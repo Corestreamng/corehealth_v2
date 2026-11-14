@@ -1,118 +1,105 @@
 # CoreHealth Scribe SDK — iFrame Track Integration Guide
 
-> Use this guide when your EMR enforces a strict **Content Security Policy (CSP)** that blocks custom HTML elements, or when you prefer a fully sandboxed, origin-isolated widget approach.
+> **Who is this for?** Partner EMR engineering teams operating in environments that enforce a strict **Content Security Policy (CSP)** (such as `script-src 'self'`) or that require origin isolation via sandboxed iframes.
 
 ---
 
-## When to Use This Track
+## 1. Overview & When to Choose Track B
 
-| Situation | Use iFrame? |
-|---|---|
-| Your EMR has `script-src 'self'` or `default-src` CSP restrictions | ✅ Yes |
-| Your team prefers strict origin isolation | ✅ Yes |
-| You can relax CSP for the CoreHealth domain | Use Web Component track instead |
-| Performance is critical (iFrames add ~50 ms mount overhead) | Consider Web Component track |
+Track B delivers the entire CoreHealth AI Scribe Studio inside a high-security origin-isolated `<iframe>`. Communication with the host EMR occurs through a bidirectional `window.postMessage` bridge.
+
+| Architectural Criteria | Track A (Web Component) | Track B (Sandboxed iFrame) |
+|---|---|---|
+| **CSP Requirements** | Allows host DOM injection | Works with strict `script-src 'self'` |
+| **Isolation Barrier** | Shadow DOM CSS encapsulation | Separate browser browsing context & origin |
+| **Data Exchange** | Direct JS callbacks & DOM events | Cryptographically verifiable `postMessage` |
+| **Mount Overhead** | Instant (~5 ms) | Minimal (~35–50 ms) |
 
 ---
 
-## How the iFrame Track Works
+## 2. Sandboxed Studio Workflow & UI Controls
+
+The screenshot below displays the consultation workflow running inside the sandboxed iFrame:
+
+![CoreHealth AI Scribe Sandboxed iFrame Clinical Workflow](/images/workbenches/scribe-sdk-iframe-verified-journey.png)
+
+### Key Clinical UI Controls in the iFrame:
+- **Progressive Stepper Navigation**: Guides clinicians sequentially: `1: Start Dictation or Load Sample` &rarr; `2: Process Note & Extract Orders` &rarr; `3: Review, Adjust & Sign`.
+- **Crisp Inline SVG Controls**: Microphones, AI structuring sparkle, sample loading, copy, reset, and sign-off buttons use clean vector SVGs.
+- **Dictation Timer & Waveform Feedback**: Real-time timer (`00:00` &rarr; `00:15`) and audio state feedback directly beside the microphone button.
+- **Vanilla Order Staging Modal**: Clinicians can click `+ Add Order` to open an inline modal overlay with category dropdown (`Medication`, `Lab`, `Imaging`, `Procedure`, `Nursing`), item name, dosage, instructions, and tariff fields — without crude browser `prompt()` dialogs.
+- **One-Click Order Removal**: Every staged item includes a dedicated trash-can SVG button with instant recalculation of total estimated tariffs.
+- **Bulk Selection Control**: The table header checkbox toggles all staged items simultaneously, synchronizing with the parent EMR.
+
+---
+
+## 3. Communication Architecture
 
 ```mermaid
 sequenceDiagram
-    participant P as Partner EMR Page
-    participant B as Partner Backend
-    participant CH as CoreHealth SDK Gateway
-    participant F as CoreHealth iFrame
+    autonumber
+    participant P as Partner EMR Host Page
+    participant B as Partner Backend Proxy
+    participant CH as CoreHealth Cloud Gateway (:8000)
+    participant F as Sandboxed iFrame
 
-    P->>B: GET /ch-scribe-token?patient=492&encounter=1017
-    B->>CH: POST /api/sdk/auth/token {client_id, client_secret, ...}
-    CH-->>B: {sdk_token: "SKT_..."}
+    P->>B: GET /ch-scribe-token?patient_id=492&encounter_id=1017
+    B->>CH: POST /api/sdk/auth/token {client_id, client_secret}
+    CH-->>B: {sdk_token: "SKT_...", expires_in: 3600}
     B-->>P: {sdk_token: "SKT_..."}
-    P->>P: Create <iframe src="corehealth.corestream.ng/scribe?token=SKT_...">
-    F->>F: Validate token, render Scribe UI
-    F-->>P: postMessage {type: "corehealth:ready"}
-    P->>P: Show "Scribe Ready" indicator
-
-    Note over P,F: Clinician dictates, reviews, signs off
-
+    P->>P: Mount <iframe src="https://corehealth.corestream.ng/scribe?token=SKT_...">
+    F->>F: Authenticate token & render Scribe Cockpit
+    F-->>P: postMessage {type: "corehealth:ready", payload: {...}}
+    
+    Note over P,F: Clinician dictates, edits orders in staging deck, and signs
+    
+    F-->>P: postMessage {type: "corehealth:orders-updated", payload: {orders: [...]}}
     F-->>P: postMessage {type: "corehealth:signed-off", payload: {...}}
     P->>B: POST /encounters/1017/scribe-signoff {payload}
-    B->>CH: POST /api/sdk/scribe/session/SKT_.../compositions
+    B->>CH: POST /api/sdk/scribe/session/:token/compositions
     CH-->>B: {openehr_composition, fhir_bundle}
-    B->>B: Persist to partner CDR/FHIR server
-    B-->>P: 200 OK
-    P->>P: Remove iFrame, show success toast
+    B-->>P: 200 OK (Compositions received & saved)
 ```
 
 ---
 
-## Step 1 — Backend: Issue a Session Token
+## 4. Frontend Implementation
 
-Identical to the Web Component track. Your backend exchanges credentials for a short-lived `SKT_` token.
-
-**Request**
-```
-POST /api/sdk/auth/token
-Content-Type: application/json
-```
-```json
-{
-  "client_id":     "partner-emr-dev",
-  "client_secret": "YOUR_CLIENT_SECRET",
-  "patient_id":    492,
-  "encounter_id":  1017,
-  "clinician_id":  38,
-  "scope":         "scribe:process scribe:sign interop:compositions"
-}
-```
-
-**Response — 200 OK**
-```json
-{
-  "sdk_token": "SKT_eyJ0eXAiOiJKV1Qi...",
-  "expires_in": 3600
-}
-```
-
-**Next step:** Return `sdk_token` to your frontend page. Do not store in `localStorage`.
-
----
-
-## Step 2 — Frontend: Mount the iFrame
+### Step 1 — Embed the iFrame
 
 ```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <!-- CSP: allow iFrame from CoreHealth SDK domain only -->
+  <!-- CSP Header: allow framing from CoreHealth Cloud -->
   <meta http-equiv="Content-Security-Policy"
         content="frame-src 'self' https://corehealth.corestream.ng;">
 </head>
 <body>
-  <div id="scribe-mount" style="width:100%;min-height:600px;"></div>
+  <div id="scribe-mount" style="width:100%;min-height:680px;"></div>
 
   <script>
   (async () => {
-    // 1. Fetch token from your backend (never hardcode here)
+    // 1. Fetch short-lived session token from your backend proxy
     const { sdk_token } = await fetch('/my-backend/ch-scribe-token?patient_id=492&encounter_id=1017')
       .then(r => r.json());
 
-    // 2. Build iFrame URL with query params
+    // 2. Build iFrame URL
     const params = new URLSearchParams({
       token:    sdk_token,
       locale:   'en-NG',
-      role:     'doctor',
-      taxonomy: 'soap',
+      role:     'doctor',    // 'doctor' | 'nurse' | 'maternity'
+      taxonomy: 'soap',      // 'soap' | 'clerking' | 'pomr'
       theme:    'light'
     });
 
     const frame = document.createElement('iframe');
     frame.src = `https://corehealth.corestream.ng/scribe?${params}`;
     frame.setAttribute('allow', 'microphone');
-    frame.setAttribute('title', 'CoreHealth AI Scribe');
+    frame.setAttribute('title', 'CoreHealth AI Scribe Studio');
     frame.style.cssText = 'width:100%;height:680px;border:none;border-radius:8px;';
-    frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-microphone');
+    frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals');
 
     document.getElementById('scribe-mount').appendChild(frame);
   })();
@@ -121,143 +108,82 @@ Content-Type: application/json
 </html>
 ```
 
-**Next step:** Listen for `postMessage` events from the iFrame.
-
 ---
 
-## Step 3 — Listen for postMessage Events
+### Step 2 — Handle Bidirectional postMessage Events
 
-```js
-const ALLOWED_ORIGIN = 'https://corehealth.corestream.ng'; // change for on-prem
+```javascript
+const ALLOWED_ORIGIN = 'https://corehealth.corestream.ng';
 
 window.addEventListener('message', async (event) => {
-
-  // ALWAYS verify origin first — never skip this check
+  // 1. ALWAYS verify origin to prevent cross-origin injection attacks
   if (event.origin !== ALLOWED_ORIGIN) return;
 
   const { type, payload } = event.data;
 
   switch (type) {
     case 'corehealth:ready':
-      console.log('Scribe widget ready for patient', payload.patient_id);
-      showIndicator('🎙 Scribe Ready — click microphone to begin');
+      console.log('Scribe Studio initialized for encounter', payload.encounter_id);
       break;
 
     case 'corehealth:recording-started':
-      showIndicator('● Recording…');
+      console.log('Clinician began audio dictation');
       break;
 
     case 'corehealth:processing':
-      showIndicator('⏳ Processing note & structuring orders…');
+      console.log('NLP structuring note and clinical orders');
       break;
 
     case 'corehealth:orders-updated':
-      console.log('Staged orders updated by clinician:', payload.orders);
+      // Emitted when clinician edits dosage, toggles checkboxes, or adds/removes items
+      console.log('Staged orders updated:', payload.orders);
       break;
 
     case 'corehealth:signed-off':
-      showIndicator('✓ Signing note & dispatching approved orders…');
-      await saveSignedNote(payload);
-      removeScribeFrame();
-      showSuccessToast('Consultation note & approved orders saved to your records.');
+      // Clinician reviewed and accepted the note & approved orders
+      console.log('Consultation accepted. Forwarding to backend:', payload);
+      await fetch('/my-backend/encounters/1017/scribe-signoff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
       break;
 
     case 'corehealth:error':
       console.error('Scribe error:', payload.code, payload.message);
-      showErrorToast(`Scribe error: ${payload.message}`);
       break;
   }
 });
-
-async function saveSignedNote(payload) {
-  // payload.final_signed_note, payload.transcript, payload.approved_orders
-  await fetch('/my-backend/encounters/1017/scribe-signoff', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-}
-
-function removeScribeFrame() {
-  document.getElementById('scribe-mount').innerHTML = '';
-}
 ```
-
-**Next step:** Your backend receives the payload and optionally calls CoreHealth to fetch enriched compositions.
 
 ---
 
-## Step 4 — Backend: Persist the Compositions
+## 5. Bidirectional Event Reference
 
-```
-POST /api/sdk/scribe/session/{sdk_token}/compositions
-Authorization: Basic base64(client_id:client_secret)
-Content-Type: application/json
-
-{ "cross_border": false }
-```
-
-**Response — 200 OK**
-```json
-{
-  "openehr_composition": {
-    "archetypeId": "openEHR-EHR-COMPOSITION.encounter.v1",
-    "content": [ "... vital signs, medications, SOAP note ..." ]
-  },
-  "fhir_bundle": {
-    "resourceType": "Bundle",
-    "type": "transaction",
-    "entry": [ "... Encounter, MedicationRequest, ServiceRequest ..." ]
-  },
-  "transcript_summary": "Patient presented with...",
-  "signed_at": "2026-11-13T15:42:00+01:00"
-}
-```
-
-> Persist `openehr_composition` → your openEHR CDR (`POST /ehr/{ehr_id}/composition`)  
-> Persist `fhir_bundle` → your FHIR server (`POST /fhir/Bundle`)
+| Event Type | Direction | Payload Structure | Trigger Condition |
+|---|---|---|---|
+| `corehealth:ready` | iFrame &rarr; Host | `{ patient_id, encounter_id, locale, role, taxonomy }` | Widget mounted and token validated |
+| `corehealth:recording-started` | iFrame &rarr; Host | `{}` | Clinician clicked Start Dictation |
+| `corehealth:processing` | iFrame &rarr; Host | `{}` | Dictation ended or Process Note clicked |
+| `corehealth:note-ready` | iFrame &rarr; Host | `{ formatted_markdown, structured_sections, orders }` | NLP structuring complete |
+| `corehealth:orders-updated` | iFrame &rarr; Host | `{ orders: [...] }` | Orders staged, modified, added, or deleted |
+| `corehealth:signed-off` | iFrame &rarr; Host | `{ final_signed_note, approved_orders, audit_id }` | Clinician clicked Accept & Sign |
+| `corehealth:set-catalog` | Host &rarr; iFrame | `{ custom_catalog: [...] }` | Host injects CSCP formulary dynamically |
+| `corehealth:error` | iFrame &rarr; Host | `{ code, message }` | Audio or API error encountered |
 
 ---
 
-## Full postMessage Event Reference
+## 6. CSP Configuration for On-Premise Deployments
 
-| `event.data.type` | Direction | Payload |
-|---|---|---|
-| `corehealth:ready` | iFrame → Parent | `{ patient_id, encounter_id, locale, role, taxonomy }` |
-| `corehealth:resize` | iFrame → Parent | `{ height }` — for dynamic height adjustment |
-| `corehealth:recording-started` | iFrame → Parent | — |
-| `corehealth:recording-stopped` | iFrame → Parent | `{ seconds_recorded }` |
-| `corehealth:processing` | iFrame → Parent | — |
-| `corehealth:note-ready` | iFrame → Parent | `{ soap_note, orders, allergy_alerts }` — before sign-off |
-| `corehealth:orders-updated` | iFrame → Parent | `{ orders }` — emitted when clinician edits/adds orders |
-| `corehealth:signed-off` | iFrame → Parent | `{ final_signed_note, transcript, approved_orders, role, taxonomy, patient_id, encounter_id }` |
-| `corehealth:error` | iFrame → Parent | `{ code, message }` |
-| `corehealth:set-catalog` | Parent → iFrame | `{ custom_catalog }` — CSCP compressed DSL or JSON array |
-| `corehealth:close` | Parent → iFrame | — — parent requests close |
+For self-hosted hospital deployments behind a corporate reverse proxy, update your host application's CSP header:
+
+```http
+Content-Security-Policy: frame-src 'self' https://corehealth.hospital-internal.org;
+```
 
 ---
 
-## CSP Configuration for On-Prem Deployments
+## 7. Support & Public CDN
 
-If CoreHealth is deployed on-prem inside Partner EMR's network:
-
-```
-# Replace corehealth.corestream.ng with your on-prem hostname
-Content-Security-Policy: frame-src 'self' https://phc-node-01.partner-emr.org;
-```
-
-> [!IMPORTANT]
-> The `ALLOWED_ORIGIN` constant in Step 3 must exactly match the `src` origin of the iFrame. For on-prem, that is your internal hostname, not `corehealth.corestream.ng`.
-
----
-
-## Troubleshooting
-
-| Problem | Cause | Fix |
-|---|---|---|
-| iFrame shows blank / white page | Invalid or expired `sdk_token` in URL | Re-fetch token from backend before mounting |
-| postMessage events not received | Origin mismatch | Match `ALLOWED_ORIGIN` to exact iFrame `src` origin |
-| Microphone not working in iFrame | Missing `allow="microphone"` attribute | Add `allow="microphone"` to `<iframe>` tag |
-| iFrame blocked by browser | Missing `sandbox` attribute values | Add `allow-scripts allow-same-origin allow-forms` |
-| CSP violation in browser console | `frame-src` missing CoreHealth domain | Add `frame-src https://corehealth.corestream.ng` to your CSP header |
-
+- **Public Production Endpoint**: `https://corehealth.corestream.ng/scribe`
+- **Technical Inquiries**: Contact CoreHealth Engineering at `hello@corestream.ng`.

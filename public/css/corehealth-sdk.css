@@ -25,12 +25,11 @@
   color: var(--ch-text-primary);
   background: var(--ch-surface);
   margin: 0;
-  padding: 16px;
+  padding: 0;
   box-sizing: border-box;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
 .ch-scribe-header {

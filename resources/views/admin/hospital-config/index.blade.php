@@ -50,6 +50,11 @@
                                     <i class="mdi mdi-cellphone-link mr-1"></i> WeCare247
                                 </a>
                             </li>
+                            <li class="nav-item" style="flex: 1; text-align: center; list-style: none;">
+                                <a class="nav-link" id="sdk-tab" data-toggle="tab" href="#sdk-settings" role="tab" style="font-weight: 600; border-radius: 8px; padding: 10px 15px; display: block; text-decoration: none; transition: all 0.2s;">
+                                    <i class="mdi mdi-code-tags mr-1"></i> AI Scribe & SDK
+                                </a>
+                            </li>
                         </ul>
 
                         <!-- Tab content -->
@@ -1169,6 +1174,323 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- AI Scribe & Partner EMR SDK Tab -->
+                            <div class="tab-pane fade" id="sdk-settings" role="tabpanel" aria-labelledby="sdk-tab">
+                                @if(session('new_client_secret'))
+                                    <div class="alert alert-warning border-left-warning shadow-sm mb-4" role="alert" style="border-radius: 8px; border-left: 4px solid #f6c23e; background-color: #fffdf5;">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h5 class="alert-heading text-dark font-weight-bold mb-1">
+                                                    <i class="mdi mdi-key-alert mr-1 text-warning"></i> New Client Secret Generated!
+                                                </h5>
+                                                <p class="mb-2 text-muted" style="font-size: 0.9rem;">
+                                                    Client ID: <strong class="text-dark">{{ session('new_client_id') }}</strong>. 
+                                                    Copy this secret key immediately. For security, it is stored as a bcrypt hash and will <strong>never</strong> be displayed again.
+                                                </p>
+                                                <div class="input-group input-group-sm" style="max-width: 550px;">
+                                                    <input type="text" id="flash-new-secret-input" class="form-control font-monospace bg-white" readonly value="{{ session('new_client_secret') }}">
+                                                    <div class="input-group-append">
+                                                        <button type="button" class="btn btn-warning text-dark font-weight-bold" onclick="copySecretToClipboard('flash-new-secret-input')">
+                                                            <i class="mdi mdi-content-copy mr-1"></i> Copy Secret
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                                    <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef; border-radius: 12px 12px 0 0;">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
+                                                <i class="mdi mdi-code-tags mr-2" style="color: var(--primary-color);"></i>
+                                                Partner EMR SDK & AI Scribe Management
+                                            </h5>
+                                            <span class="badge badge-primary px-3 py-2" style="font-size: 0.85rem; border-radius: 20px;">
+                                                <i class="mdi mdi-shield-check mr-1"></i> OAuth2 / HMAC Token Broker
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="card-body" style="padding: 1.5rem;">
+                                        <!-- KPI Metrics -->
+                                        <div class="row mb-4">
+                                            <div class="col-md-3 col-6 mb-2">
+                                                <div class="p-3 rounded text-center" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                                                    <div class="text-xs text-uppercase font-weight-bold text-muted">Registered Clients</div>
+                                                    <div class="h4 mb-0 font-weight-bold text-dark">{{ $totalClients ?? count($sdkClients) }}</div>
+                                                    <small class="text-success font-weight-bold">{{ $activeClients ?? 0 }} Active</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 col-6 mb-2">
+                                                <div class="p-3 rounded text-center" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                                                    <div class="text-xs text-uppercase font-weight-bold text-muted">Active Sessions</div>
+                                                    <div class="h4 mb-0 font-weight-bold text-primary">{{ $activeTokens ?? 0 }}</div>
+                                                    <small class="text-muted">Live Bearers</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 col-6 mb-2">
+                                                <div class="p-3 rounded text-center" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                                                    <div class="text-xs text-uppercase font-weight-bold text-muted">Tokens Minted</div>
+                                                    <div class="h4 mb-0 font-weight-bold text-dark">{{ $totalTokensIssued ?? 0 }}</div>
+                                                    <small class="text-muted">Historical Audits</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 col-6 mb-2">
+                                                <div class="p-3 rounded text-center" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                                                    <div class="text-xs text-uppercase font-weight-bold text-muted">Scribe Sign-offs</div>
+                                                    <div class="h4 mb-0 font-weight-bold text-success">{{ $totalScribeSigned ?? 0 }}</div>
+                                                    <small class="text-muted">Clinical Notes</small>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Section 1: Partner EMR API Clients -->
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <div>
+                                                <h6 class="font-weight-bold text-dark mb-0">
+                                                    <i class="mdi mdi-key-variant text-warning mr-1"></i> Partner EMR API Clients
+                                                </h6>
+                                                <small class="text-muted">Registered external EMR integrations authorized to mint scoped session tokens.</small>
+                                            </div>
+                                            <button type="button" class="btn btn-primary btn-sm font-weight-bold" data-toggle="modal" data-target="#registerSdkClientModal">
+                                                <i class="mdi mdi-plus-circle mr-1"></i> Register Client
+                                            </button>
+                                        </div>
+
+                                        <div class="table-responsive mb-4">
+                                            <table class="table table-hover table-bordered mb-0" style="font-size: 0.88rem;">
+                                                <thead class="thead-light">
+                                                    <tr>
+                                                        <th>Client ID & Name</th>
+                                                        <th>Organization</th>
+                                                        <th>Allowed Scopes</th>
+                                                        <th>Rate Limit</th>
+                                                        <th>Status</th>
+                                                        <th class="text-center" style="width: 190px;">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @forelse($sdkClients as $client)
+                                                        <tr>
+                                                            <td>
+                                                                <div class="font-weight-bold text-dark font-monospace">{{ $client->client_id }}</div>
+                                                                <small class="text-muted">{{ $client->name }}</small>
+                                                            </td>
+                                                            <td>
+                                                                <span class="text-dark">{{ $client->organization ?? '—' }}</span>
+                                                            </td>
+                                                            <td>
+                                                                @if(in_array('*', $client->allowed_scopes ?? []))
+                                                                    <span class="badge badge-success">Full Access (*)</span>
+                                                                @else
+                                                                    @foreach($client->allowed_scopes ?? [] as $scope)
+                                                                        <span class="badge badge-secondary mr-1 mb-1">{{ $scope }}</span>
+                                                                    @endforeach
+                                                                @endif
+                                                            </td>
+                                                            <td>
+                                                                <span class="badge badge-light border text-dark">{{ $client->rate_limit_rpm }} rpm</span>
+                                                            </td>
+                                                            <td>
+                                                                @if($client->is_active)
+                                                                    <span class="badge badge-success px-2 py-1"><i class="mdi mdi-check-circle mr-1"></i>Active</span>
+                                                                @else
+                                                                    <span class="badge badge-secondary px-2 py-1"><i class="mdi mdi-cancel mr-1"></i>Disabled</span>
+                                                                @endif
+                                                            </td>
+                                                            <td class="text-center">
+                                                                <div class="btn-group btn-group-sm" role="group">
+                                                                    <button type="button" class="btn btn-outline-info" title="View / Copy .env Snippet"
+                                                                        onclick="openEnvSnippetModal('{{ $client->client_id }}', '{{ addslashes($client->name) }}', '{{ url('/') }}')">
+                                                                        <i class="mdi mdi-file-code-outline"></i> .env
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-outline-warning" title="Rotate Secret Key"
+                                                                        onclick="confirmRotateSdkSecret('{{ $client->client_id }}', '{{ route('hospital-config.sdk-clients.rotate', $client->id) }}')">
+                                                                        <i class="mdi mdi-key-refresh"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn {{ $client->is_active ? 'btn-outline-secondary' : 'btn-outline-success' }}" 
+                                                                        title="{{ $client->is_active ? 'Deactivate Client' : 'Activate Client' }}"
+                                                                        onclick="toggleSdkClientStatus('{{ $client->client_id }}', '{{ route('hospital-config.sdk-clients.toggle', $client->id) }}', {{ $client->is_active ? 'true' : 'false' }})">
+                                                                        <i class="mdi {{ $client->is_active ? 'mdi-pause-circle-outline' : 'mdi-play-circle-outline' }}"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-outline-danger" title="Delete Client"
+                                                                        onclick="confirmDeleteSdkClient('{{ $client->client_id }}', '{{ route('hospital-config.sdk-clients.destroy', $client->id) }}')">
+                                                                        <i class="mdi mdi-trash-can-outline"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    @empty
+                                                        <tr>
+                                                            <td colspan="6" class="text-center py-4 text-muted">
+                                                                <i class="mdi mdi-shield-off-outline mdi-24px d-block mb-1"></i>
+                                                                No Partner EMR SDK Clients registered yet.
+                                                            </td>
+                                                        </tr>
+                                                    @endforelse
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <!-- Section 2: Live SDK Session Tokens -->
+                                        <div class="d-flex justify-content-between align-items-center mb-2 mt-4">
+                                            <div>
+                                                <h6 class="font-weight-bold text-dark mb-0">
+                                                    <i class="mdi mdi-history text-primary mr-1"></i> Recent SDK Session Tokens & Bearers
+                                                </h6>
+                                                <small class="text-muted">Live audit trail of issued single-encounter bearer tokens (last 15).</small>
+                                            </div>
+                                        </div>
+
+                                        <div class="table-responsive mb-4">
+                                            <table class="table table-sm table-hover table-bordered mb-0" style="font-size: 0.85rem;">
+                                                <thead class="thead-light">
+                                                    <tr>
+                                                        <th>Client</th>
+                                                        <th>Patient / Enc</th>
+                                                        <th>Token JTI</th>
+                                                        <th>Client IP</th>
+                                                        <th>Issued</th>
+                                                        <th>Status</th>
+                                                        <th class="text-center">Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @forelse($recentTokenAudits as $audit)
+                                                        @php
+                                                            $isRevoked = !is_null($audit->revoked_at);
+                                                            $isExpired = $audit->expires_at && $audit->expires_at->isPast();
+                                                        @endphp
+                                                        <tr>
+                                                            <td><span class="font-weight-bold font-monospace">{{ $audit->client_id }}</span></td>
+                                                            <td>
+                                                                <span class="badge badge-light border">Pt #{{ $audit->patient_id ?? 'N/A' }}</span>
+                                                                <span class="badge badge-light border">Enc #{{ $audit->encounter_id ?? 'N/A' }}</span>
+                                                            </td>
+                                                            <td>
+                                                                <span class="font-monospace text-muted" title="{{ $audit->token_jti }}">
+                                                                    {{ Str::limit($audit->token_jti, 18, '...') }}
+                                                                </span>
+                                                            </td>
+                                                            <td>{{ $audit->ip_address ?? '127.0.0.1' }}</td>
+                                                            <td>{{ $audit->issued_at ? $audit->issued_at->diffForHumans() : '—' }}</td>
+                                                            <td>
+                                                                @if($isRevoked)
+                                                                    <span class="badge badge-danger">Revoked</span>
+                                                                @elseif($isExpired)
+                                                                    <span class="badge badge-secondary">Expired</span>
+                                                                @else
+                                                                    <span class="badge badge-success">Active</span>
+                                                                @endif
+                                                            </td>
+                                                            <td class="text-center">
+                                                                @if(!$isRevoked && !$isExpired)
+                                                                    <button type="button" class="btn btn-outline-danger btn-xs py-0 px-2"
+                                                                        onclick="confirmRevokeSdkToken('{{ $audit->token_jti }}', '{{ route('hospital-config.sdk-tokens.revoke', $audit->token_jti) }}')">
+                                                                        Revoke
+                                                                    </button>
+                                                                @else
+                                                                    <span class="text-muted text-xs">—</span>
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                    @empty
+                                                        <tr>
+                                                            <td colspan="7" class="text-center py-3 text-muted">No SDK session tokens issued yet.</td>
+                                                        </tr>
+                                                    @endforelse
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <!-- Section 3: AI Scribe Clinical Processing Audits -->
+                                        <div class="d-flex justify-content-between align-items-center mb-2 mt-4">
+                                            <div>
+                                                <h6 class="font-weight-bold text-dark mb-0">
+                                                    <i class="mdi mdi-robot-outline text-success mr-1"></i> AI Scribe Activity & Clinical Sign-offs
+                                                </h6>
+                                                <small class="text-muted">Recent AI ambient clinical notes structured, validated, and signed into EMR (last 15).</small>
+                                            </div>
+                                        </div>
+
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-hover table-bordered mb-0" style="font-size: 0.85rem;">
+                                                <thead class="thead-light">
+                                                    <tr>
+                                                        <th>Date / Time</th>
+                                                        <th>Clinician</th>
+                                                        <th>Patient</th>
+                                                        <th>Taxonomy</th>
+                                                        <th>Model</th>
+                                                        <th>Orders</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @forelse($recentScribeAudits as $scribe)
+                                                        @php
+                                                            $clinicianUser = $scribe->user;
+                                                            $patientUser = optional($scribe->patient)->user;
+                                                            $dispatchedCount = is_array($scribe->orders_dispatched_json) ? count($scribe->orders_dispatched_json) : 0;
+                                                        @endphp
+                                                        <tr>
+                                                            <td>
+                                                                {{ $scribe->created_at ? $scribe->created_at->format('M d, H:i') : '—' }}
+                                                                <small class="text-muted d-block">{{ $scribe->created_at ? $scribe->created_at->diffForHumans() : '' }}</small>
+                                                            </td>
+                                                            <td>
+                                                                @if($clinicianUser)
+                                                                    <span class="font-weight-bold text-dark">{{ $clinicianUser->surname . ' ' . $clinicianUser->firstname . ($clinicianUser->othername ? ' ' . $clinicianUser->othername : '') }}</span>
+                                                                    <small class="text-muted d-block text-capitalize">{{ $scribe->role ?? 'Doctor' }}</small>
+                                                                @else
+                                                                    <span class="text-muted">System / Unknown</span>
+                                                                @endif
+                                                            </td>
+                                                            <td>
+                                                                @if($patientUser)
+                                                                    <span class="text-dark">{{ $patientUser->surname . ' ' . $patientUser->firstname . ($patientUser->othername ? ' ' . $patientUser->othername : '') }}</span>
+                                                                    <small class="text-muted d-block">File: {{ optional($scribe->patient)->file_no ?? 'N/A' }}</small>
+                                                                @else
+                                                                    <span class="text-muted">Pt #{{ $scribe->patient_id ?? 'N/A' }}</span>
+                                                                @endif
+                                                            </td>
+                                                            <td>
+                                                                <span class="badge badge-info text-uppercase">{{ $scribe->taxonomy_type ?? 'SOAP' }}</span>
+                                                            </td>
+                                                            <td>
+                                                                <span class="badge badge-light border text-dark font-monospace">{{ $scribe->model_used ?? 'gemini-2.5-flash' }}</span>
+                                                            </td>
+                                                            <td>
+                                                                @if($dispatchedCount > 0)
+                                                                    <span class="badge badge-success">{{ $dispatchedCount }} dispatched</span>
+                                                                @else
+                                                                    <span class="badge badge-light border text-muted">0 orders</span>
+                                                                @endif
+                                                            </td>
+                                                            <td>
+                                                                @if($scribe->signed_at)
+                                                                    <span class="badge badge-success px-2 py-1"><i class="mdi mdi-check-all mr-1"></i>Signed</span>
+                                                                @else
+                                                                    <span class="badge badge-warning px-2 py-1">Draft</span>
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                    @empty
+                                                        <tr>
+                                                            <td colspan="7" class="text-center py-3 text-muted">No AI scribe processing sessions recorded yet.</td>
+                                                        </tr>
+                                                    @endforelse
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div> {{-- End of #configTabsContent --}}
                     </div> <!-- End col-lg-8 -->
                     <!-- Branding & System Settings -->
@@ -1937,6 +2259,160 @@
 </div>
 </div>
 
+<!-- Modal: Register Partner EMR SDK Client -->
+<div class="modal fade" id="registerSdkClientModal" tabindex="-1" role="dialog" aria-labelledby="registerSdkClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+            <div class="modal-header bg-white" style="border-bottom: 1px solid #e9ecef; border-radius: 12px 12px 0 0;">
+                <h5 class="modal-title font-weight-bold text-dark" id="registerSdkClientModalLabel">
+                    <i class="mdi mdi-key-plus text-primary mr-1"></i> Register Partner EMR API Client
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="{{ route('hospital-config.sdk-clients.store') }}" method="POST">
+                @csrf
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-4">
+                        Provision credentials for external EMR instances, telemetry microservices, or partner web applications that need to mint single-encounter session tokens or consume clinical notes.
+                    </p>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label font-weight-bold">Client Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="name" required placeholder="e.g. eHealth Africa Clinic EMR" style="border-radius: 8px;">
+                            <small class="text-muted">Human-readable name for this partner application.</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label font-weight-bold">Organization</label>
+                            <input type="text" class="form-control" name="organization" placeholder="e.g. eHealth Africa Global" style="border-radius: 8px;">
+                            <small class="text-muted">Partner institution or hospital network.</small>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label font-weight-bold">Custom Client ID <span class="text-muted font-weight-normal">(Optional)</span></label>
+                            <input type="text" class="form-control font-monospace" name="client_id" placeholder="e.g. partner-emr-clinic-1" style="border-radius: 8px;">
+                            <small class="text-muted">Leave blank to auto-generate a slug identifier.</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label font-weight-bold">Initial Secret <span class="text-muted font-weight-normal">(Optional)</span></label>
+                            <input type="text" class="form-control font-monospace" name="client_secret" placeholder="Leave blank for secure 40-char string" style="border-radius: 8px;">
+                            <small class="text-muted">Leave blank to auto-generate a cryptographic secret.</small>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label font-weight-bold">Rate Limit (Requests / Min)</label>
+                            <input type="number" class="form-control" name="rate_limit_rpm" value="120" min="10" max="3600" style="border-radius: 8px;">
+                            <small class="text-muted">Default: 120 RPM. Protects LLM inference against floods.</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 pt-2 border-top">
+                        <label class="form-label font-weight-bold mb-2">Authorized Scopes</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" class="custom-control-input" id="scope_all" name="allowed_scopes[]" value="*" checked>
+                                    <label class="custom-control-label font-weight-bold" for="scope_all">Full Access (*)</label>
+                                    <small class="text-muted d-block pl-4">Grants all Scribe and Interop privileges</small>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" class="custom-control-input" id="scope_session" name="allowed_scopes[]" value="scribe:session">
+                                    <label class="custom-control-label" for="scope_session">scribe:session</label>
+                                    <small class="text-muted d-block pl-4">Mint scoped single-encounter tokens</small>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" class="custom-control-input" id="scope_process" name="allowed_scopes[]" value="scribe:process">
+                                    <label class="custom-control-label" for="scope_process">scribe:process</label>
+                                    <small class="text-muted d-block pl-4">Transcribe audio & run Gemini note structuring</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" class="custom-control-input" id="scope_sign" name="allowed_scopes[]" value="scribe:sign">
+                                    <label class="custom-control-label" for="scope_sign">scribe:sign</label>
+                                    <small class="text-muted d-block pl-4">Sign notes & dispatch clinical orders</small>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" class="custom-control-input" id="scope_orders" name="allowed_scopes[]" value="orders:dispatch">
+                                    <label class="custom-control-label" for="scope_orders">orders:dispatch</label>
+                                    <small class="text-muted d-block pl-4">Dispatch lab & pharmacy order lines</small>
+                                </div>
+                                <div class="custom-control custom-checkbox mb-2">
+                                    <input type="checkbox" class="custom-control-input" id="scope_compositions" name="allowed_scopes[]" value="interop:compositions">
+                                    <label class="custom-control-label" for="scope_compositions">interop:compositions</label>
+                                    <small class="text-muted d-block pl-4">Query openEHR & FHIR standard compositions</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light" style="border-top: 1px solid #e9ecef; border-radius: 0 0 12px 12px;">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary font-weight-bold">
+                        <i class="mdi mdi-check mr-1"></i> Register Client
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: View .env Configuration Snippet -->
+<div class="modal fade" id="envSnippetModal" tabindex="-1" role="dialog" aria-labelledby="envSnippetModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+            <div class="modal-header bg-white" style="border-bottom: 1px solid #e9ecef; border-radius: 12px 12px 0 0;">
+                <h5 class="modal-title font-weight-bold text-dark" id="envSnippetModalLabel">
+                    <i class="mdi mdi-file-code-outline text-info mr-1"></i> Partner EMR Environment Configuration
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted small mb-3">
+                    Paste these environment variables directly into your Node.js Express (<code>sdks/js-scribe-sdk</code>) or Python FastAPI (<code>sdks/python-scribe-sdk</code>) backend <code>.env</code> file:
+                </p>
+
+                <div class="position-relative">
+                    <pre class="bg-dark text-light p-3 rounded font-monospace" id="envSnippetContent" style="font-size: 0.88rem; line-height: 1.6; user-select: all;"></pre>
+                </div>
+                <small class="text-muted d-block mt-2">
+                    <i class="mdi mdi-information-outline text-info mr-1"></i>
+                    Note: For security, if you don't know the client secret, use the <strong>Rotate Secret</strong> button on the client table to mint a fresh secret key.
+                </small>
+            </div>
+            <div class="modal-footer bg-light" style="border-top: 1px solid #e9ecef; border-radius: 0 0 12px 12px;">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary font-weight-bold" onclick="copySnippetToClipboard()">
+                    <i class="mdi mdi-content-copy mr-1"></i> Copy .env Snippet
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden Action Forms for SDK Operations -->
+<form id="rotateSdkClientForm" method="POST" style="display:none;">
+    @csrf
+</form>
+<form id="toggleSdkClientForm" method="POST" style="display:none;">
+    @csrf
+</form>
+<form id="deleteSdkClientForm" method="POST" style="display:none;">
+    @csrf
+    @method('DELETE')
+</form>
+<form id="revokeSdkTokenForm" method="POST" style="display:none;">
+    @csrf
+</form>
+
 <style>
     /* Custom Toggle Switch Styles */
     .toggle-switch {
@@ -2083,6 +2559,10 @@
 <script src="{{ asset('js/wecare-config.js') }}"></script>
 <script>
     window.WECARE_PROBE_URL = "{{ route('hospital-config.test-wecare') }}";
+</script>
+<script src="{{ asset('js/hospital-config-sdk.js') }}"></script>
+<script>
+    initSdkConfigTab({{ session('new_client_secret') ? 'true' : 'false' }});
 </script>
 <style>
     #consent-template .ck-editor__editable_inline {

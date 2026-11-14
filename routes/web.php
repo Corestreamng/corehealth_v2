@@ -147,6 +147,13 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('hospital-config', [HospitalConfigController::class, 'index'])->name('hospital-config.index');
         Route::put('hospital-config', [HospitalConfigController::class, 'update'])->name('hospital-config.update');
         Route::post('hospital-config/test-wecare', [HospitalConfigController::class, 'testWeCare'])->name('hospital-config.test-wecare');
+
+        // SDK & Interoperability Client Management
+        Route::post('hospital-config/sdk-clients', [HospitalConfigController::class, 'storeSdkClient'])->name('hospital-config.sdk-clients.store');
+        Route::post('hospital-config/sdk-clients/{id}/toggle', [HospitalConfigController::class, 'toggleSdkClient'])->name('hospital-config.sdk-clients.toggle');
+        Route::post('hospital-config/sdk-clients/{id}/rotate', [HospitalConfigController::class, 'rotateSdkClientSecret'])->name('hospital-config.sdk-clients.rotate');
+        Route::delete('hospital-config/sdk-clients/{id}', [HospitalConfigController::class, 'deleteSdkClient'])->name('hospital-config.sdk-clients.destroy');
+        Route::post('hospital-config/sdk-tokens/{jti}/revoke', [HospitalConfigController::class, 'revokeSdkToken'])->name('hospital-config.sdk-tokens.revoke');
     });
 
     // Vaccine Schedule Configuration

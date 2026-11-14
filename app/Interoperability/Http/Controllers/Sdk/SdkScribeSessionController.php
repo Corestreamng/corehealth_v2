@@ -17,7 +17,9 @@ use App\Models\ProductCategory;
 use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\User;
+use App\Services\LlmGatewayService;
 use App\Services\OrderCatalogRegistryService;
+use App\Services\PatientContextService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,16 +36,24 @@ class SdkScribeSessionController extends Controller
 
     protected CompressedCatalogService $compressedCatalog;
 
+    protected ?LlmGatewayService $llmGateway;
+
+    protected ?PatientContextService $contextService;
+
     public function __construct(
         SdkTokenService $tokenService,
         NdprSanitizerService $sanitizer,
         OrderCatalogRegistryService $catalogRegistry,
-        CompressedCatalogService $compressedCatalog
+        CompressedCatalogService $compressedCatalog,
+        ?LlmGatewayService $llmGateway = null,
+        ?PatientContextService $contextService = null
     ) {
         $this->tokenService = $tokenService;
         $this->sanitizer = $sanitizer;
         $this->catalogRegistry = $catalogRegistry;
         $this->compressedCatalog = $compressedCatalog;
+        $this->llmGateway = $llmGateway;
+        $this->contextService = $contextService;
     }
 
     /**
@@ -348,6 +358,7 @@ class SdkScribeSessionController extends Controller
 
         // Retrieve Patient & Allergies for Safety Check
         $patientAllergies = [];
+        $patientContext = '';
         if ($patientId) {
             $patient = Patient::find($patientId);
             if ($patient && !empty($patient->allergies)) {
@@ -355,6 +366,16 @@ class SdkScribeSessionController extends Controller
                     ? $patient->allergies
                     : array_filter(array_map('trim', explode(',', (string) $patient->allergies)));
             }
+            if ($this->contextService) {
+                try {
+                    $patientContext = $this->contextService->getPatientContext((int) $patientId, $encounterId ? (int) $encounterId : null);
+                } catch (\Throwable $e) {
+                    Log::warning('Patient context retrieval error: ' . $e->getMessage());
+                }
+            }
+        }
+        if (!empty($sanitizedPatientSummary)) {
+            $patientContext .= "\n\nLONGITUDINAL PATIENT SUMMARY & EHR BRIEF (Context only):\n" . trim($sanitizedPatientSummary);
         }
 
         try {
@@ -368,19 +389,109 @@ class SdkScribeSessionController extends Controller
                 $existingOrders = json_decode($existingOrders, true) ?: [];
             }
 
-            // Generate structured sections based on taxonomy
-            $structuredSections = $this->buildStructuredSections(
-                $transcript,
-                $editorContent,
-                $taxonomy,
-                $role,
-                $existingSections,
-                $sanitizedPatientSummary
-            );
+            $modelUsed = 'corehealth-clinical-nlp-v2';
+            $provider = 'corehealth-heuristics';
+            $structuredSections = [];
+            $extractedOrders = [];
+            $summaryHeadline = 'Clinical Consultation Summary (' . strtoupper($taxonomy) . ')';
+            $aiSuccess = false;
 
-            // Extract candidate orders from clinical narrative
-            $combinedText = $transcript . ' ' . $editorContent;
-            $extractedOrders = $this->extractOrdersFromText($combinedText, $parsedCustomCatalog, $patientAllergies);
+            // 1. Primary AI Inference via LlmGatewayService (if configured & enabled)
+            if ($this->llmGateway && $this->llmGateway->isEnabled()) {
+                try {
+                    $combinedSearchText = $transcript . ' ' . $editorContent;
+                    if (!empty($existingSections)) {
+                        foreach ($existingSections as $sec) {
+                            $combinedSearchText .= ' ' . ($sec['content'] ?? '');
+                        }
+                    }
+
+                    $catalogContext = $this->catalogRegistry->getCatalogPromptContext($combinedSearchText);
+                    $config = $this->llmGateway->getConfig();
+                    $systemPrompt = $config['system_prompts']['clinical_scribe'] ?? config('llm.prompts.clinical_scribe');
+
+                    $userMessage = "TARGET PERSPECTIVE: ROLE=" . strtoupper($role) . ", TAXONOMY=" . strtoupper($taxonomy) . "\n";
+                    $userMessage .= "TODAY'S CLINICAL ENCOUNTER DATE & TIME: " . now()->format('l, F j, Y g:i A') . " (" . now()->toDateString() . ")\n\n";
+                    $userMessage .= $catalogContext . "\n\n";
+
+                    if (!empty($parsedCustomCatalog['categories'])) {
+                        $userMessage .= "PARTNER EMR CUSTOM CATALOG:\n" . json_encode($parsedCustomCatalog, JSON_UNESCAPED_SLASHES) . "\n\n";
+                    }
+
+                    if (!empty($patientContext)) {
+                        $userMessage .= "PATIENT CLINICAL CONTEXT & HISTORY (Background context only — do NOT echo this verbatim into the consultation note; the clinician's spoken dictation and live encounter observations take absolute precedence):\n" .
+                            $patientContext . "\n\n---\n";
+                    }
+
+                    if (!empty($editorContent)) {
+                        $userMessage .= "EXISTING NOTE CONTENT IN CLINICAL EDITOR (Preserve and merge with transcript):\n" .
+                            $editorContent . "\n\n---\n";
+                    }
+
+                    if (!empty($existingSections)) {
+                        $userMessage .= "CURRENT STRUCTURED CONSULTATION NOTE (The clinician is adding new dictation/orders or amending this note; maintain established structure and update sections seamlessly):\n" .
+                            json_encode($existingSections, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n\n---\n";
+                    }
+
+                    if (!empty($transcript)) {
+                        $userMessage .= "NEW SPOKEN AUDIO DICTATION / TRANSCRIPT TO INCORPORATE:\n" .
+                            $transcript . "\n\n";
+                    }
+
+                    $llmResponse = $this->llmGateway->complete($systemPrompt, $userMessage, [
+                        'max_tokens' => 8192,
+                        'temperature' => 0.15,
+                        'json_mode' => true,
+                        'thinking_budget' => 0,
+                    ]);
+
+                    $rawContent = trim($llmResponse['content'] ?? '');
+                    $parsed = $this->extractJsonPayload($rawContent);
+
+                    if ($parsed && !empty($parsed['structured_sections'])) {
+                        $structuredSections = $parsed['structured_sections'];
+                        $summaryHeadline = $parsed['summary_headline'] ?? $summaryHeadline;
+                        $rawOrders = $parsed['extracted_orders'] ?? [];
+                        if (empty($rawOrders) && preg_match('/"extracted_orders"\s*:\s*\[([\s\S]*?)\]/', $rawContent, $ordersBlock)) {
+                            $ordersJson = '[' . trim($ordersBlock[1]) . ']';
+                            $ordersJson = preg_replace('/,\s*\]$/', ']', $ordersJson);
+                            $decodedOrders = json_decode($ordersJson, true);
+                            if (is_array($decodedOrders) && !empty($decodedOrders)) {
+                                $rawOrders = $decodedOrders;
+                            }
+                        }
+
+                        // Ground with hospital catalog (formats dosage with pipe standard: <dose> | <freq> | <duration> | <route>)
+                        $groundedHospitalOrders = $this->catalogRegistry->groundOrders($rawOrders, $patientAllergies);
+
+                        // Enrich with custom catalog items if partner supplied a custom catalog
+                        $extractedOrders = $this->enrichOrdersWithCustomCatalog($groundedHospitalOrders, $parsedCustomCatalog);
+
+                        $modelUsed = $llmResponse['model'] ?? 'gemini-2.5-flash';
+                        $provider = $llmResponse['provider'] ?? 'gemini';
+                        $aiSuccess = true;
+                    } else {
+                        Log::warning('LLM Scribe JSON parse returned no structured sections, falling back to heuristic partitioner', ['raw' => $rawContent]);
+                    }
+                } catch (\Throwable $llmErr) {
+                    Log::warning('LLM Scribe execution failed, falling back to heuristic NLP: ' . $llmErr->getMessage());
+                }
+            }
+
+            // 2. Intelligent Heuristic Fallback (if LLM is disabled or failed)
+            if (!$aiSuccess) {
+                $structuredSections = $this->buildStructuredSections(
+                    $transcript,
+                    $editorContent,
+                    $taxonomy,
+                    $role,
+                    $existingSections,
+                    $sanitizedPatientSummary
+                );
+
+                $combinedText = $transcript . ' ' . $editorContent;
+                $extractedOrders = $this->extractOrdersFromText($combinedText, $parsedCustomCatalog, $patientAllergies);
+            }
 
             // Merge with existing orders if any
             if (!empty($existingOrders)) {
@@ -423,14 +534,15 @@ class SdkScribeSessionController extends Controller
                 'encounter_id' => $encounterId,
                 'role' => $role,
                 'taxonomy_type' => $taxonomy,
-                'summary_headline' => 'Clinical Consultation Summary (' . strtoupper($taxonomy) . ')',
+                'summary_headline' => $summaryHeadline,
                 'structured_sections' => $structuredSections,
                 'formatted_markdown' => trim($md),
                 'grounded_orders' => $extractedOrders,
                 'safety_warnings' => $safetyWarnings,
                 'custom_catalog_applied' => !empty($parsedCustomCatalog['categories']),
-                'custom_categories_count' => count($parsedCustomCatalog['categories']),
-                'model_used' => 'corehealth-clinical-nlp-v2',
+                'custom_categories_count' => count($parsedCustomCatalog['categories'] ?? []),
+                'model_used' => $modelUsed,
+                'provider' => $provider,
                 'timestamp' => Carbon::now()->toIso8601String(),
             ], 200);
         } catch (\Throwable $e) {
@@ -821,6 +933,219 @@ class SdkScribeSessionController extends Controller
     }
 
     /**
+     * Enrich hospital-grounded orders with custom partner catalog metadata if provided.
+     */
+    protected function enrichOrdersWithCustomCatalog(array $orders, array $parsedCustomCatalog): array
+    {
+        if (empty($parsedCustomCatalog['categories'])) {
+            return $orders;
+        }
+
+        foreach ($orders as &$ord) {
+            $name = $ord['item_name'] ?? '';
+            $typeHint = ($ord['order_type'] === 'PRODUCT') ? 'RX' : ((($ord['service_type'] ?? '') === 'lab') ? 'LAB' : null);
+            $matched = $this->compressedCatalog->matchItem($name, $parsedCustomCatalog, $typeHint);
+            if ($matched) {
+                // If item was ungrounded or free-form in hospital catalog, bind to partner custom catalog
+                if (empty($ord['catalog_id']) || !empty($ord['is_free_form'])) {
+                    $ord['catalog_id'] = $matched['id'] ?? null;
+                    $ord['category_id'] = $matched['category_id'] ?? $ord['category_id'];
+                    $ord['category_name'] = $matched['category_name'] ?? $ord['category_name'];
+                    $ord['unit_price'] = (float) ($matched['unit_price'] ?? $ord['unit_price']);
+                    $ord['is_matched'] = true;
+                    $ord['is_free_form'] = false;
+                }
+            }
+        }
+        unset($ord);
+
+        return $orders;
+    }
+
+    /**
+     * Helper to extract clean JSON from LLM text responses.
+     */
+    protected function extractJsonPayload(string $raw): ?array
+    {
+        $clean = trim($raw);
+
+        // Strip ```json or ``` code fences
+        if (str_starts_with($clean, '```')) {
+            $clean = preg_replace('/^```(?:json)?\s*/i', '', $clean);
+            $clean = preg_replace('/\s*```$/', '', $clean);
+            $clean = trim($clean);
+        }
+
+        // Try direct decode
+        $decoded = json_decode($clean, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            return $decoded;
+        }
+
+        // Attempt regex capture between { and }
+        if (preg_match('/\{[\s\S]*\}/', $clean, $matches)) {
+            $decoded = json_decode($matches[0], true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        // Repair truncated JSON if the model response was cut off mid-stream
+        $repaired = $this->repairTruncatedJson($clean);
+        if ($repaired !== null) {
+            return $repaired;
+        }
+
+        return null;
+    }
+
+    /**
+     * Attempt to repair and salvage truncated JSON streams.
+     */
+    protected function repairTruncatedJson(string $raw): ?array
+    {
+        $str = trim($raw);
+        if (!str_starts_with($str, '{')) {
+            $start = strpos($str, '{');
+            if ($start === false) {
+                return null;
+            }
+            $str = substr($str, $start);
+        }
+
+        // Strip trailing uncompleted elements e.g. , { ... or , "key": ... or trailing comma
+        $cleanStr = preg_replace('/,\s*\{\s*(?:"[^"]*"\s*:\s*(?:"[^"]*"|[^,}\]]*))?$/s', '', $str);
+        $cleanStr = preg_replace('/,\s*"[^"]*"\s*:\s*(?:"[^"]*)?$/s', '', $cleanStr);
+        $cleanStr = preg_replace('/,\s*$/s', '', $cleanStr);
+
+        // Count unclosed brackets and braces
+        $openBraces = substr_count($cleanStr, '{') - substr_count($cleanStr, '}');
+        $openBrackets = substr_count($cleanStr, '[') - substr_count($cleanStr, ']');
+
+        if ($openBraces > 0 || $openBrackets > 0) {
+            $closing = str_repeat(']', max(0, $openBrackets)) . str_repeat('}', max(0, $openBraces));
+            $attempt = $cleanStr . $closing;
+
+            $decoded = json_decode($attempt, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                Log::info('Successfully repaired truncated LLM JSON payload in SDK Scribe');
+
+                return $decoded;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Partition raw clinical narrative into Subjective, Objective, Assessment, and Plan components.
+     */
+    protected function partitionClinicalNarrative(string $text): array
+    {
+        $text = trim($text);
+        if (empty($text)) {
+            return [
+                'subjective' => '',
+                'objective' => '',
+                'assessment' => '',
+                'plan' => '',
+            ];
+        }
+
+        $objPatterns = '/\b(?:Physical examination reveals|Examination reveals|Physical exam reveals|On examination|O\/E|Examination|Vitals|Vital signs)\s*[:\-]?\s*/i';
+        $assessPatterns = '/\b(?:Assessment|Clinical Impression|Impression|Diagnosis|Provisional Diagnosis|Dx)\s*[:\-]?\s*/i';
+        $planPatterns = '/\b(?:Plan|Management|Prescribe|Treatment|Rx|Orders|Advise|Recommendations)\s*[:\-]?\s*/i';
+
+        $hasObj = preg_match($objPatterns, $text, $objMatches, PREG_OFFSET_CAPTURE);
+        $hasAssess = preg_match($assessPatterns, $text, $assessMatches, PREG_OFFSET_CAPTURE);
+        $hasPlan = preg_match($planPatterns, $text, $planMatches, PREG_OFFSET_CAPTURE);
+
+        if ($hasObj || $hasAssess || $hasPlan) {
+            $cuts = [];
+            if ($hasObj) {
+                $cuts['obj'] = [
+                    'start' => $objMatches[0][1],
+                    'match_len' => strlen($objMatches[0][0]),
+                ];
+            }
+            if ($hasAssess) {
+                $cuts['assess'] = [
+                    'start' => $assessMatches[0][1],
+                    'match_len' => strlen($assessMatches[0][0]),
+                ];
+            }
+            if ($hasPlan) {
+                $cuts['plan'] = [
+                    'start' => $planMatches[0][1],
+                    'match_len' => strlen($planMatches[0][0]),
+                ];
+            }
+
+            // Sort cut positions
+            uasort($cuts, fn ($a, $b) => $a['start'] <=> $b['start']);
+            $keys = array_keys($cuts);
+
+            // Text before first marker is Subjective
+            $firstCut = $cuts[$keys[0]];
+            $subj = trim(substr($text, 0, $firstCut['start']));
+            $obj = '';
+            $assess = '';
+            $plan = '';
+
+            for ($i = 0; $i < count($keys); $i++) {
+                $k = $keys[$i];
+                $startPos = $cuts[$k]['start'];
+                $endPos = ($i + 1 < count($keys)) ? $cuts[$keys[$i + 1]]['start'] : strlen($text);
+                $segment = trim(substr($text, $startPos, $endPos - $startPos));
+
+                if ($k === 'obj') {
+                    $obj = $segment;
+                } elseif ($k === 'assess') {
+                    $cleanAssess = preg_replace($assessPatterns, '', $segment, 1);
+                    $assess = trim($cleanAssess ?: $segment);
+                } elseif ($k === 'plan') {
+                    $plan = $segment;
+                }
+            }
+        } else {
+            // Narrative heuristic: look for sentences with vitals / diagnosis / treatment
+            $sentences = preg_split('/(?<=[.!?])\s+/', $text, -1, PREG_SPLIT_NO_EMPTY);
+            $sSubj = [];
+            $sObj = [];
+            $sAssess = [];
+            $sPlan = [];
+
+            foreach ($sentences as $sentence) {
+                if (preg_match('/(\b(temp|temperature|bp|pulse|heart rate|respiratory rate|clear on auscultation|abdomen is soft|tender|non-tender|\d+°c|\d+\/\d+\s*mmhg|\d+\s*bpm)\b)/i', $sentence)) {
+                    $sObj[] = $sentence;
+                } elseif (preg_match('/(\b(diagnos|malaria|infection|syndrome|disease|hypertension|diabetes|fever)\b)/i', $sentence) && !preg_match('/(\b(history of|prescribe|request)\b)/i', $sentence)) {
+                    $sAssess[] = $sentence;
+                } elseif (preg_match('/(\b(prescribe|request|advise|give|administer|tab|mg|tds|bd|daily|bed rest)\b)/i', $sentence)) {
+                    $sPlan[] = $sentence;
+                } else {
+                    $sSubj[] = $sentence;
+                }
+            }
+
+            $subj = implode(' ', $sSubj);
+            $obj = implode(' ', $sObj);
+            $assess = implode(' ', $sAssess);
+            $plan = implode(' ', $sPlan);
+
+            if (empty($subj)) {
+                $subj = $text;
+            }
+        }
+
+        return [
+            'subjective' => trim($subj),
+            'objective' => trim($obj),
+            'assessment' => trim($assess),
+            'plan' => trim($plan),
+        ];
+    }
+
+    /**
      * Build structured sections based on the selected clinical taxonomy.
      */
     protected function buildStructuredSections(
@@ -832,67 +1157,68 @@ class SdkScribeSessionController extends Controller
         string $patientSummary
     ): array {
         $content = $transcript ?: $editorContent;
+        $parts = $this->partitionClinicalNarrative($content);
 
         return match ($taxonomy) {
             'clerking' => [
-                ['key' => 'pc', 'title' => 'Presenting Complaint (PC)', 'content' => $content],
-                ['key' => 'hpc', 'title' => 'History of Presenting Complaint (HPC)', 'content' => 'Symptoms onset, character, and chronology recorded during consultation.'],
+                ['key' => 'pc', 'title' => 'Presenting Complaint (PC)', 'content' => $parts['subjective'] ?: $content],
+                ['key' => 'hpc', 'title' => 'History of Presenting Complaint (HPC)', 'content' => $parts['subjective'] ?: 'Symptoms onset, character, and chronology recorded during consultation.'],
                 ['key' => 'ros', 'title' => 'Review of Systems (ROS)', 'content' => 'Cardiovascular, respiratory, gastrointestinal, and neurological systems reviewed.'],
                 ['key' => 'pmh', 'title' => 'Past Medical History & Drug History', 'content' => !empty($patientSummary) ? $patientSummary : 'No known drug allergies or prior adverse reactions documented.'],
-                ['key' => 'exam', 'title' => 'General & Systemic Physical Examination', 'content' => 'Vitals stable. Physical examination findings recorded.'],
-                ['key' => 'impression', 'title' => 'Clinical Impression / Diagnosis', 'content' => 'Provisional clinical diagnosis established per clinical findings.'],
-                ['key' => 'plan', 'title' => 'Management Plan & Orders', 'content' => 'Pharmacotherapy and diagnostic investigations initiated.'],
+                ['key' => 'exam', 'title' => 'General & Systemic Physical Examination', 'content' => $parts['objective'] ?: 'Vitals stable. Physical examination findings recorded.'],
+                ['key' => 'impression', 'title' => 'Clinical Impression / Diagnosis', 'content' => $parts['assessment'] ?: 'Provisional clinical diagnosis established per clinical findings.'],
+                ['key' => 'plan', 'title' => 'Management Plan & Orders', 'content' => $parts['plan'] ?: 'Pharmacotherapy and diagnostic investigations initiated.'],
             ],
             'pomr' => [
-                ['key' => 'problem_list', 'title' => 'Active Problem List', 'content' => '1. Primary clinical complaint\n2. Underlying risk factors'],
-                ['key' => 'subjective', 'title' => 'Subjective Observations', 'content' => $content],
-                ['key' => 'objective', 'title' => 'Objective Clinical Findings', 'content' => 'Vitals within normal limits. Baseline physical examination performed.'],
-                ['key' => 'assessment', 'title' => 'Diagnostic Assessment', 'content' => 'Clinical impression established.'],
-                ['key' => 'plan', 'title' => 'Problem-Oriented Management Plan', 'content' => 'Therapeutic regimen and follow-up scheduled.'],
+                ['key' => 'problem_list', 'title' => 'Active Problem List', 'content' => '1. ' . ($parts['assessment'] ?: 'Consultation Chief Problem')],
+                ['key' => 'subjective', 'title' => 'Subjective Observations', 'content' => $parts['subjective'] ?: $content],
+                ['key' => 'objective', 'title' => 'Objective Clinical Findings', 'content' => $parts['objective'] ?: 'Vitals within normal limits. Baseline physical examination performed.'],
+                ['key' => 'assessment', 'title' => 'Diagnostic Assessment', 'content' => $parts['assessment'] ?: 'Clinical impression established.'],
+                ['key' => 'plan', 'title' => 'Problem-Oriented Management Plan', 'content' => $parts['plan'] ?: 'Therapeutic regimen and follow-up scheduled.'],
             ],
             'dar' => [
-                ['key' => 'data', 'title' => 'Data (Subjective & Objective)', 'content' => $content],
-                ['key' => 'action', 'title' => 'Action (Nursing Interventions)', 'content' => 'Nursing care, medication administration, and patient monitoring implemented.'],
-                ['key' => 'response', 'title' => 'Response (Patient Outcome)', 'content' => 'Patient tolerated interventions well. Vital signs reassessed.'],
+                ['key' => 'data', 'title' => 'Data (Subjective & Objective)', 'content' => trim(($parts['subjective'] ?: $content) . ($parts['objective'] ? "\n\n" . $parts['objective'] : ''))],
+                ['key' => 'action', 'title' => 'Action (Nursing Interventions)', 'content' => $parts['plan'] ?: 'Nursing care, medication administration, and patient monitoring implemented.'],
+                ['key' => 'response', 'title' => 'Response (Patient Outcome)', 'content' => $parts['assessment'] ?: 'Patient tolerated interventions well. Vital signs reassessed.'],
             ],
             'sbar' => [
-                ['key' => 'situation', 'title' => 'Situation', 'content' => $content],
+                ['key' => 'situation', 'title' => 'Situation', 'content' => $parts['subjective'] ?: $content],
                 ['key' => 'background', 'title' => 'Background', 'content' => !empty($patientSummary) ? $patientSummary : 'Clinical history and admission context.'],
-                ['key' => 'assessment', 'title' => 'Assessment', 'content' => 'Acute evaluation and observed physical parameters.'],
-                ['key' => 'recommendation', 'title' => 'Recommendation', 'content' => 'Escalation, therapy continuation, and monitoring triggers.'],
+                ['key' => 'assessment', 'title' => 'Assessment', 'content' => trim(($parts['objective'] ? $parts['objective'] . "\n\n" : '') . ($parts['assessment'] ?: 'Acute clinical evaluation.'))],
+                ['key' => 'recommendation', 'title' => 'Recommendation', 'content' => $parts['plan'] ?: 'Therapeutic orders and monitoring triggers.'],
             ],
             'soapie' => [
-                ['key' => 'subjective', 'title' => 'Subjective', 'content' => $content],
-                ['key' => 'objective', 'title' => 'Objective', 'content' => 'Vital signs and bedside physical observations.'],
-                ['key' => 'assessment', 'title' => 'Assessment', 'content' => 'Nursing evaluation and clinical impression.'],
-                ['key' => 'plan', 'title' => 'Plan', 'content' => 'Nursing interventions and care goals.'],
+                ['key' => 'subjective', 'title' => 'Subjective', 'content' => $parts['subjective'] ?: $content],
+                ['key' => 'objective', 'title' => 'Objective', 'content' => $parts['objective'] ?: 'Vital signs and bedside physical observations.'],
+                ['key' => 'assessment', 'title' => 'Assessment', 'content' => $parts['assessment'] ?: 'Nursing evaluation and clinical impression.'],
+                ['key' => 'plan', 'title' => 'Plan', 'content' => $parts['plan'] ?: 'Nursing interventions and care goals.'],
                 ['key' => 'intervention', 'title' => 'Intervention', 'content' => 'Care protocol executed per physician orders.'],
                 ['key' => 'evaluation', 'title' => 'Evaluation', 'content' => 'Patient response and progress evaluated.'],
             ],
             'anc' => [
-                ['key' => 'gestation', 'title' => 'Gestational Age & Maternal Symptoms', 'content' => $content],
-                ['key' => 'exam', 'title' => 'Obstetric Examination & Fundal Height', 'content' => 'Blood pressure checked. Fundal height corresponds with gestational age. Fetal heart rate audible.'],
+                ['key' => 'gestation', 'title' => 'Gestational Age & Maternal Symptoms', 'content' => $parts['subjective'] ?: $content],
+                ['key' => 'exam', 'title' => 'Obstetric Examination & Fundal Height', 'content' => $parts['objective'] ?: 'Blood pressure checked. Fundal height corresponds with gestational age. Fetal heart rate audible.'],
                 ['key' => 'labs', 'title' => 'Antenatal Screening & Bedside Tests', 'content' => 'Urine dipstick, PCV, and routine antenatal profile evaluated.'],
-                ['key' => 'plan', 'title' => 'Obstetric Plan & Preventive Therapy', 'content' => 'Routine iron/folic acid supplementation, tetanus immunization, and birth plan review.'],
+                ['key' => 'plan', 'title' => 'Obstetric Plan & Preventive Therapy', 'content' => $parts['plan'] ?: 'Routine iron/folic acid supplementation, tetanus immunization, and birth plan review.'],
             ],
             'labor' => [
-                ['key' => 'contractions', 'title' => 'Contraction Frequency & Cervical Status', 'content' => $content],
-                ['key' => 'fetal_status', 'title' => 'Fetal Heart Rate & Liquor Assessment', 'content' => 'Fetal heart sound checked. Membranes intact / clear liquor.'],
+                ['key' => 'contractions', 'title' => 'Contraction Frequency & Cervical Status', 'content' => $parts['subjective'] ?: $content],
+                ['key' => 'fetal_status', 'title' => 'Fetal Heart Rate & Liquor Assessment', 'content' => $parts['objective'] ?: 'Fetal heart sound checked. Membranes intact / clear liquor.'],
                 ['key' => 'partograph', 'title' => 'Partograph Progress & Vitals', 'content' => 'Progress plotted on partograph. Maternal vital signs monitored.'],
-                ['key' => 'plan', 'title' => 'Intrapartum Management & Delivery Plan', 'content' => 'Active monitoring continued. Delivery pack and neonatal resuscitation ready.'],
+                ['key' => 'plan', 'title' => 'Intrapartum Management & Delivery Plan', 'content' => $parts['plan'] ?: 'Active monitoring continued. Delivery pack and neonatal resuscitation ready.'],
             ],
             'pnc' => [
-                ['key' => 'maternal_status', 'title' => 'Maternal Postpartum Recovery', 'content' => $content],
-                ['key' => 'involution', 'title' => 'Uterine Involution, Lochia & Perineum', 'content' => 'Uterus well contracted, lochia rubra normal, perineum healing well.'],
+                ['key' => 'maternal_status', 'title' => 'Maternal Postpartum Recovery', 'content' => $parts['subjective'] ?: $content],
+                ['key' => 'involution', 'title' => 'Uterine Involution, Lochia & Perineum', 'content' => $parts['objective'] ?: 'Uterus well contracted, lochia rubra normal, perineum healing well.'],
                 ['key' => 'lactation', 'title' => 'Lactation & Neonatal Feeding', 'content' => 'Breasts soft, colostrum/milk flowing, baby latching well.'],
-                ['key' => 'plan', 'title' => 'Postnatal Plan & Immunization', 'content' => 'Postpartum family planning counselled. Infant immunization scheduled.'],
+                ['key' => 'plan', 'title' => 'Postnatal Plan & Immunization', 'content' => $parts['plan'] ?: 'Postpartum family planning counselled. Infant immunization scheduled.'],
             ],
             default => [
                 // International SOAP Default
-                ['key' => 'subjective', 'title' => 'Subjective / History of Presenting Illness', 'content' => $content],
-                ['key' => 'objective', 'title' => 'Objective / Physical Examination & Vitals', 'content' => 'Vitals stable. Examination findings recorded during consultation.'],
-                ['key' => 'assessment', 'title' => 'Assessment / Clinical Impression', 'content' => 'Clinical diagnosis per consultation narrative.'],
-                ['key' => 'plan', 'title' => 'Plan / Management & Orders', 'content' => 'Pharmacotherapy and clinical investigations initiated.'],
+                ['key' => 'subjective', 'title' => 'Subjective / History of Presenting Illness', 'content' => $parts['subjective'] ?: $content],
+                ['key' => 'objective', 'title' => 'Objective / Physical Examination & Vitals', 'content' => $parts['objective'] ?: 'Vitals stable. Examination findings recorded during consultation.'],
+                ['key' => 'assessment', 'title' => 'Assessment / Clinical Impression', 'content' => $parts['assessment'] ?: 'Clinical diagnosis per consultation narrative.'],
+                ['key' => 'plan', 'title' => 'Plan / Management & Orders', 'content' => $parts['plan'] ?: 'Pharmacotherapy and clinical investigations initiated.'],
             ],
         };
     }
@@ -954,11 +1280,11 @@ class SdkScribeSessionController extends Controller
 
         // 1. Prescriptions & Medications
         $drugPatterns = [
-            'paracetamol' => ['Paracetamol 500mg Tablet', '1g', 'TDS (8-hourly)', '3 days', 'oral', 6],
+            'artemether' => ['Artemether-Lumefantrine 80/480mg', '80/480mg', 'BD (12-hourly)', '3 days', 'oral', 6],
+            'paracetamol' => ['Paracetamol 500mg Tablet', '500mg', 'TDS (8-hourly)', '3 days', 'oral', 6],
             'amoxicillin' => ['Amoxicillin 500mg Capsule', '500mg', 'TDS (8-hourly)', '5 days', 'oral', 15],
             'augmentin' => ['Augmentin 625mg Tablet', '625mg', 'BD (12-hourly)', '5 days', 'oral', 10],
             'ciprofloxacin' => ['Ciprofloxacin 500mg Tablet', '500mg', 'BD (12-hourly)', '5 days', 'oral', 10],
-            'artemether' => ['Artemether-Lumefantrine 80/480mg', '1 tab', 'BD (12-hourly)', '3 days', 'oral', 6],
             'metformin' => ['Metformin 500mg Tablet', '500mg', 'BD with meals', '30 days', 'oral', 60],
             'amlodipine' => ['Amlodipine 5mg Tablet', '5mg', 'OD (morning)', '30 days', 'oral', 30],
             'omeprazole' => ['Omeprazole 20mg Capsule', '20mg', 'OD before breakfast', '14 days', 'oral', 14],
@@ -969,10 +1295,29 @@ class SdkScribeSessionController extends Controller
 
         foreach ($drugPatterns as $key => $spec) {
             if (str_contains($lower, $key)) {
-                $dosage = $spec[1];
-                if (preg_match('/' . $key . '\s*(\d+\s*(?:mg|g|ml))/i', $text, $dMatch)) {
-                    $dosage = trim($dMatch[1]);
+                $dose = $spec[1];
+                if (preg_match('/' . $key . '[\s\-]*(?:tab(?:let)?|cap(?:sule)?|inj(?:ection)?)?\s*(\d+(?:\/\d+)?\s*(?:mg|g|ml))/i', $text, $dMatch)) {
+                    $dose = trim($dMatch[1]);
                 }
+
+                $freq = $spec[2];
+                if (preg_match('/\b(twice daily|bd|bid)\b/i', $text)) {
+                    $freq = 'BD (12-hourly)';
+                } elseif (preg_match('/\b(three times daily|tds|tid)\b/i', $text)) {
+                    $freq = 'TDS (8-hourly)';
+                } elseif (preg_match('/\b(once daily|od)\b/i', $text)) {
+                    $freq = 'OD (daily)';
+                } elseif (preg_match('/\b(four times daily|qid|qds)\b/i', $text)) {
+                    $freq = 'QDS (6-hourly)';
+                }
+
+                $duration = $spec[3];
+                if (preg_match('/(?:for\s+)?(\d+\s*(?:days?|weeks?|months?))/i', $text, $durMatch)) {
+                    $duration = trim($durMatch[1]);
+                }
+
+                $route = ucfirst($spec[4]);
+                $pipedDosage = implode(' | ', array_filter([$dose, $freq, $duration, $route]));
 
                 // Check custom catalog first
                 $matchedItem = $this->compressedCatalog->matchItem($key, $parsedCustomCatalog, 'RX');
@@ -1010,10 +1355,10 @@ class SdkScribeSessionController extends Controller
                     'category_name' => $catName,
                     'catalog_id' => $catalogId,
                     'item_name' => $itemName,
-                    'dosage' => $dosage,
-                    'frequency' => $spec[2],
-                    'duration' => $spec[3],
-                    'route' => $spec[4],
+                    'dosage' => $pipedDosage,
+                    'frequency' => $freq,
+                    'duration' => $duration,
+                    'route' => $route,
                     'quantity' => $spec[5],
                     'instructions' => 'Take as directed by clinician',
                     'unit_price' => $unitPrice,
@@ -1028,10 +1373,10 @@ class SdkScribeSessionController extends Controller
 
         // 2. Laboratory Investigations
         $labPatterns = [
+            'malaria' => ['Malaria Parasite (MP) Test', 'Evaluate febrile illness'],
+            'mp' => ['Malaria Parasite (MP) Test', 'Evaluate febrile illness'],
             'fbc' => ['Full Blood Count (FBC)', 'Confirm infection / rule out anemia'],
             'full blood count' => ['Full Blood Count (FBC)', 'Routine hematological screen'],
-            'mp' => ['Malaria Parasite (MP) Test', 'Evaluate febrile illness'],
-            'malaria' => ['Malaria Rapid Diagnostic Test', 'Rule out acute malaria'],
             'pcv' => ['Packed Cell Volume (PCV)', 'Anemia screening'],
             'urinalysis' => ['Routine Urinalysis', 'Exclude urinary tract infection'],
             'blood sugar' => ['Random Blood Sugar (RBS)', 'Screen for hyperglycemia'],
@@ -1043,8 +1388,28 @@ class SdkScribeSessionController extends Controller
             'widal' => ['Widal Agglutination Test', 'Enteric fever screen'],
         ];
 
+        $matchedLabKeys = [];
         foreach ($labPatterns as $key => $spec) {
-            if (str_contains($lower, $key)) {
+            $isMatch = false;
+            if (in_array($key, ['mp', 'fbc', 'rbs', 'fbs', 'lft', 'pcv'])) {
+                $isMatch = preg_match('/\b' . preg_quote($key, '/') . '\b/i', $text);
+            } else {
+                $isMatch = str_contains($lower, $key);
+            }
+
+            if ($isMatch) {
+                // Prevent duplicate FBC / Full Blood Count or MP / Malaria hits
+                $canonicalKey = match ($key) {
+                    'fbc', 'full blood count' => 'fbc',
+                    'mp', 'malaria' => 'mp',
+                    'rbs', 'blood sugar' => 'rbs',
+                    default => $key,
+                };
+                if (isset($matchedLabKeys[$canonicalKey])) {
+                    continue;
+                }
+                $matchedLabKeys[$canonicalKey] = true;
+
                 $matchedItem = $this->compressedCatalog->matchItem($key, $parsedCustomCatalog, 'LAB');
                 $catalogId = $matchedItem['id'] ?? null;
                 $catId = $matchedItem['category_id'] ?? 2;
@@ -1073,7 +1438,7 @@ class SdkScribeSessionController extends Controller
                     'item_name' => $itemName,
                     'indication' => $spec[1],
                     'instructions' => 'Fasting / routine venous blood sample',
-                    'urgency' => str_contains($lower, 'stat') ? 'stat' : 'routine',
+                    'urgency' => (str_contains($lower, 'urgent') || str_contains($lower, 'stat')) ? 'urgent' : 'routine',
                     'unit_price' => $unitPrice,
                     'target_queue' => 'lab_queue',
                     'is_selected' => true,
@@ -1081,8 +1446,6 @@ class SdkScribeSessionController extends Controller
                     'is_free_form' => empty($catalogId),
                     'safety_warning' => null,
                 ];
-
-                break; // Prevent duplicate FBC / Full Blood Count hits
             }
         }
 

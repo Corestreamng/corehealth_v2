@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Interoperability\Models\SdkClient;
+use App\Interoperability\Models\SdkTokenAudit;
+use App\Models\AiScribeAudit;
 use App\Models\ApplicationStatu;
 use App\Models\ServiceCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class HospitalConfigController extends Controller
 {
@@ -45,7 +49,32 @@ class HospitalConfigController extends Controller
             }
         }
 
-        return view('admin.hospital-config.index', compact('config', 'serviceCategories', 'providerModels'));
+        // Query Partner EMR SDK Clients and Monitoring Data
+        $sdkClients = SdkClient::orderBy('id', 'desc')->get();
+        $recentTokenAudits = SdkTokenAudit::orderBy('id', 'desc')->limit(15)->get();
+        $recentScribeAudits = AiScribeAudit::with(['patient.user', 'user'])->orderBy('id', 'desc')->limit(15)->get();
+
+        $totalClients = SdkClient::count();
+        $activeClients = SdkClient::where('is_active', true)->count();
+        $activeTokens = SdkTokenAudit::whereNull('revoked_at')
+            ->where('expires_at', '>', now())
+            ->count();
+        $totalTokensIssued = SdkTokenAudit::count();
+        $totalScribeSigned = AiScribeAudit::count();
+
+        return view('admin.hospital-config.index', compact(
+            'config',
+            'serviceCategories',
+            'providerModels',
+            'sdkClients',
+            'recentTokenAudits',
+            'recentScribeAudits',
+            'totalClients',
+            'activeClients',
+            'activeTokens',
+            'totalTokensIssued',
+            'totalScribeSigned'
+        ));
     }
 
     public function update(Request $request)
@@ -380,5 +409,104 @@ class HospitalConfigController extends Controller
                 'latency_ms' => $latency,
             ], 500);
         }
+    }
+
+    /**
+     * Register a new Partner EMR SDK Client.
+     */
+    public function storeSdkClient(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'organization' => 'nullable|string|max:255',
+            'client_id' => 'nullable|string|max:100|unique:sdk_clients,client_id',
+            'client_secret' => 'nullable|string|min:16',
+            'allowed_scopes' => 'nullable|array',
+            'allowed_scopes.*' => 'string',
+            'rate_limit_rpm' => 'nullable|integer|min:10|max:3600',
+        ]);
+
+        $clientId = !empty($validated['client_id'])
+            ? Str::slug($validated['client_id'])
+            : 'partner-' . Str::lower(Str::random(12));
+
+        $rawSecret = !empty($validated['client_secret'])
+            ? $validated['client_secret']
+            : 'sec_' . Str::random(40);
+
+        $scopes = !empty($validated['allowed_scopes']) ? array_values($validated['allowed_scopes']) : ['*'];
+
+        $client = SdkClient::create([
+            'client_id' => $clientId,
+            'client_secret' => $rawSecret, // SdkClient model mutator hashes with bcrypt
+            'name' => $validated['name'],
+            'organization' => $validated['organization'] ?? 'Partner Healthcare Network',
+            'allowed_scopes' => $scopes,
+            'rate_limit_rpm' => (int) ($validated['rate_limit_rpm'] ?? 120),
+            'is_active' => true,
+        ]);
+
+        return redirect()->to(route('hospital-config.index') . '#sdk-settings')
+            ->with('success', "Partner SDK Client '{$client->name}' registered successfully.")
+            ->with('new_client_secret', $rawSecret)
+            ->with('new_client_id', $client->client_id);
+    }
+
+    /**
+     * Toggle an SDK client's active status.
+     */
+    public function toggleSdkClient(Request $request, $id)
+    {
+        $client = SdkClient::findOrFail($id);
+        $client->is_active = !$client->is_active;
+        $client->save();
+
+        $statusStr = $client->is_active ? 'activated' : 'deactivated';
+
+        return redirect()->to(route('hospital-config.index') . '#sdk-settings')
+            ->with('success', "SDK Client '{$client->client_id}' {$statusStr} successfully.");
+    }
+
+    /**
+     * Rotate an SDK client's secret key.
+     */
+    public function rotateSdkClientSecret(Request $request, $id)
+    {
+        $client = SdkClient::findOrFail($id);
+
+        $rawSecret = 'sec_' . Str::random(40);
+        $client->client_secret = $rawSecret;
+        $client->save();
+
+        return redirect()->to(route('hospital-config.index') . '#sdk-settings')
+            ->with('success', "Secret key for SDK Client '{$client->client_id}' rotated successfully. Please copy the new key now.")
+            ->with('new_client_secret', $rawSecret)
+            ->with('new_client_id', $client->client_id);
+    }
+
+    /**
+     * Delete an SDK client.
+     */
+    public function deleteSdkClient(Request $request, $id)
+    {
+        $client = SdkClient::findOrFail($id);
+        $clientId = $client->client_id;
+        $client->delete();
+
+        return redirect()->to(route('hospital-config.index') . '#sdk-settings')
+            ->with('success', "SDK Client '{$clientId}' deleted successfully.");
+    }
+
+    /**
+     * Revoke an active SDK token session by its JTI.
+     */
+    public function revokeSdkToken(Request $request, string $jti)
+    {
+        $tokenAudit = SdkTokenAudit::where('token_jti', $jti)->firstOrFail();
+        $tokenAudit->revoked_at = now();
+        $tokenAudit->save();
+
+        return redirect()->to(route('hospital-config.index') . '#sdk-settings')
+            ->with('success', "SDK Token session '{$jti}' revoked immediately.");
     }
 }
