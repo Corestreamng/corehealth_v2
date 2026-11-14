@@ -33,7 +33,7 @@ class SdkTokenService
             : array_values(array_intersect($requestedScopes, $allowedScopes));
 
         $payload = [
-            'iss' => config('app.url', 'https://corehealth.ng'),
+            'iss' => config('app.url', 'https://corehealth.corestream.ng'),
             'sub' => $client->client_id,
             'client_id' => $client->client_id,
             'patient_id' => $claims['patient_id'] ?? null,

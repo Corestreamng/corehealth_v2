@@ -262,7 +262,7 @@ Expected: `200 OK` — CCD XML document with patient summary.
 
 ---
 
-### Section 05 — AI Scribe SDK
+### Section 05 — AI Scribe SDK & Catalog Protocol
 
 **05.1 POST Issue SDK Session Token**
 ```
@@ -311,17 +311,109 @@ Authorization: Bearer {{sdk_token}}
 ```
 Expected: `200 OK` — `{ "status": "SIGNED_OFF", "signed_at": "2026-11-13T15:42:00+01:00" }`
 
-**05.4 POST Get openEHR Composition + FHIR Bundle** *(after sign-off)*
+**05.4 GET Catalog Categories**
 ```
-POST {{base_url}}/api/sdk/scribe/session/{{sdk_token}}/compositions
+GET {{base_url}}/api/sdk/catalogs/categories?type=all
+Authorization: Bearer {{sdk_token}}
+```
+Expected: `200 OK` — List of hospital service categories (lab, imaging, procedure, nursing, consultation) and product categories.
+
+**05.5 GET Search Catalog Items (CSCP)**
+```
+GET {{base_url}}/api/sdk/catalogs/items?q=malaria&limit=10
+Authorization: Bearer {{sdk_token}}
+```
+Expected: `200 OK` — Catalog items with matched tariffs and pre-compiled `#CAT:id|type|name` CSCP snippet.
+
+**05.6 POST Process Dictation with Compressed Catalog (CSCP)**
+```
+POST {{base_url}}/api/sdk/scribe/process
 Authorization: Bearer {{sdk_token}}
 Content-Type: application/json
 
-{ "cross_border": false }
+{
+  "transcript": "Patient presents with acute headache and high grade pyrexia. BP 125/82, Temp 38.5C. Assessment is severe malaria. Prescribe Artemether-Lumefantrine 80/480mg twice daily for 3 days and request Malaria Parasite by Microscopy.",
+  "role": "doctor",
+  "taxonomy": "soap",
+  "language": "en-NG",
+  "custom_catalog": "#CAT:101|medication|Artemether-Lumefantrine 80/480mg\n#CAT:201|laboratory|Malaria Parasite (MP) Giemsa\n#CAT:301|imaging|Chest X-Ray AP/Lat"
+}
 ```
-Expected: `200 OK` — full payload with `openehr_composition` + `fhir_bundle` + `transcript_summary` + `signed_at`
+Expected: `200 OK` — Structured SOAP sections, allergy alerts, and categorized suggested orders deck with matched IDs and parameters.
 
-> See `sdk-embeddable-integration-guide.md` §5 for full response sample.
+**05.7 POST Convert Clinical Note Format**
+```
+POST {{base_url}}/api/sdk/scribe/convert-format
+Authorization: Bearer {{sdk_token}}
+Content-Type: application/json
+
+{
+  "note": "SUBJECTIVE:\nPatient complains of fever and headache for 3 days.\n\nOBJECTIVE:\nBP: 120/80 mmHg, Temp: 38.2 C.\n\nASSESSMENT:\nAcute malaria.\n\nPLAN:\n1. Artemether-Lumefantrine 80/480mg BD x 3d\n2. Malaria Rapid Diagnostic Test",
+  "source_taxonomy": "soap",
+  "target_taxonomy": "traditional",
+  "source_role": "doctor",
+  "target_role": "doctor"
+}
+```
+Expected: `200 OK` — Transformed note in Traditional Clerking format (History of Presenting Complaint, Examination, Working Diagnosis, Management Plan).
+
+**05.8 POST Clinician Sign-off with Approved Orders**
+```
+POST {{base_url}}/api/sdk/scribe/sign
+Authorization: Bearer {{sdk_token}}
+Content-Type: application/json
+
+{
+  "final_signed_note": "SUBJECTIVE:\nPatient complains of fever and headache...\n\nOBJECTIVE:\nBP 125/82...",
+  "approved_orders": [
+    {
+      "type": "medication",
+      "name": "Artemether-Lumefantrine 80/480mg",
+      "matched_id": 101,
+      "matched_tariff": 1850.0,
+      "dosage": "1 tab",
+      "frequency": "BD",
+      "duration": "3 days",
+      "route": "Oral",
+      "instructions": "Take with meals"
+    },
+    {
+      "type": "laboratory",
+      "name": "Malaria Parasite (MP) Giemsa",
+      "matched_id": 201,
+      "matched_tariff": 2500.0,
+      "instructions": "Stat blood film examination"
+    }
+  ],
+  "role": "doctor",
+  "taxonomy": "soap"
+}
+```
+Expected: `200 OK` — `{ "status": "signed", "audit_id": 812, "orders_dispatched": 2 }`
+
+**05.9 POST Fetch openEHR Composition & FHIR Bundle (Direct)**
+```
+POST {{base_url}}/api/sdk/scribe/compositions
+Authorization: Bearer {{sdk_token}}
+Content-Type: application/json
+
+{
+  "cross_border": false
+}
+```
+Expected: `200 OK` — openEHR `COMPOSITION.encounter.v1` with `INSTRUCTION` archetypes for approved orders and complete HL7 FHIR R4 Bundle.
+
+**05.10 POST Fetch HL7 FHIR R4 Encounter Bundle**
+```
+POST {{base_url}}/api/sdk/scribe/fhir-bundle
+Authorization: Bearer {{sdk_token}}
+Content-Type: application/json
+
+{
+  "cross_border": false
+}
+```
+Expected: `200 OK` — Canonical HL7 FHIR R4 Bundle containing Encounter, Observations, Condition, MedicationRequest, and ServiceRequest resources.
 
 ---
 

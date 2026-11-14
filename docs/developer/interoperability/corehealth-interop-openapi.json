@@ -16,8 +16,8 @@
       "description": "Local Edge Node / Development Server"
     },
     {
-      "url": "https://api.corehealth.ng",
-      "description": "CoreHealth Cloud Gateway"
+      "url": "https://corehealth.corestream.ng",
+      "description": "CoreHealth Public Cloud Gateway"
     }
   ],
   "components": {
@@ -175,6 +175,223 @@
             "description": "Standard HL7 FHIR R4 Transaction Bundle JSON"
           }
         }
+      },
+      "ClinicalOrderItem": {
+        "type": "object",
+        "required": [
+          "name",
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "medication",
+              "laboratory",
+              "imaging",
+              "procedure",
+              "nursing",
+              "consultation"
+            ],
+            "example": "medication"
+          },
+          "name": {
+            "type": "string",
+            "example": "Paracetamol 500mg Tab"
+          },
+          "matched_id": {
+            "type": [
+              "integer",
+              "string",
+              "null"
+            ],
+            "example": 101
+          },
+          "matched_tariff": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "example": 500.0
+          },
+          "dosage": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "1g"
+          },
+          "frequency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "TDS (Three times daily)"
+          },
+          "duration": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "3 days"
+          },
+          "route": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Oral"
+          },
+          "indication": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Headache / Mild Pyrexia"
+          },
+          "instructions": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Take after meals with water"
+          }
+        }
+      },
+      "CatalogCategory": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "code": {
+            "type": "string",
+            "example": "LAB_HEMATOLOGY"
+          },
+          "name": {
+            "type": "string",
+            "example": "Hematology & Blood Transfusion"
+          },
+          "type": {
+            "type": "string",
+            "example": "service"
+          }
+        }
+      },
+      "CatalogItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 204
+          },
+          "name": {
+            "type": "string",
+            "example": "Full Blood Count (FBC)"
+          },
+          "type": {
+            "type": "string",
+            "example": "laboratory"
+          },
+          "category_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "example": 1
+          },
+          "category_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Hematology"
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "LAB-FBC-01"
+          },
+          "price": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "example": 4500.0
+          },
+          "stock_count": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "example": null
+          },
+          "cscp": {
+            "type": "string",
+            "example": "#CAT:204|laboratory|Full Blood Count (FBC)"
+          }
+        }
+      },
+      "ConvertFormatRequest": {
+        "type": "object",
+        "required": [
+          "note",
+          "source_taxonomy",
+          "target_taxonomy"
+        ],
+        "properties": {
+          "note": {
+            "type": "string",
+            "example": "SUBJECTIVE:\nPatient presents with 3-day history of dry cough and intermittent pyrexia.\n\nOBJECTIVE:\nBP: 120/80 mmHg, PR: 78 bpm, Temp: 38.2 C.\n\nASSESSMENT:\nAcute Upper Respiratory Tract Infection (URTI).\n\nPLAN:\n1. Paracetamol 1g TDS x 3 days\n2. Malaria Rapid Diagnostic Test (mRDT)"
+          },
+          "source_taxonomy": {
+            "type": "string",
+            "example": "soap"
+          },
+          "target_taxonomy": {
+            "type": "string",
+            "example": "traditional"
+          },
+          "source_role": {
+            "type": "string",
+            "example": "doctor"
+          },
+          "target_role": {
+            "type": "string",
+            "example": "doctor"
+          }
+        }
+      },
+      "ConvertFormatResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "source_taxonomy": {
+            "type": "string",
+            "example": "soap"
+          },
+          "target_taxonomy": {
+            "type": "string",
+            "example": "traditional"
+          },
+          "source_role": {
+            "type": "string",
+            "example": "doctor"
+          },
+          "target_role": {
+            "type": "string",
+            "example": "doctor"
+          },
+          "converted_note": {
+            "type": "string"
+          }
+        }
       }
     }
   },
@@ -263,7 +480,8 @@
     },
     "/api/sdk/scribe/process": {
       "post": {
-        "summary": "Process Audio Dictation / Transcript into Structured SOAP",
+        "summary": "Process Audio Dictation / Transcript with Grounded Catalog & Suggested Orders",
+        "description": "Process consultation transcript or audio dictation. Accepts partner custom catalogs in super-compressed CSCP format (#CAT:id|type|name or gzipped base64), performs clinical grounding, detects active patient allergies, and extracts structured orders (medications, labs, imaging, procedures, nursing, consultation).",
         "security": [
           {
             "SdkSessionToken": []
@@ -277,7 +495,59 @@
                 "type": "object",
                 "properties": {
                   "transcript": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Patient presents with acute headache and high grade pyrexia. BP 125/82, Temp 38.5C. Assessment is severe malaria. Prescribe Artemether-Lumefantrine 80/480mg twice daily for 3 days and request Malaria Parasite by Microscopy."
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "doctor",
+                      "nurse",
+                      "maternity"
+                    ],
+                    "default": "doctor"
+                  },
+                  "taxonomy": {
+                    "type": "string",
+                    "enum": [
+                      "soap",
+                      "traditional",
+                      "pomr",
+                      "dar",
+                      "sbar",
+                      "soapie",
+                      "anc",
+                      "labor",
+                      "pnc"
+                    ],
+                    "default": "soap"
+                  },
+                  "language": {
+                    "type": "string",
+                    "example": "en-NG"
+                  },
+                  "custom_catalog": {
+                    "description": "Super-compressed CSCP (#CAT:id|type|name) DSL string, base64-gzipped CSCP, or JSON array of partner items.",
+                    "oneOf": [
+                      {
+                        "type": "string",
+                        "example": "#CAT:101|medication|Artemether-Lumefantrine 80/480mg\n#CAT:201|laboratory|Malaria Parasite (MP) Giemsa"
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  },
+                  "patient_id": {
+                    "type": "integer",
+                    "example": 492
+                  },
+                  "encounter_id": {
+                    "type": "integer",
+                    "example": 1017
                   }
                 }
               }
@@ -286,14 +556,54 @@
         },
         "responses": {
           "200": {
-            "description": "Structured SOAP sections and extracted orders"
+            "description": "Structured clinical sections, detected allergy alerts, and categorized suggested orders deck",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "sections": {
+                      "type": "object"
+                    },
+                    "formatted_note": {
+                      "type": "string"
+                    },
+                    "orders": {
+                      "type": "array",
+                      "items": {
+                        "": "#/components/schemas/ClinicalOrderItem"
+                      }
+                    },
+                    "allergy_alerts": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "taxonomy": {
+                      "type": "string",
+                      "example": "soap"
+                    },
+                    "role": {
+                      "type": "string",
+                      "example": "doctor"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/sdk/scribe/sign": {
       "post": {
-        "summary": "Sign Consultation Note & Archive Audit Record",
+        "summary": "Sign Consultation Note, Archive Audit Record & Seal Approved Orders",
+        "description": "Seal the consultation note with clinician sign-off. Commits the signed clinical note and approved orders deck (with inline dosage/frequency/instructions adjustments) into the audit trail for downstream openEHR and FHIR generation.",
         "security": [
           {
             "SdkSessionToken": []
@@ -314,6 +624,32 @@
                   },
                   "original_transcript": {
                     "type": "string"
+                  },
+                  "approved_orders": {
+                    "type": "array",
+                    "items": {
+                      "": "#/components/schemas/ClinicalOrderItem"
+                    }
+                  },
+                  "patient_id": {
+                    "type": "integer",
+                    "example": 492
+                  },
+                  "encounter_id": {
+                    "type": "integer",
+                    "example": 1017
+                  },
+                  "clinician_id": {
+                    "type": "integer",
+                    "example": 38
+                  },
+                  "role": {
+                    "type": "string",
+                    "example": "doctor"
+                  },
+                  "taxonomy": {
+                    "type": "string",
+                    "example": "soap"
                   }
                 }
               }
@@ -322,7 +658,32 @@
         },
         "responses": {
           "200": {
-            "description": "Note successfully signed and archived"
+            "description": "Note successfully signed, audited, and approved orders staged for dispatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "signed"
+                    },
+                    "audit_id": {
+                      "type": "integer",
+                      "example": 812
+                    },
+                    "orders_dispatched": {
+                      "type": "integer",
+                      "example": 2
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Consultation signed, audited, and 2 orders staged for dispatch."
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -491,6 +852,255 @@
         "responses": {
           "201": {
             "description": "Consent record created"
+          }
+        }
+      }
+    },
+    "/api/sdk/scribe/convert-format": {
+      "post": {
+        "summary": "Lossless Medical Taxonomy Conversion",
+        "description": "Deterministically convert consultation notes between medical taxonomies (Doctor: SOAP, Traditional Clerking, POMR; Nurse: Focus DAR, SBAR, SOAPIE; Maternity: ANC, Labor, PNC) while preserving all clinical observations and findings.",
+        "security": [
+          {
+            "SdkSessionToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "": "#/components/schemas/ConvertFormatRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transformed consultation note",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "": "#/components/schemas/ConvertFormatResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/scribe/compositions": {
+      "post": {
+        "summary": "Direct openEHR & FHIR Compositions Extraction",
+        "description": "Directly retrieve openEHR COMPOSITION.encounter.v1 and HL7 FHIR R4 Bundle for the authenticated session, including all approved clinical orders mapped to openEHR INSTRUCTION archetypes.",
+        "security": [
+          {
+            "SdkSessionToken": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "encounter_id": {
+                    "type": "integer"
+                  },
+                  "cross_border": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Standardized clinical data payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "": "#/components/schemas/CompositionsHandoffResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/scribe/fhir-bundle": {
+      "post": {
+        "summary": "Direct HL7 FHIR R4 Encounter Bundle Extraction",
+        "description": "Directly extract the full HL7 FHIR R4 Bundle containing Patient, Encounter, Observations, Condition, MedicationRequest, and ServiceRequest resources.",
+        "security": [
+          {
+            "SdkSessionToken": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "encounter_id": {
+                    "type": "integer"
+                  },
+                  "cross_border": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Standard HL7 FHIR R4 Bundle"
+          }
+        }
+      }
+    },
+    "/api/sdk/catalogs/categories": {
+      "get": {
+        "summary": "List Active Catalog Categories",
+        "description": "Fetch hospital product and clinical service categories (Laboratory, Imaging, Pharmacy, Nursing, Procedures, Consultation) for catalog synchronization.",
+        "security": [
+          {
+            "SdkSessionToken": []
+          },
+          {
+            "SanctumBearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "service",
+                "product"
+              ],
+              "default": "all"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of catalog categories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "count": {
+                      "type": "integer",
+                      "example": 6
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "": "#/components/schemas/CatalogCategory"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/catalogs/items": {
+      "get": {
+        "summary": "Search Catalog Items & CSCP Tokens",
+        "description": "Search hospital products and services by query or category, returning individual entries and super-compressed CSCP (#CAT:id|type|name) tokens for instant context injection.",
+        "security": [
+          {
+            "SdkSessionToken": []
+          },
+          {
+            "SanctumBearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "malaria"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "laboratory"
+            }
+          },
+          {
+            "name": "category_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matched catalog items with pre-computed CSCP strings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "count": {
+                      "type": "integer",
+                      "example": 5
+                    },
+                    "cscp": {
+                      "type": "string",
+                      "example": "#CAT:201|laboratory|Malaria Parasite\n#CAT:101|medication|Artemether-Lumefantrine"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "": "#/components/schemas/CatalogItem"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

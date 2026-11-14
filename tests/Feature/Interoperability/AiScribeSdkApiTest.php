@@ -159,4 +159,147 @@ class AiScribeSdkApiTest extends TestCase
             ->postJson('/api/sdk/scribe/session', []);
         $rejectedResponse->assertStatus(401);
     }
+
+    /**
+     * Test catalog categories and search endpoints with CSCP representation.
+     */
+    public function test_catalog_categories_and_items_endpoints(): void
+    {
+        $authResponse = $this->postJson('/api/sdk/auth/token', [
+            'client_id' => 'test-partner-client',
+            'client_secret' => $this->plainSecret,
+            'scope' => 'scribe:process scribe:sign interop:compositions',
+        ]);
+        $sdkToken = $authResponse->json('sdk_token');
+
+        // Categories
+        $catResponse = $this->withHeader('Authorization', "Bearer {$sdkToken}")
+            ->getJson('/api/sdk/catalogs/categories');
+        $catResponse->assertStatus(200);
+        $catResponse->assertJsonStructure([
+            'status',
+            'count',
+            'data',
+        ]);
+
+        // Items Search with CSCP tokens
+        $itemsResponse = $this->withHeader('Authorization', "Bearer {$sdkToken}")
+            ->getJson('/api/sdk/catalogs/items?q=paracetamol&limit=5');
+        $itemsResponse->assertStatus(200);
+        $itemsResponse->assertJsonStructure([
+            'status',
+            'count',
+            'cscp',
+            'data',
+        ]);
+    }
+
+    /**
+     * Test dictation processing with super-compressed partner catalog (CSCP).
+     */
+    public function test_scribe_process_with_compressed_cscp_catalog(): void
+    {
+        $authResponse = $this->postJson('/api/sdk/auth/token', [
+            'client_id' => 'test-partner-client',
+            'client_secret' => $this->plainSecret,
+            'scope' => 'scribe:process scribe:sign interop:compositions',
+        ]);
+        $sdkToken = $authResponse->json('sdk_token');
+
+        $cscpCatalog = "#CAT:101|medication|Artemether-Lumefantrine 80/480mg\n#CAT:201|laboratory|Malaria Parasite (MP) Giemsa";
+
+        $response = $this->withHeader('Authorization', "Bearer {$sdkToken}")
+            ->postJson('/api/sdk/scribe/process', [
+                'transcript' => 'Patient has severe malaria. Prescribe Artemether-Lumefantrine 80/480mg twice daily for 3 days and request Malaria Parasite by Microscopy.',
+                'role' => 'doctor',
+                'taxonomy' => 'soap',
+                'custom_catalog' => $cscpCatalog,
+            ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+        $this->assertNotEmpty($response->json('structured_sections'));
+        $orders = $response->json('grounded_orders');
+        $this->assertIsArray($orders);
+    }
+
+    /**
+     * Test deterministic lossless clinical taxonomy conversion.
+     */
+    public function test_scribe_taxonomy_format_conversion(): void
+    {
+        $authResponse = $this->postJson('/api/sdk/auth/token', [
+            'client_id' => 'test-partner-client',
+            'client_secret' => $this->plainSecret,
+            'scope' => 'scribe:process scribe:sign interop:compositions',
+        ]);
+        $sdkToken = $authResponse->json('sdk_token');
+
+        $response = $this->withHeader('Authorization', "Bearer {$sdkToken}")
+            ->postJson('/api/sdk/scribe/convert-format', [
+                'note' => "SUBJECTIVE:\nPatient complains of fever and headache.\n\nOBJECTIVE:\nBP 120/80 mmHg, Temp 38.2 C.\n\nASSESSMENT:\nMalaria fever.\n\nPLAN:\nArtemether-Lumefantrine 80/480mg BD x 3d.",
+                'source_taxonomy' => 'soap',
+                'target_taxonomy' => 'traditional',
+                'source_role' => 'doctor',
+                'target_role' => 'doctor',
+            ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('status', 'success');
+        $this->assertNotEmpty($response->json('converted_note'));
+    }
+
+    /**
+     * Test signing consultation note with approved orders deck.
+     */
+    public function test_scribe_sign_with_approved_orders(): void
+    {
+        $patient = Patient::first();
+        $patientId = $patient ? $patient->id : null;
+
+        $authResponse = $this->postJson('/api/sdk/auth/token', [
+            'client_id' => 'test-partner-client',
+            'client_secret' => $this->plainSecret,
+            'patient_id' => $patientId,
+            'encounter_id' => 1017,
+            'clinician_id' => 38,
+            'scope' => 'scribe:process scribe:sign interop:compositions',
+        ]);
+        $sdkToken = $authResponse->json('sdk_token');
+
+        $approvedOrders = [
+            [
+                'type' => 'medication',
+                'name' => 'Artemether-Lumefantrine 80/480mg',
+                'matched_id' => 101,
+                'matched_tariff' => 1850.0,
+                'dosage' => '1 tab',
+                'frequency' => 'BD',
+                'duration' => '3 days',
+                'route' => 'Oral',
+                'instructions' => 'Take with meals',
+            ],
+            [
+                'type' => 'laboratory',
+                'name' => 'Malaria Parasite (MP) Giemsa',
+                'matched_id' => 201,
+                'matched_tariff' => 2500.0,
+                'instructions' => 'Urgent Giemsa blood smear',
+            ],
+        ];
+
+        $response = $this->withHeader('Authorization', "Bearer {$sdkToken}")
+            ->postJson('/api/sdk/scribe/sign', [
+                'final_signed_note' => "SUBJECTIVE:\nFever and chills.\n\nOBJECTIVE:\nTemp 38.5.\n\nASSESSMENT:\nMalaria.\n\nPLAN:\nArtemether-Lumefantrine and MP Giemsa.",
+                'original_transcript' => 'Dictated clinical findings...',
+                'approved_orders' => $approvedOrders,
+                'role' => 'doctor',
+                'taxonomy' => 'soap',
+            ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+        $this->assertNotNull($response->json('audit_id'));
+        $this->assertEquals(2, $response->json('orders_dispatched'));
+    }
 }

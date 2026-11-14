@@ -739,7 +739,73 @@
                     }
                 },
                 {
-                    "name": "05.4 POST Process Dictation into Structured SOAP",
+                    "name": "05.4 GET Catalog Categories",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{sdk_token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/sdk/catalogs/categories",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "sdk",
+                                "catalogs",
+                                "categories"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "05.5 GET Search Catalog Items",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{sdk_token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/sdk/catalogs/items?q=paracetamol&limit=10",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "sdk",
+                                "catalogs",
+                                "items"
+                            ],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "paracetamol"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "05.6 POST Process Dictation with Super-Compressed Catalog (CSCP)",
                     "request": {
                         "method": "POST",
                         "header": [
@@ -758,7 +824,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"transcript\": \"Patient complains of recurrent throbbing headache for 3 days. BP recorded as 130/85 mmHg. Plan to initiate Amlodipine 5mg OD oral and order Full Blood Count test.\"\n}"
+                            "raw": "{\n    \"transcript\": \"Patient presents with 3 days of high-grade fever and body aches. On examination, pharynx is congested. Prescribe Paracetamol 500mg TDS for 3 days and request Full Blood Count.\",\n    \"role\": \"doctor\",\n    \"taxonomy\": \"soap\",\n    \"custom_catalog\": \"#CAT:partner_lab|LAB|Partner Diagnostics\\np-lab-101:Full Blood Count (FBC)\\np-lab-102:Malaria Rapid Antigen Test\\n#CAT:partner_rx|RX|Partner Pharmacy\\np-rx-201:Paracetamol 500mg Tablet:300\\np-rx-202:Amoxicillin 500mg:600\"\n}"
                         },
                         "url": {
                             "raw": "{{base_url}}/api/sdk/scribe/process",
@@ -775,7 +841,7 @@
                     }
                 },
                 {
-                    "name": "05.5 POST Sign Scribe Consultation Note",
+                    "name": "05.7 POST Lossless Taxonomy Conversion",
                     "request": {
                         "method": "POST",
                         "header": [
@@ -794,7 +860,43 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"final_signed_note\": \"Patient presented with 3-day history of throbbing headache. Examination: BP 130/85 mmHg, afebrile. Assessment: Essential hypertension stage 1. Plan: Amlodipine 5mg OD oral, FBC investigation, review in 4 weeks.\",\n    \"original_transcript\": \"Patient complains of recurrent throbbing headache for 3 days...\"\n}"
+                            "raw": "{\n    \"from_taxonomy\": \"soap\",\n    \"to_taxonomy\": \"clerking\",\n    \"role\": \"doctor\",\n    \"current_sections\": [\n        {\"key\": \"subjective\", \"title\": \"Subjective\", \"content\": \"Patient presents with acute pharyngitis for 3 days.\"},\n        {\"key\": \"objective\", \"title\": \"Objective\", \"content\": \"Pharynx inflamed. Temperature 38.1C.\"},\n        {\"key\": \"assessment\", \"title\": \"Assessment\", \"content\": \"Acute tonsillopharyngitis.\"},\n        {\"key\": \"plan\", \"title\": \"Plan\", \"content\": \"Paracetamol 500mg and FBC investigation.\"}\n    ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/sdk/scribe/convert-format",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "sdk",
+                                "scribe",
+                                "convert-format"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "05.8 POST Sign Consultation Note & Approved Orders",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{sdk_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"patient_id\": {{patient_id}},\n    \"encounter_id\": {{encounter_id}},\n    \"role\": \"doctor\",\n    \"taxonomy_type\": \"soap\",\n    \"final_signed_note\": \"### Subjective\\nPatient presented with 3-day history of fever.\\n\\n### Objective\\nBP 120/80 mmHg, temp 38.1C.\\n\\n### Assessment\\nAcute febrile illness.\\n\\n### Plan\\nParacetamol 500mg TDS for 3 days and FBC investigation.\",\n    \"original_transcript\": \"Patient presents with 3 days of high-grade fever...\",\n    \"approved_orders\": [\n        {\n            \"id\": \"ord_1\",\n            \"order_type\": \"PRODUCT\",\n            \"item_name\": \"Paracetamol 500mg Tablet\",\n            \"catalog_id\": \"p-rx-201\",\n            \"dosage\": \"500mg\",\n            \"frequency\": \"TDS\",\n            \"duration\": \"3 days\",\n            \"route\": \"oral\",\n            \"is_selected\": true\n        },\n        {\n            \"id\": \"ord_2\",\n            \"order_type\": \"SERVICE\",\n            \"item_name\": \"Full Blood Count (FBC)\",\n            \"catalog_id\": \"p-lab-101\",\n            \"service_type\": \"lab\",\n            \"indication\": \"Rule out bacteremia\",\n            \"is_selected\": true\n        }\n    ]\n}"
                         },
                         "url": {
                             "raw": "{{base_url}}/api/sdk/scribe/sign",
@@ -811,7 +913,7 @@
                     }
                 },
                 {
-                    "name": "05.6 POST Fetch openEHR Composition + FHIR Bundle",
+                    "name": "05.9 POST Fetch openEHR Composition + FHIR Bundle (Direct)",
                     "request": {
                         "method": "POST",
                         "header": [
@@ -833,7 +935,7 @@
                             "raw": "{\n    \"cross_border\": false\n}"
                         },
                         "url": {
-                            "raw": "{{base_url}}/api/sdk/scribe/session/{{sdk_token}}/compositions",
+                            "raw": "{{base_url}}/api/sdk/scribe/compositions",
                             "host": [
                                 "{{base_url}}"
                             ],
@@ -841,15 +943,13 @@
                                 "api",
                                 "sdk",
                                 "scribe",
-                                "session",
-                                "{{sdk_token}}",
                                 "compositions"
                             ]
                         }
                     }
                 },
                 {
-                    "name": "05.7 POST Fetch FHIR-only Transaction Bundle",
+                    "name": "05.10 POST Fetch FHIR-only Transaction Bundle",
                     "request": {
                         "method": "POST",
                         "header": [
@@ -871,7 +971,7 @@
                             "raw": "{}"
                         },
                         "url": {
-                            "raw": "{{base_url}}/api/sdk/scribe/session/{{sdk_token}}/fhir-bundle",
+                            "raw": "{{base_url}}/api/sdk/scribe/fhir-bundle",
                             "host": [
                                 "{{base_url}}"
                             ],
@@ -879,15 +979,13 @@
                                 "api",
                                 "sdk",
                                 "scribe",
-                                "session",
-                                "{{sdk_token}}",
                                 "fhir-bundle"
                             ]
                         }
                     }
                 },
                 {
-                    "name": "05.8 POST Revoke SDK Session Token",
+                    "name": "05.11 POST Revoke SDK Session Token",
                     "request": {
                         "method": "POST",
                         "header": [

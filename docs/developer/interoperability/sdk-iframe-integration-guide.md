@@ -28,7 +28,7 @@ sequenceDiagram
     B->>CH: POST /api/sdk/auth/token {client_id, client_secret, ...}
     CH-->>B: {sdk_token: "SKT_..."}
     B-->>P: {sdk_token: "SKT_..."}
-    P->>P: Create <iframe src="sdk.corehealth.ng/scribe?token=SKT_...">
+    P->>P: Create <iframe src="corehealth.corestream.ng/scribe?token=SKT_...">
     F->>F: Validate token, render Scribe UI
     F-->>P: postMessage {type: "corehealth:ready"}
     P->>P: Show "Scribe Ready" indicator
@@ -87,7 +87,7 @@ Content-Type: application/json
   <meta charset="UTF-8">
   <!-- CSP: allow iFrame from CoreHealth SDK domain only -->
   <meta http-equiv="Content-Security-Policy"
-        content="frame-src 'self' https://sdk.corehealth.ng;">
+        content="frame-src 'self' https://corehealth.corestream.ng;">
 </head>
 <body>
   <div id="scribe-mount" style="width:100%;min-height:600px;"></div>
@@ -100,16 +100,18 @@ Content-Type: application/json
 
     // 2. Build iFrame URL with query params
     const params = new URLSearchParams({
-      token:  sdk_token,
-      locale: 'en-NG',
-      theme:  'light'
+      token:    sdk_token,
+      locale:   'en-NG',
+      role:     'doctor',
+      taxonomy: 'soap',
+      theme:    'light'
     });
 
     const frame = document.createElement('iframe');
-    frame.src = `https://sdk.corehealth.ng/scribe?${params}`;
+    frame.src = `https://corehealth.corestream.ng/scribe?${params}`;
     frame.setAttribute('allow', 'microphone');
     frame.setAttribute('title', 'CoreHealth AI Scribe');
-    frame.style.cssText = 'width:100%;height:600px;border:none;border-radius:8px;';
+    frame.style.cssText = 'width:100%;height:680px;border:none;border-radius:8px;';
     frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-microphone');
 
     document.getElementById('scribe-mount').appendChild(frame);
@@ -126,7 +128,7 @@ Content-Type: application/json
 ## Step 3 — Listen for postMessage Events
 
 ```js
-const ALLOWED_ORIGIN = 'https://sdk.corehealth.ng'; // change for on-prem
+const ALLOWED_ORIGIN = 'https://corehealth.corestream.ng'; // change for on-prem
 
 window.addEventListener('message', async (event) => {
 
@@ -146,14 +148,18 @@ window.addEventListener('message', async (event) => {
       break;
 
     case 'corehealth:processing':
-      showIndicator('⏳ Processing note…');
+      showIndicator('⏳ Processing note & structuring orders…');
+      break;
+
+    case 'corehealth:orders-updated':
+      console.log('Staged orders updated by clinician:', payload.orders);
       break;
 
     case 'corehealth:signed-off':
-      showIndicator('✓ Signing note…');
+      showIndicator('✓ Signing note & dispatching approved orders…');
       await saveSignedNote(payload);
       removeScribeFrame();
-      showSuccessToast('Consultation note saved to your records.');
+      showSuccessToast('Consultation note & approved orders saved to your records.');
       break;
 
     case 'corehealth:error':
@@ -164,6 +170,7 @@ window.addEventListener('message', async (event) => {
 });
 
 async function saveSignedNote(payload) {
+  // payload.final_signed_note, payload.transcript, payload.approved_orders
   await fetch('/my-backend/encounters/1017/scribe-signoff', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -216,14 +223,16 @@ Content-Type: application/json
 
 | `event.data.type` | Direction | Payload |
 |---|---|---|
-| `corehealth:ready` | iFrame → Parent | `{ patient_id, encounter_id, locale }` |
+| `corehealth:ready` | iFrame → Parent | `{ patient_id, encounter_id, locale, role, taxonomy }` |
 | `corehealth:resize` | iFrame → Parent | `{ height }` — for dynamic height adjustment |
 | `corehealth:recording-started` | iFrame → Parent | — |
 | `corehealth:recording-stopped` | iFrame → Parent | `{ seconds_recorded }` |
 | `corehealth:processing` | iFrame → Parent | — |
-| `corehealth:note-ready` | iFrame → Parent | `{ soap_note, orders }` — before sign-off |
-| `corehealth:signed-off` | iFrame → Parent | Full payload (see integration guide §6) |
+| `corehealth:note-ready` | iFrame → Parent | `{ soap_note, orders, allergy_alerts }` — before sign-off |
+| `corehealth:orders-updated` | iFrame → Parent | `{ orders }` — emitted when clinician edits/adds orders |
+| `corehealth:signed-off` | iFrame → Parent | `{ final_signed_note, transcript, approved_orders, role, taxonomy, patient_id, encounter_id }` |
 | `corehealth:error` | iFrame → Parent | `{ code, message }` |
+| `corehealth:set-catalog` | Parent → iFrame | `{ custom_catalog }` — CSCP compressed DSL or JSON array |
 | `corehealth:close` | Parent → iFrame | — — parent requests close |
 
 ---
@@ -233,12 +242,12 @@ Content-Type: application/json
 If CoreHealth is deployed on-prem inside Partner EMR's network:
 
 ```
-# Replace sdk.corehealth.ng with your on-prem hostname
+# Replace corehealth.corestream.ng with your on-prem hostname
 Content-Security-Policy: frame-src 'self' https://phc-node-01.partner-emr.org;
 ```
 
 > [!IMPORTANT]
-> The `ALLOWED_ORIGIN` constant in Step 3 must exactly match the `src` origin of the iFrame. For on-prem, that is your internal hostname, not `sdk.corehealth.ng`.
+> The `ALLOWED_ORIGIN` constant in Step 3 must exactly match the `src` origin of the iFrame. For on-prem, that is your internal hostname, not `corehealth.corestream.ng`.
 
 ---
 
@@ -250,5 +259,5 @@ Content-Security-Policy: frame-src 'self' https://phc-node-01.partner-emr.org;
 | postMessage events not received | Origin mismatch | Match `ALLOWED_ORIGIN` to exact iFrame `src` origin |
 | Microphone not working in iFrame | Missing `allow="microphone"` attribute | Add `allow="microphone"` to `<iframe>` tag |
 | iFrame blocked by browser | Missing `sandbox` attribute values | Add `allow-scripts allow-same-origin allow-forms` |
-| CSP violation in browser console | `frame-src` missing CoreHealth domain | Add `frame-src https://sdk.corehealth.ng` to your CSP header |
+| CSP violation in browser console | `frame-src` missing CoreHealth domain | Add `frame-src https://corehealth.corestream.ng` to your CSP header |
 
