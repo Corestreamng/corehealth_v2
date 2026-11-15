@@ -11,6 +11,8 @@ class AnthropicAdapter implements LlmProviderInterface
 
     protected string $baseUrl;
 
+    protected ?array $lastUsage = null;
+
     public function __construct(string $apiKey, string $baseUrl = 'https://api.anthropic.com')
     {
         $this->apiKey = $apiKey;
@@ -47,7 +49,25 @@ class AnthropicAdapter implements LlmProviderInterface
 
         $data = $response->json();
 
+        // Extract real token usage from Anthropic usage block
+        $usage = $data['usage'] ?? [];
+        $inputTokens = isset($usage['input_tokens']) ? (int) $usage['input_tokens'] : null;
+        $outputTokens = isset($usage['output_tokens']) ? (int) $usage['output_tokens'] : null;
+        $totalTokens = ($inputTokens !== null && $outputTokens !== null) ? ($inputTokens + $outputTokens) : null;
+
+        $this->lastUsage = [
+            'prompt_tokens' => $inputTokens,
+            'completion_tokens' => $outputTokens,
+            'total_tokens' => $totalTokens,
+            'is_estimated' => ($inputTokens === null || $outputTokens === null),
+        ];
+
         return $data['content'][0]['text'] ?? '';
+    }
+
+    public function getLastUsage(): ?array
+    {
+        return $this->lastUsage;
     }
 
     public function listModels(): array

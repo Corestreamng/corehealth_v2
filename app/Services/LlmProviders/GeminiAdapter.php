@@ -11,6 +11,8 @@ class GeminiAdapter implements LlmProviderInterface
 
     protected string $baseUrl;
 
+    protected ?array $lastUsage = null;
+
     public function __construct(string $apiKey, string $baseUrl = 'https://generativelanguage.googleapis.com')
     {
         $this->apiKey = $apiKey;
@@ -91,7 +93,25 @@ class GeminiAdapter implements LlmProviderInterface
             ]);
         }
 
+        // Extract real token usage from Gemini usageMetadata
+        $usage = $data['usageMetadata'] ?? [];
+        $promptTokens = isset($usage['promptTokenCount']) ? (int) $usage['promptTokenCount'] : null;
+        $completionTokens = isset($usage['candidatesTokenCount']) ? (int) $usage['candidatesTokenCount'] : null;
+        $totalTokens = isset($usage['totalTokenCount']) ? (int) $usage['totalTokenCount'] : (($promptTokens !== null && $completionTokens !== null) ? ($promptTokens + $completionTokens) : null);
+
+        $this->lastUsage = [
+            'prompt_tokens' => $promptTokens,
+            'completion_tokens' => $completionTokens,
+            'total_tokens' => $totalTokens,
+            'is_estimated' => ($promptTokens === null || $completionTokens === null),
+        ];
+
         return $text;
+    }
+
+    public function getLastUsage(): ?array
+    {
+        return $this->lastUsage;
     }
 
     public function listModels(): array

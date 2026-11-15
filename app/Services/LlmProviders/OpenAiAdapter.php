@@ -11,6 +11,8 @@ class OpenAiAdapter implements LlmProviderInterface
 
     protected string $baseUrl;
 
+    protected ?array $lastUsage = null;
+
     public function __construct(string $apiKey, string $baseUrl = 'https://api.openai.com/v1')
     {
         $this->apiKey = $apiKey;
@@ -46,7 +48,25 @@ class OpenAiAdapter implements LlmProviderInterface
 
         $data = $response->json();
 
+        // Extract real token usage from OpenAI usage block
+        $usage = $data['usage'] ?? [];
+        $promptTokens = isset($usage['prompt_tokens']) ? (int) $usage['prompt_tokens'] : null;
+        $completionTokens = isset($usage['completion_tokens']) ? (int) $usage['completion_tokens'] : null;
+        $totalTokens = isset($usage['total_tokens']) ? (int) $usage['total_tokens'] : (($promptTokens !== null && $completionTokens !== null) ? ($promptTokens + $completionTokens) : null);
+
+        $this->lastUsage = [
+            'prompt_tokens' => $promptTokens,
+            'completion_tokens' => $completionTokens,
+            'total_tokens' => $totalTokens,
+            'is_estimated' => ($promptTokens === null || $completionTokens === null),
+        ];
+
         return $data['choices'][0]['message']['content'] ?? '';
+    }
+
+    public function getLastUsage(): ?array
+    {
+        return $this->lastUsage;
     }
 
     public function listModels(): array

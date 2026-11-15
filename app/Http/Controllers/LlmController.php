@@ -71,6 +71,9 @@ class LlmController extends Controller
             $response = $this->gateway->complete($systemPrompt, $context, [
                 'max_tokens' => 4096,
                 'temperature' => 0.2, // Low temp for clinical facts
+                'source' => 'patient_summary',
+                'user_id' => Auth::id() ?: 1,
+                'patient_id' => $patient->id ?? null,
             ]);
 
             $summaryData = [
@@ -156,6 +159,8 @@ class LlmController extends Controller
             $response = $this->gateway->complete($systemPrompt, $userMessage, [
                 'max_tokens' => 4096,
                 'temperature' => 0.2,
+                'source' => 'polish_note',
+                'user_id' => Auth::id() ?: 1,
             ]);
 
             return response()->json([
@@ -349,6 +354,10 @@ class LlmController extends Controller
                 'temperature' => 0.15,
                 'json_mode' => true,
                 'thinking_budget' => 0,
+                'source' => 'local_scribe',
+                'user_id' => Auth::id() ?: 1,
+                'patient_id' => $patientId,
+                'encounter_id' => $encounterId,
             ]);
 
             $content = trim($response['content']);
@@ -509,6 +518,8 @@ class LlmController extends Controller
             $response = $this->gateway->complete($systemPrompt, $userMessage, [
                 'max_tokens' => 4096,
                 'temperature' => 0.1,
+                'source' => 'taxonomy_conversion',
+                'user_id' => Auth::id() ?: 1,
             ]);
 
             $parsed = $this->extractJsonPayload($response['content']);

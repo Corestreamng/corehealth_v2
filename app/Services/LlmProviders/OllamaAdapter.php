@@ -9,6 +9,8 @@ class OllamaAdapter implements LlmProviderInterface
 {
     protected string $baseUrl;
 
+    protected ?array $lastUsage = null;
+
     public function __construct(string $apiKey = '', string $baseUrl = 'http://localhost:11434')
     {
         $this->baseUrl = rtrim($baseUrl, '/');
@@ -38,7 +40,23 @@ class OllamaAdapter implements LlmProviderInterface
             throw new \Exception("Ollama API error: " . $response->body());
         }
 
+        $promptTokens = $response->json('prompt_eval_count');
+        $completionTokens = $response->json('eval_count');
+        $totalTokens = ($promptTokens !== null && $completionTokens !== null) ? ($promptTokens + $completionTokens) : null;
+
+        $this->lastUsage = [
+            'prompt_tokens' => $promptTokens !== null ? (int) $promptTokens : null,
+            'completion_tokens' => $completionTokens !== null ? (int) $completionTokens : null,
+            'total_tokens' => $totalTokens !== null ? (int) $totalTokens : null,
+            'is_estimated' => ($promptTokens === null || $completionTokens === null),
+        ];
+
         return $response->json('message.content', '');
+    }
+
+    public function getLastUsage(): ?array
+    {
+        return $this->lastUsage;
     }
 
     public function listModels(): array

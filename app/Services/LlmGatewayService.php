@@ -42,11 +42,52 @@ class LlmGatewayService
             $response = $adapter->complete($model, $systemPrompt, $userMessage, $options);
             $elapsed = round((microtime(true) - $startTime) * 1000);
 
+            // Extract real token usage from adapter, with fallback to character heuristic estimation
+            $rawUsage = $adapter->getLastUsage();
+            $isEstimated = false;
+
+            if ($rawUsage && isset($rawUsage['prompt_tokens'], $rawUsage['completion_tokens']) && $rawUsage['prompt_tokens'] !== null) {
+                $promptTokens = (int) $rawUsage['prompt_tokens'];
+                $completionTokens = (int) $rawUsage['completion_tokens'];
+                $totalTokens = (int) ($rawUsage['total_tokens'] ?? ($promptTokens + $completionTokens));
+            } else {
+                $promptTokens = $adapter->estimateTokens($systemPrompt . $userMessage);
+                $completionTokens = $adapter->estimateTokens($response);
+                $totalTokens = $promptTokens + $completionTokens;
+                $isEstimated = true;
+            }
+
+            // Automatic Token Audit Logging
+            $auditId = null;
+
+            try {
+                $audit = \App\Models\LlmTokenAudit::create([
+                    'source' => $options['source'] ?? 'local_scribe',
+                    'client_id' => $options['client_id'] ?? null,
+                    'user_id' => $options['user_id'] ?? (auth()->id() ?: null),
+                    'patient_id' => $options['patient_id'] ?? null,
+                    'encounter_id' => $options['encounter_id'] ?? null,
+                    'provider' => $provider,
+                    'model' => $model,
+                    'prompt_tokens' => $promptTokens,
+                    'completion_tokens' => $completionTokens,
+                    'total_tokens' => $totalTokens,
+                    'latency_ms' => $elapsed,
+                    'is_estimated' => $isEstimated,
+                    'ip_address' => request()->ip() ?? '127.0.0.1',
+                ]);
+                $auditId = $audit->id;
+            } catch (\Throwable $auditErr) {
+                Log::warning('Failed to persist LlmTokenAudit record: ' . $auditErr->getMessage());
+            }
+
             Log::info('LLM completion', [
                 'provider' => $provider,
                 'model' => $model,
-                'input_tokens' => $adapter->estimateTokens($systemPrompt . $userMessage),
-                'output_tokens' => $adapter->estimateTokens($response),
+                'prompt_tokens' => $promptTokens,
+                'completion_tokens' => $completionTokens,
+                'total_tokens' => $totalTokens,
+                'is_estimated' => $isEstimated,
                 'elapsed_ms' => $elapsed,
             ]);
 
@@ -55,8 +96,13 @@ class LlmGatewayService
                 'provider' => $provider,
                 'model' => $model,
                 'elapsed_ms' => $elapsed,
-                'input_tokens_est' => $adapter->estimateTokens($systemPrompt . $userMessage),
-                'output_tokens_est' => $adapter->estimateTokens($response),
+                'prompt_tokens' => $promptTokens,
+                'completion_tokens' => $completionTokens,
+                'total_tokens' => $totalTokens,
+                'is_estimated' => $isEstimated,
+                'token_audit_id' => $auditId,
+                'input_tokens_est' => $promptTokens,
+                'output_tokens_est' => $completionTokens,
             ];
         } catch (\Exception $e) {
             Log::error('LLM completion failed', [

@@ -6,6 +6,7 @@ use App\Interoperability\Models\SdkClient;
 use App\Interoperability\Models\SdkTokenAudit;
 use App\Models\AiScribeAudit;
 use App\Models\ApplicationStatu;
+use App\Models\LlmTokenAudit;
 use App\Models\ServiceCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -62,6 +63,20 @@ class HospitalConfigController extends Controller
         $totalTokensIssued = SdkTokenAudit::count();
         $totalScribeSigned = AiScribeAudit::count();
 
+        // LLM Token Consumption Metrics & Audits
+        $totalTokensConsumed = (int) LlmTokenAudit::sum('total_tokens');
+        $localScribeTokens = (int) LlmTokenAudit::where('source', 'local_scribe')->sum('total_tokens');
+        $apiScribeTokens = (int) LlmTokenAudit::where('source', 'api_scribe')->sum('total_tokens');
+        $clientTokensMap = LlmTokenAudit::whereNotNull('client_id')
+            ->groupBy('client_id')
+            ->selectRaw('client_id, sum(total_tokens) as tokens')
+            ->pluck('tokens', 'client_id')
+            ->toArray();
+        $recentLlmAudits = LlmTokenAudit::with(['client', 'user', 'patient.user'])
+            ->orderBy('id', 'desc')
+            ->limit(15)
+            ->get();
+
         return view('admin.hospital-config.index', compact(
             'config',
             'serviceCategories',
@@ -73,7 +88,12 @@ class HospitalConfigController extends Controller
             'activeClients',
             'activeTokens',
             'totalTokensIssued',
-            'totalScribeSigned'
+            'totalScribeSigned',
+            'totalTokensConsumed',
+            'localScribeTokens',
+            'apiScribeTokens',
+            'clientTokensMap',
+            'recentLlmAudits'
         ));
     }
 

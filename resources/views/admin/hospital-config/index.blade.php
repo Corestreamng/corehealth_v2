@@ -1219,25 +1219,32 @@
                                     <div class="card-body" style="padding: 1.5rem;">
                                         <!-- KPI Metrics -->
                                         <div class="row mb-4">
-                                            <div class="col-md-3 col-6 mb-2">
+                                            <div class="col-md-2 col-6 mb-2">
                                                 <div class="p-3 rounded text-center" style="background: #f8fafc; border: 1px solid #e2e8f0;">
                                                     <div class="text-xs text-uppercase font-weight-bold text-muted">Registered Clients</div>
                                                     <div class="h4 mb-0 font-weight-bold text-dark">{{ $totalClients ?? count($sdkClients) }}</div>
                                                     <small class="text-success font-weight-bold">{{ $activeClients ?? 0 }} Active</small>
                                                 </div>
                                             </div>
-                                            <div class="col-md-3 col-6 mb-2">
+                                            <div class="col-md-2 col-6 mb-2">
                                                 <div class="p-3 rounded text-center" style="background: #f8fafc; border: 1px solid #e2e8f0;">
                                                     <div class="text-xs text-uppercase font-weight-bold text-muted">Active Sessions</div>
                                                     <div class="h4 mb-0 font-weight-bold text-primary">{{ $activeTokens ?? 0 }}</div>
                                                     <small class="text-muted">Live Bearers</small>
                                                 </div>
                                             </div>
-                                            <div class="col-md-3 col-6 mb-2">
+                                            <div class="col-md-2 col-6 mb-2">
                                                 <div class="p-3 rounded text-center" style="background: #f8fafc; border: 1px solid #e2e8f0;">
                                                     <div class="text-xs text-uppercase font-weight-bold text-muted">Tokens Minted</div>
                                                     <div class="h4 mb-0 font-weight-bold text-dark">{{ $totalTokensIssued ?? 0 }}</div>
-                                                    <small class="text-muted">Historical Audits</small>
+                                                    <small class="text-muted">OAuth Sessions</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 col-6 mb-2">
+                                                <div class="p-3 rounded text-center" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                                                    <div class="text-xs text-uppercase font-weight-bold text-muted">LLM Tokens Consumed</div>
+                                                    <div class="h4 mb-0 font-weight-bold text-info">{{ number_format($totalTokensConsumed ?? 0) }}</div>
+                                                    <small class="text-muted">{{ number_format($localScribeTokens ?? 0) }} Local &bull; {{ number_format($apiScribeTokens ?? 0) }} API</small>
                                                 </div>
                                             </div>
                                             <div class="col-md-3 col-6 mb-2">
@@ -1269,6 +1276,7 @@
                                                         <th>Client ID & Name</th>
                                                         <th>Organization</th>
                                                         <th>Allowed Scopes</th>
+                                                        <th>LLM Tokens</th>
                                                         <th>Rate Limit</th>
                                                         <th>Status</th>
                                                         <th class="text-center" style="width: 190px;">Actions</th>
@@ -1292,6 +1300,11 @@
                                                                         <span class="badge badge-secondary mr-1 mb-1">{{ $scope }}</span>
                                                                     @endforeach
                                                                 @endif
+                                                            </td>
+                                                            <td>
+                                                                <span class="badge badge-light border text-primary font-weight-bold font-monospace">
+                                                                    <i class="mdi mdi-chart-bubble mr-1"></i>{{ number_format($clientTokensMap[$client->client_id] ?? 0) }}
+                                                                </span>
                                                             </td>
                                                             <td>
                                                                 <span class="badge badge-light border text-dark">{{ $client->rate_limit_rpm }} rpm</span>
@@ -1327,7 +1340,7 @@
                                                         </tr>
                                                     @empty
                                                         <tr>
-                                                            <td colspan="6" class="text-center py-4 text-muted">
+                                                            <td colspan="7" class="text-center py-4 text-muted">
                                                                 <i class="mdi mdi-shield-off-outline mdi-24px d-block mb-1"></i>
                                                                 No Partner EMR SDK Clients registered yet.
                                                             </td>
@@ -1483,6 +1496,88 @@
                                                     @empty
                                                         <tr>
                                                             <td colspan="7" class="text-center py-3 text-muted">No AI scribe processing sessions recorded yet.</td>
+                                                        </tr>
+                                                    @endforelse
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <!-- Section 4: Real-Time LLM Token Usage & Telemetry -->
+                                        <div class="d-flex justify-content-between align-items-center mb-2 mt-4">
+                                            <div>
+                                                <h6 class="font-weight-bold text-dark mb-0">
+                                                    <i class="mdi mdi-chart-timeline-variant-shimmer text-info mr-1"></i> Real-Time LLM Token Usage Telemetry
+                                                </h6>
+                                                <small class="text-muted">Live audit stream of prompt and candidate tokens consumed across Local and API Scribe callers (last 15).</small>
+                                            </div>
+                                            <span class="badge badge-light border text-dark font-monospace">
+                                                Total: {{ number_format($totalTokensConsumed ?? 0) }} tokens
+                                            </span>
+                                        </div>
+
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-hover table-bordered mb-0" style="font-size: 0.85rem;">
+                                                <thead class="thead-light">
+                                                    <tr>
+                                                        <th>Timestamp</th>
+                                                        <th>Source / Caller</th>
+                                                        <th>Provider &amp; Model</th>
+                                                        <th>Prompt</th>
+                                                        <th>Completion</th>
+                                                        <th>Total Tokens</th>
+                                                        <th>Latency</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @forelse($recentLlmAudits as $tokenAudit)
+                                                        @php
+                                                            $callerUser = $tokenAudit->user;
+                                                            $clientApp = $tokenAudit->client;
+                                                        @endphp
+                                                        <tr>
+                                                            <td>
+                                                                {{ $tokenAudit->created_at ? $tokenAudit->created_at->format('M d, H:i:s') : '—' }}
+                                                                <small class="text-muted d-block">{{ $tokenAudit->created_at ? $tokenAudit->created_at->diffForHumans() : '' }}</small>
+                                                            </td>
+                                                            <td>
+                                                                @if($tokenAudit->source === 'api_scribe')
+                                                                    <span class="badge badge-primary px-2 py-1"><i class="mdi mdi-api mr-1"></i>API SCRIBE</span>
+                                                                    <small class="font-monospace text-dark d-block mt-1 font-weight-bold">{{ $tokenAudit->client_id ?? 'Unknown Client' }}</small>
+                                                                @else
+                                                                    <span class="badge badge-info px-2 py-1"><i class="mdi mdi-stethoscope mr-1"></i>LOCAL SCRIBE</span>
+                                                                    @if($callerUser)
+                                                                        <small class="text-muted d-block mt-1 font-weight-bold">{{ $callerUser->surname . ' ' . $callerUser->firstname }}</small>
+                                                                    @endif
+                                                                @endif
+                                                            </td>
+                                                            <td>
+                                                                <span class="text-uppercase font-weight-bold text-secondary text-xs">{{ $tokenAudit->provider ?? 'gemini' }}</span>
+                                                                <div class="font-monospace text-dark text-xs">{{ $tokenAudit->model ?? 'gemini-2.5-flash' }}</div>
+                                                            </td>
+                                                            <td>
+                                                                <span class="font-monospace text-muted">{{ number_format($tokenAudit->prompt_tokens ?? 0) }}</span>
+                                                            </td>
+                                                            <td>
+                                                                <span class="font-monospace text-muted">{{ number_format($tokenAudit->completion_tokens ?? 0) }}</span>
+                                                            </td>
+                                                            <td>
+                                                                <span class="badge badge-light border text-primary font-weight-bold font-monospace">
+                                                                    {{ number_format($tokenAudit->total_tokens ?? 0) }}
+                                                                </span>
+                                                                @if($tokenAudit->is_estimated)
+                                                                    <small class="badge badge-warning text-dark ml-1" title="Tokens estimated from character count">est</small>
+                                                                @endif
+                                                            </td>
+                                                            <td>
+                                                                @if($tokenAudit->latency_ms)
+                                                                    <span class="badge badge-light border text-dark">{{ number_format($tokenAudit->latency_ms) }} ms</span>
+                                                                @else
+                                                                    <span class="text-muted">—</span>
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                    @empty
+                                                        <tr>
+                                                            <td colspan="7" class="text-center py-3 text-muted">No LLM token consumption records logged yet.</td>
                                                         </tr>
                                                     @endforelse
                                                 </tbody>
@@ -2267,9 +2362,7 @@
                 <h5 class="modal-title font-weight-bold text-dark" id="registerSdkClientModalLabel">
                     <i class="mdi mdi-key-plus text-primary mr-1"></i> Register Partner EMR API Client
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="close btn-close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" style="background: transparent; border: 0; font-size: 1.5rem; line-height: 1; cursor: pointer; color: #6c757d; padding: 0.25rem 0.5rem;"><span aria-hidden="true">&times;</span></button>
             </div>
             <form action="{{ route('hospital-config.sdk-clients.store') }}" method="POST">
                 @csrf
@@ -2353,7 +2446,7 @@
                     </div>
                 </div>
                 <div class="modal-footer bg-light" style="border-top: 1px solid #e9ecef; border-radius: 0 0 12px 12px;">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary font-weight-bold">
                         <i class="mdi mdi-check mr-1"></i> Register Client
                     </button>
@@ -2371,9 +2464,7 @@
                 <h5 class="modal-title font-weight-bold text-dark" id="envSnippetModalLabel">
                     <i class="mdi mdi-file-code-outline text-info mr-1"></i> Partner EMR Environment Configuration
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="close btn-close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" style="background: transparent; border: 0; font-size: 1.5rem; line-height: 1; cursor: pointer; color: #6c757d; padding: 0.25rem 0.5rem;"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body p-4">
                 <p class="text-muted small mb-3">
@@ -2389,7 +2480,7 @@
                 </small>
             </div>
             <div class="modal-footer bg-light" style="border-top: 1px solid #e9ecef; border-radius: 0 0 12px 12px;">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-primary font-weight-bold" onclick="copySnippetToClipboard()">
                     <i class="mdi mdi-content-copy mr-1"></i> Copy .env Snippet
                 </button>

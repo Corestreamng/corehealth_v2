@@ -331,8 +331,10 @@ class SdkScribeSessionController extends Controller
     public function process(Request $request): JsonResponse
     {
         $claims = $request->attributes->get('sdk_claims') ?? [];
+        $clientId = $claims['client_id'] ?? $request->input('client_id');
         $patientId = $claims['patient_id'] ?? $request->input('patient_id');
         $encounterId = $claims['encounter_id'] ?? $request->input('encounter_id');
+        $clinicianId = $claims['clinician_id'] ?? $request->input('clinician_id');
         $role = strtolower((string) $request->input('role', 'doctor'));
         $taxonomy = strtolower((string) $request->input('taxonomy', 'soap'));
 
@@ -443,6 +445,11 @@ class SdkScribeSessionController extends Controller
                         'temperature' => 0.15,
                         'json_mode' => true,
                         'thinking_budget' => 0,
+                        'source' => 'api_scribe',
+                        'client_id' => $clientId,
+                        'user_id' => $clinicianId,
+                        'patient_id' => $patientId,
+                        'encounter_id' => $encounterId,
                     ]);
 
                     $rawContent = trim($llmResponse['content'] ?? '');

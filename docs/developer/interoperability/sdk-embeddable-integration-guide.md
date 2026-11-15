@@ -73,7 +73,10 @@ From this administration panel, hospital administrators can:
 - **Provision Partner Clients**: Click **+ Register Client** to configure external EMR identities, assign granular scopes (`*`, `scribe:session`, `scribe:process`, `scribe:sign`, `orders:dispatch`, `interop:compositions`), and enforce custom rate limits (requests per minute).
 - **One-Click `.env` Snippet**: Click the **.env** button beside any client row to open a ready-to-copy configuration block pre-filled with the instance Base URL and Client ID.
 - **Instant Secret Rotation**: Click the **Rotate Secret** button to mint a fresh cryptographic secret key without disrupting active token sessions.
+- **LLM Token Tracking & Telemetry**: Monitor real-time prompt tokens, candidate tokens, total consumption, and inference latency across both internal Local Scribe hospital clinicians and external Partner EMR API clients via the auxiliary `llm_token_audits` telemetry engine.
 - **Session Revocation & Real-Time Auditing**: Monitor live `SdkTokenAudit` bearer sessions with immediate revocation controls, alongside historical `AiScribeAudit` sign-offs.
+
+![Real-Time LLM Token Usage Telemetry](/images/workbenches/hospital-config-llm-token-telemetry.png)
 
 ![New Client Secret Alert & 1-Click Copy](/images/workbenches/hospital-config-sdk-new-client-secret.png)
 

@@ -50,6 +50,11 @@ class HuggingFaceAdapter implements LlmProviderInterface
         return is_string($data) ? $data : json_encode($data);
     }
 
+    public function getLastUsage(): ?array
+    {
+        return null;
+    }
+
     public function listModels(): array
     {
         // HuggingFace has thousands of models — return curated medical/clinical models

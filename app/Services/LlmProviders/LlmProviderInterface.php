@@ -44,4 +44,11 @@ interface LlmProviderInterface
      * Uses a rough heuristic (words / 0.75) as a universal fallback.
      */
     public function estimateTokens(string $text): int;
+
+    /**
+     * Get the token usage metadata from the most recent completion.
+     *
+     * @return array|null ['prompt_tokens' => int, 'completion_tokens' => int, 'total_tokens' => int, 'is_estimated' => bool]
+     */
+    public function getLastUsage(): ?array;
 }

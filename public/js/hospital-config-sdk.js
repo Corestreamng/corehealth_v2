@@ -106,3 +106,43 @@ function initSdkConfigTab(hasNewSecret) {
     }
 }
 
+// Global modal dismiss handler for project standard compatibility (BS4 & BS5)
+if (typeof document !== 'undefined') {
+    document.addEventListener('click', function(e) {
+        const dismissBtn = e.target.closest('[data-dismiss="modal"], [data-bs-dismiss="modal"]');
+        if (!dismissBtn) return;
+
+        const modalEl = dismissBtn.closest('.modal');
+        if (!modalEl) return;
+
+        e.preventDefault();
+
+        // 1. Try jQuery / Bootstrap 4 & 5 Modal plugin
+        if (window.$ && typeof window.$(modalEl).modal === 'function') {
+            window.$(modalEl).modal('hide');
+            return;
+        }
+
+        // 2. Try Bootstrap 5 native Modal instance
+        if (window.bootstrap && window.bootstrap.Modal) {
+            const bsModal = window.bootstrap.Modal.getInstance(modalEl) || new window.bootstrap.Modal(modalEl);
+            if (bsModal) {
+                bsModal.hide();
+                return;
+            }
+        }
+
+        // 3. Direct DOM fallback
+        modalEl.classList.remove('show');
+        modalEl.style.display = 'none';
+        modalEl.setAttribute('aria-hidden', 'true');
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        for (let i = 0; i < backdrops.length; i++) {
+            backdrops[i].remove();
+        }
+        document.body.classList.remove('modal-open');
+        document.body.style.paddingRight = '';
+    });
+}
+
+
