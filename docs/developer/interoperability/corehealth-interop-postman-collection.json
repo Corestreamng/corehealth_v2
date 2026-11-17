@@ -43,7 +43,7 @@
         },
         {
             "key": "client_secret",
-            "value": "partner_dev_secret_2026",
+            "value": "YOUR_CLIENT_SECRET",
             "type": "string"
         }
     ],
@@ -90,7 +90,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"email\": \"sysadmin@mail.com\",\n    \"password\": \"123456\",\n    \"device_name\": \"postman-interop-test\"\n}"
+                            "raw": "{\n    \"email\": \"{{admin_email}}\",\n    \"password\": \"{{admin_password}}\",\n    \"device_name\": \"postman-interop-test\"\n}"
                         },
                         "url": {
                             "raw": "{{base_url}}/sanctum/token",

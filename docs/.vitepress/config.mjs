@@ -274,6 +274,7 @@ export default defineConfig({
             { text: 'SDK Embeddable Integration Guide', link: '/developer/interoperability/sdk-embeddable-integration-guide' },
             { text: 'SDK iFrame Track & postMessage', link: '/developer/interoperability/sdk-iframe-integration-guide' },
             { text: 'Vanilla JS Reference Demo', link: '/developer/interoperability/sdk-vanilla-demo-walkthrough' },
+            { text: 'Python & FastAPI Reference Demo', link: '/developer/interoperability/sdk-python-fastapi-walkthrough' },
             { text: 'Postman Collection Guide', link: '/developer/interoperability/postman-collection-guide' },
           ]
         }

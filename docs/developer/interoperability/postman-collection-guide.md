@@ -27,8 +27,10 @@
 | `patient_id` | `492` | Canonical test patient (Oladipo Amina, file 14-32-97) |
 | `encounter_id` | `1017` | Active test encounter |
 | `ehr_id` | *(empty)* | Auto-populated by `03.1/POST EHR Create` |
-| `client_id` | `partner-emr-dev` | Your SDK client ID |
+| `client_id` | `your-client-id` | Your SDK client ID (from Admin -> Hospital Config) |
 | `client_secret` | *(your secret)* | Mark as **secret** in Postman |
+| `admin_email` | `admin@yourhospital.com` | Authorized hospital administrator email |
+| `admin_password` | *(your password)* | Mark as **secret** in Postman |
 
 4. Select this environment before running any requests.
 
@@ -46,8 +48,8 @@ POST {{base_url}}/sanctum/token
 Content-Type: application/json
 
 {
-  "email":       "sysadmin@mail.com",
-  "password":    "123456",
+  "email":       "{{admin_email}}",
+  "password":    "{{admin_password}}",
   "device_name": "postman-interop-test"
 }
 ```

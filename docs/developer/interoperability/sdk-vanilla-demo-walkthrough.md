@@ -88,12 +88,12 @@ cd sdks/js-scribe-sdk/examples/vanilla-integration
 cp .env.example .env
 ```
 
-Verify or adjust parameters in `.env`:
+Verify or adjust parameters in `.env` (copy your client credentials from **CoreHealth Admin &rarr; Hospital Configuration &rarr; AI Scribe & SDK**):
 
 ```ini
 CH_BASE_URL=http://127.0.0.1:8000
-CH_CLIENT_ID=partner-emr-dev
-CH_CLIENT_SECRET=partner_dev_secret_2026
+CH_CLIENT_ID=your_client_id_here
+CH_CLIENT_SECRET=your_client_secret_here
 PORT=3001
 CH_DEFAULT_LOCALE=en-NG
 CH_DEFAULT_PATIENT_ID=492

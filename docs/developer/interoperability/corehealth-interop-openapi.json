@@ -84,7 +84,7 @@
           },
           "client_secret": {
             "type": "string",
-            "example": "partner_dev_secret_2026"
+            "example": "sec_dev_sample_secret_key"
           },
           "patient_id": {
             "type": "integer",

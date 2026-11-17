@@ -37,7 +37,7 @@ node tools/capture_workbench_screenshots.js
 ```
 
 ### Script Architecture (`tools/capture_workbench_screenshots.js`)
-- Authenticates against the local application using pre-seeded administrator or clinician credentials (`sysadmin@mail.com` / `123456`).
+- Authenticates against the local application using standard test administrator or clinician credentials configured for automated tooling.
 - Standardizes viewport geometry to **Full HD ($1920 \times 1080$) standard** at 92% JPEG quality.
 - Automates navigation across workbenches, triggers modals (`#patientFormModal`, `#concludeEncounterModal`), switches tabs (`switch_tab(null, id)`), and controls collapsible demographic ribbons.
 - Writes optimized JPEG images directly to `docs/public/images/workbenches/`.

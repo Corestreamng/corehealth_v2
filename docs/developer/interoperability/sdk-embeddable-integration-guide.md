@@ -52,9 +52,30 @@ git submodule update --init --recursive
 cd vendor/corehealth-scribe-sdk && npm install && npm run build
 ```
 
-### Option C — NPM Package
+### Option C — Direct Git Package Installation (npm & pip)
+
+Install the SDK packages directly into your application using standard Git repository URLs:
+
+**For Node.js / TypeScript (npm, yarn, pnpm):**
 ```bash
-npm install @corehealth/scribe-sdk
+npm install git+https://github.com/Corestream-Networks-and-Robotics-LTD/corehealth-scribe-js-sdk.git
+```
+Or in `package.json`:
+```json
+{
+  "dependencies": {
+    "@corehealth/scribe-sdk": "git+https://github.com/Corestream-Networks-and-Robotics-LTD/corehealth-scribe-js-sdk.git#main"
+  }
+}
+```
+
+**For Python (FastAPI, Django, Flask):**
+```bash
+pip install "corehealth-scribe-sdk[fastapi] @ git+https://github.com/Corestream-Networks-and-Robotics-LTD/corehealth-scribe-python-sdk.git@main"
+```
+Or in `requirements.txt`:
+```text
+corehealth-scribe-sdk @ git+https://github.com/Corestream-Networks-and-Robotics-LTD/corehealth-scribe-python-sdk.git@main
 ```
 
 ---
@@ -91,8 +112,8 @@ Both JavaScript and Python SDK distributions include standard `.env.example` tem
 CH_BASE_URL=https://corehealth.corestream.ng
 
 # Client Credentials (obtained in CoreHealth Admin -> Hospital Configuration -> AI Scribe & SDK)
-CH_CLIENT_ID=partner-emr-dev
-CH_CLIENT_SECRET=partner_dev_secret_2026
+CH_CLIENT_ID=your_client_id_here
+CH_CLIENT_SECRET=your_client_secret_here
 
 # Local Backend Proxy Port
 PORT=3001
@@ -121,9 +142,9 @@ python3 -m venv venv
 # 2. Activate the virtual environment
 source venv/bin/activate  # On Windows: .\venv\Scripts\Activate.ps1
 
-# 3. Upgrade pip and install dependencies
+# 3. Upgrade pip and install dependencies directly from Git
 pip install --upgrade pip
-pip install "corehealth-scribe-sdk[fastapi]" python-dotenv
+pip install "corehealth-scribe-sdk[fastapi] @ git+https://github.com/Corestream-Networks-and-Robotics-LTD/corehealth-scribe-python-sdk.git@main" python-dotenv
 ```
 
 ### 4.4 Ephemeral Token Minting Endpoint
@@ -286,7 +307,11 @@ Persist `openehr_composition` to your openEHR CDR (`POST /ehr/{ehr_id}/compositi
 
 ---
 
-## 10. Support & Resources
+## 10. Support & Working Reference Implementations
 
+- **Vanilla JS & Node.js Reference Demo**: [Step-by-Step Vanilla Walkthrough](/developer/interoperability/sdk-vanilla-demo-walkthrough) (`sdks/js-scribe-sdk/examples/vanilla-integration/`)
+- **Python & FastAPI Reference Demo**: [Step-by-Step Python Walkthrough](/developer/interoperability/sdk-python-fastapi-walkthrough) (`sdks/python-scribe-sdk/examples/fastapi-integration/`)
+- **iFrame Track & postMessage Guide**: [iFrame Integration Guide](/developer/interoperability/sdk-iframe-integration-guide)
+- **Postman API Test Collection**: [Postman Collection Guide](/developer/interoperability/postman-collection-guide)
 - **Public Production CDN**: `https://corehealth.corestream.ng/js/corehealth-scribe-sdk.umd.js`
 - **Technical Inquiries**: Contact CoreHealth Engineering at `hello@corestream.ng`.
