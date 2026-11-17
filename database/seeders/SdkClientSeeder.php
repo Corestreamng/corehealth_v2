@@ -15,24 +15,6 @@ class SdkClientSeeder extends Seeder
     {
         $clients = [
             [
-                'client_id' => 'partner-emr-dev',
-                'client_secret' => Hash::make('partner_dev_secret_2026'),
-                'name' => 'Partner EMR Developer Sandbox',
-                'organization' => 'Partner Healthcare Organization',
-                'allowed_scopes' => ['*'],
-                'rate_limit_rpm' => 300,
-                'is_active' => true,
-            ],
-            [
-                'client_id' => 'partner-emr-prod',
-                'client_secret' => Hash::make('partner_prod_secret_2026'),
-                'name' => 'Partner EMR Production Node',
-                'organization' => 'Partner Healthcare Organization',
-                'allowed_scopes' => ['scribe:process', 'scribe:sign', 'interop:compositions'],
-                'rate_limit_rpm' => 600,
-                'is_active' => true,
-            ],
-            [
                 'client_id' => 'ehealth-africa-dev',
                 'client_secret' => Hash::make('ehealth_dev_secret_2026'),
                 'name' => 'Partner Deployment Sandbox',
