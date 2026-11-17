@@ -12,7 +12,6 @@ use App\Interoperability\Http\Controllers\Fhir\FhirServiceRequestController;
 use App\Interoperability\Http\Controllers\OpenEhr\OpenEhrCompositionController;
 use App\Interoperability\Http\Controllers\OpenEhr\OpenEhrEhrController;
 use App\Interoperability\Http\Controllers\OpenEhr\OpenEhrQueryController;
-use App\Interoperability\Http\Controllers\OpenEmr\OpenEmrCompatibilityController;
 use App\Interoperability\Http\Controllers\PatientConsentController;
 use Illuminate\Support\Facades\Route;
 
@@ -81,18 +80,5 @@ Route::middleware(['interop.auth', 'interop.ndpa'])->group(function () {
         Route::post('ehr/{ehr_id}/composition', [OpenEhrCompositionController::class, 'store'])->name('openehr.composition.create');
 
         Route::post('query/aql', [OpenEhrQueryController::class, 'execute'])->name('openehr.query.aql');
-    });
-
-    // OpenEMR REST Compatibility & C-CDA XML
-    Route::prefix('apis/default')->group(function () {
-        Route::get('api/patient', [OpenEmrCompatibilityController::class, 'patient'])->name('openemr.patient.index');
-        Route::get('api/encounter', [OpenEmrCompatibilityController::class, 'encounter'])->name('openemr.encounter.index');
-        Route::get('api/vital_signs', [OpenEmrCompatibilityController::class, 'vitals'])->name('openemr.vitals.index');
-        Route::get('api/ccda/{patientId}', [OpenEmrCompatibilityController::class, 'ccda'])->name('openemr.ccda.export');
-
-        Route::get('fhir/Patient', [FhirPatientController::class, 'index'])->name('openemr.fhir.patient.index');
-        Route::get('fhir/Patient/{id}', [FhirPatientController::class, 'show'])->name('openemr.fhir.patient.read');
-        Route::get('fhir/Observation', [FhirObservationController::class, 'index'])->name('openemr.fhir.observation.index');
-        Route::get('fhir/Encounter', [FhirEncounterController::class, 'index'])->name('openemr.fhir.encounter.index');
     });
 });
