@@ -166,6 +166,10 @@ The FastAPI proxy starts on `http://localhost:3002`.
    - **Clinical Orders**: Staged and approved orders in tabulated view with category pills, piped dosages, tariffs, and queue routing + raw JSON view.
 5. Toggle between `[ ▦ Tabulated View ]` and `[ < > Raw JSON ]` or use the 1-click **Copy JSON** button.
 
+![Node.js Vanilla SDK Completed Dictation, Grounding & Dual-Standard Signed Workflow](/images/workbenches/sdk-demo-node-signed-workflow.png)
+
+![Python FastAPI SDK Reference Integration with Signed Clinical Data Received](/images/workbenches/sdk-demo-python-signed-workflow.png)
+
 ---
 
 ## 5. Downstream Handover
