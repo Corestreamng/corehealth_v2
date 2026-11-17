@@ -314,6 +314,38 @@ class CompressedCatalogService
     }
 
     /**
+     * Compress items or categories into CSCP format.
+     */
+    public function compress(array $itemsOrCategories): string
+    {
+        if (empty($itemsOrCategories)) {
+            return '';
+        }
+
+        // If it's a list of categories
+        if (isset($itemsOrCategories[0]['items'])) {
+            return $this->serializeToCscp($itemsOrCategories);
+        }
+
+        // If it's a flat list of items, group them by type/category
+        $grouped = [];
+        foreach ($itemsOrCategories as $it) {
+            $catType = $it['type'] ?? 'general';
+            if (!isset($grouped[$catType])) {
+                $grouped[$catType] = [
+                    'id' => $catType,
+                    'type' => $catType,
+                    'name' => ucfirst($catType),
+                    'items' => [],
+                ];
+            }
+            $grouped[$catType]['items'][] = $it;
+        }
+
+        return $this->serializeToCscp(array_values($grouped));
+    }
+
+    /**
      * Serialize a categories collection into CSCP compact text.
      */
     public function serializeToCscp(array $categories): string

@@ -183,6 +183,12 @@ class SdkScribeSessionController extends Controller
 
         return response()->json([
             'success' => true,
+            'status' => 'success',
+            'count' => count($serviceCategories) + count($productCategories),
+            'data' => [
+                'services' => $serviceCategories,
+                'products' => $productCategories,
+            ],
             'service_categories' => $serviceCategories,
             'product_categories' => $productCategories,
             'category_map' => $appSettingCats,
@@ -211,7 +217,7 @@ class SdkScribeSessionController extends Controller
             if (!empty($query)) {
                 $pQuery->where(function ($q) use ($query) {
                     $q->where('product_name', 'LIKE', "%{$query}%")
-                      ->orWhere('product_code', 'LIKE', "%{$query}%");
+                        ->orWhere('product_code', 'LIKE', "%{$query}%");
                 });
             }
             $products = $pQuery->limit($limit)->get();
@@ -241,7 +247,7 @@ class SdkScribeSessionController extends Controller
             if (!empty($query)) {
                 $sQuery->where(function ($q) use ($query) {
                     $q->where('service_name', 'LIKE', "%{$query}%")
-                      ->orWhere('service_code', 'LIKE', "%{$query}%");
+                        ->orWhere('service_code', 'LIKE', "%{$query}%");
                 });
             }
             $services = $sQuery->limit($limit - count($items))->get();
@@ -281,7 +287,11 @@ class SdkScribeSessionController extends Controller
 
         return response()->json([
             'success' => true,
+            'status' => 'success',
+            'count' => count($items),
             'total' => count($items),
+            'cscp' => $this->compressedCatalog->compress(array_slice($items, 0, 50)),
+            'data' => $items,
             'items' => $items,
         ], 200);
     }
@@ -291,21 +301,33 @@ class SdkScribeSessionController extends Controller
      */
     public function convertFormat(Request $request): JsonResponse
     {
-        $from = strtolower((string) $request->input('from_taxonomy', 'soap'));
-        $to = strtolower((string) $request->input('to_taxonomy', 'clerking'));
-        $role = strtolower((string) $request->input('role', 'doctor'));
+        $from = strtolower((string) ($request->input('from_taxonomy') ?? $request->input('source_taxonomy', 'soap')));
+        $to = strtolower((string) ($request->input('to_taxonomy') ?? $request->input('target_taxonomy', 'clerking')));
+        $role = strtolower((string) ($request->input('role') ?? $request->input('target_role') ?? $request->input('source_role', 'doctor')));
         $currentSections = $request->input('current_sections', []);
 
         if (is_string($currentSections)) {
             $currentSections = json_decode($currentSections, true) ?: [];
         }
 
+        $rawNote = (string) ($request->input('note') ?? $request->input('transcript') ?? '');
+
         $allContent = '';
         $sectionMap = [];
-        foreach ($currentSections as $sec) {
-            $key = strtolower($sec['key'] ?? '');
-            $sectionMap[$key] = $sec['content'] ?? '';
-            $allContent .= ($sec['title'] ?? '') . ":\n" . ($sec['content'] ?? '') . "\n\n";
+        if (!empty($currentSections)) {
+            foreach ($currentSections as $sec) {
+                $key = strtolower($sec['key'] ?? '');
+                $sectionMap[$key] = $sec['content'] ?? '';
+                $allContent .= ($sec['title'] ?? '') . ":\n" . ($sec['content'] ?? '') . "\n\n";
+            }
+        } elseif (!empty($rawNote)) {
+            $allContent = $rawNote;
+            // Parse common section headers if note provided as plain string
+            preg_match_all('/(?:^|\n)([A-Z\s]+):([\s\S]*?)(?=(?:\n[A-Z\s]+:)|$)/', $rawNote, $matches, PREG_SET_ORDER);
+            foreach ($matches as $m) {
+                $k = strtolower(trim($m[1]));
+                $sectionMap[$k] = trim($m[2]);
+            }
         }
 
         $newSections = $this->transformTaxonomySections($sectionMap, $allContent, $from, $to, $role);
@@ -317,10 +339,12 @@ class SdkScribeSessionController extends Controller
 
         return response()->json([
             'success' => true,
+            'status' => 'success',
             'from_taxonomy' => $from,
             'to_taxonomy' => $to,
             'structured_sections' => $newSections,
             'formatted_markdown' => trim($markdown),
+            'converted_note' => trim($markdown),
         ], 200);
     }
 
@@ -616,12 +640,14 @@ class SdkScribeSessionController extends Controller
 
             return response()->json([
                 'success' => true,
+                'status' => 'success',
                 'message' => 'Consultation note signed and archived successfully.',
                 'audit_id' => $audit->id,
                 'patient_id' => $patientId,
                 'encounter_id' => $encounterId,
                 'signed_at' => $audit->signed_at->toIso8601String(),
                 'approved_orders_count' => count($approvedOrders),
+                'orders_dispatched' => count($approvedOrders),
             ], 200);
         } catch (\Throwable $e) {
             Log::error('SDK Scribe Sign Error', ['error' => $e->getMessage()]);
