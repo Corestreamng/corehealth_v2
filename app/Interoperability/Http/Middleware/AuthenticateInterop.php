@@ -27,6 +27,16 @@ class AuthenticateInterop
             return $next($request);
         }
 
+        // 2b. Authenticate via Ephemeral SDK Session Token (SKT_...)
+        $rawBearer = $request->bearerToken();
+        if ($rawBearer && str_starts_with($rawBearer, 'SKT_')) {
+            $tokenService = app(\App\Interoperability\Services\SdkTokenService::class);
+            $claims = $tokenService->validateToken($rawBearer);
+            if ($claims) {
+                return $next($request);
+            }
+        }
+
         // 3. Authenticate via Web session (internal portals & test harness)
         if (Auth::guard('web')->check()) {
             return $next($request);

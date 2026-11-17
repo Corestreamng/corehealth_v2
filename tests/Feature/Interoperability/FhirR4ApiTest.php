@@ -295,4 +295,34 @@ class FhirR4ApiTest extends TestCase
             'note' => 'Urgent STAT investigation required',
         ]);
     }
+
+    /**
+     * Test an ephemeral SDK session token (SKT_...) can authenticate FHIR endpoints.
+     */
+    public function test_sdk_token_can_authenticate_fhir_endpoints(): void
+    {
+        app('auth')->forgetGuards();
+
+        $client = \App\Interoperability\Models\SdkClient::updateOrCreate(
+            ['client_id' => 'test-interop-sdk-client'],
+            [
+                'client_secret' => \Illuminate\Support\Facades\Hash::make('secret_123'),
+                'name' => 'Test Interop Client',
+                'is_active' => true,
+                'allowed_scopes' => ['*'],
+                'rate_limit_rpm' => 60,
+            ]
+        );
+
+        $tokenService = app(\App\Interoperability\Services\SdkTokenService::class);
+        $sktToken = $tokenService->generateToken($client, ['scope' => '*'], 3600);
+
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $sktToken,
+            'Accept' => 'application/fhir+json',
+        ])->getJson('/api/fhir/r4/Patient?_count=2');
+
+        $this->assertTrue(in_array($response->status(), [200, 201]));
+        $response->assertJsonPath('resourceType', 'Bundle');
+    }
 }
