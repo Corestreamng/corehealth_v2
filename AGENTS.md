@@ -71,7 +71,12 @@ Two Flutter apps, both following the same native standards (responsive, no dupli
 - **Single source of truth:** `App\Support\Navigation\WorkspaceRegistry` mirrors the sidebar. Change the sidebar and the registry together; `tests/Feature/NativeClient` enforces it. The app shows what `GET /api/mobile/staff/workspaces` returns.
 - **No duplication:** mobile routes (`routes/api.php`, `mobile/<workspace>`) point at the same controller methods the web uses. When output must be adapted, add a thin `API\Mobile<Workspace>Controller` that only adapts and calls the web controller or service. Never copy business rules into mobile controllers or Dart.
 - **Guards:** every mobile route group uses `native.workspace:<registry key>`. Only active staff pass, so patients cannot reach staff data.
-- **Parity:** every feature that touches a workspace closes web parity for the screens it touches, and updates the parity table in `docs/developer/native-client.md`. Items that aren't native yet open their web page, so none is ever hidden.
+- **Native parity rule (every workbench change):**
+  - **New feature on any web workbench:** build it in the native client in the same change, in the matching workspace of the staff app. If patients should see the result, build it in the patient app too.
+  - **Updating an existing feature:** check whether the native client has it. If it does, update it in step. If it doesn't and it's a **core feature**, add it natively now.
+  - **A core feature** is one staff use in that workspace's daily work: finding patients, registering, queueing, clinical notes, orders, result entry and approval, dispensing, billing and payments, admissions and discharge, vitals and charts, and viewing a patient's records. Configuration, bulk reports, exports and print layouts may stay on the web, through the web fallback, until the workspace's native flow needs them.
+  - **Record the outcome** in the commit message as `Native parity: <implemented | updated | web-only (reason)>`, and update the parity table in `docs/developer/native-client.md`.
+  - Items that aren't native yet open their web page, so none is ever hidden.
 - **Verify:** `flutter analyze`, `flutter test`, `phpunit tests/Feature/NativeClient`, and check the app at phone, tablet and desktop widths.
 - **Patient app:** `/api/mobile/patient/*` only ever exposes the signed-in patient's own records. Staff login refuses patient accounts, and patient features reuse existing models and services, never staff endpoints.
 
@@ -93,7 +98,7 @@ CoreHealth is one product spread over several repos. Details and release procedu
   - Mobile API changes update the native app that uses them.
   - CoreHMS event changes update Super Admin's receiver.
   - WeCare and DHIS payload changes update the integration on both sides.
-- **Commit messages** end with an `Ecosystem impact:` line listing each component as `updated`, or `not affected` with the reason.
+- **Commit messages** end with a `Native parity:` line (see §8) and an `Ecosystem impact:` line listing each component as `updated`, or `not affected` with the reason.
 - **Docs cover every affected component:** core `docs/` plus the component's own README or docs.
 - **Submodules:** commit and push inside the submodule first, then commit the new pointer in core. Never commit a pointer to an unpushed commit, or one you did not mean to change (`git diff --submodule`).
 - **Releases stay in sync:** one core tag (§6) per release.

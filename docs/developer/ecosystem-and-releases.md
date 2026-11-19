@@ -22,8 +22,10 @@ Before you finish, go through the table. For each component:
    - **Super Admin:** the event receiver and forms.
    - **WeCare/DHIS:** the payload on both sides.
    - In every case, add or adjust tests and update that component's docs.
-3. **Write the result in the commit message:**
+3. **Native parity:** a feature added or changed on a web workbench is built or updated in the staff app (and the patient app if patients see it) in the same change. Any **core feature** you touch that isn't native yet is added now (root `CLAUDE.md` §8). Record it as `Native parity: implemented | updated | web-only (reason)`.
+4. **Write the result in the commit message:**
    ```
+   Native parity: updated (reception queue filters added in client_app)
    Ecosystem impact: core updated; client_app updated; patient_app not affected (patient API unchanged);
    super-admin not affected; sdks not affected; dhis2 not affected; wecare247 not affected
    ```
