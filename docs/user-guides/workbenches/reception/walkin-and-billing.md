@@ -42,6 +42,7 @@ flowchart TD
 ### Step 1: Identify the Customer
 - **Registered Patients**: Search by File Number, Name, or Phone in the left search panel. The patient's record mounts into the top blue ribbon.
 - **Unregistered Walk-In Visitors**: Click the **`+ Register Walk-In`** button on the top action ribbon. Enter their name and phone number for quick receipt generation without opening a permanent medical folder.
+  - **File number:** leave it blank and CoreHealth issues the next number automatically: `EX-` for a reception walk-in, or the department's own series when registering from a department (for example `LAB-0014` from the Laboratory, `RAD-` from Imaging). A number you type yourself also gets the department prefix (`999888` becomes `LAB-999888`). Numbers that already carry an allowed prefix are kept, including both `ANC-` and `PANC-` for maternity.
 
 ---
 

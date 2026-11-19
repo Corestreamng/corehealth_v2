@@ -1502,15 +1502,14 @@ class ReceptionWorkbenchController extends Controller
             // Create patient
             $patient = new Patient();
             $patient->user_id = $user->id;
+            // Typed numbers get the department prefix; a blank number gets the next one in the
+            // department's own sequence (walk-in EX- sequence for plain quick registrations)
+            $workbench = $request->registration_workbench ?? 'reception';
             $fileNo = trim($request->file_no ?? '');
-            if (empty($fileNo)) {
-                $lastWalkin = Patient::whereNotNull('file_no')
-                    ->where('file_no', 'like', 'EX-%')
-                    ->orderBy('id', 'desc')
-                    ->value('file_no');
-                $fileNo = $lastWalkin ? $this->incrementLastNumericSegment($lastWalkin) : 'EX-0001';
+            if ($fileNo === '') {
+                $fileNo = $this->nextFileNumberFor(Patient::getPrefixForWorkbench($workbench) ?? 'EX-');
             }
-            $patient->file_no = $fileNo; // Use provided or auto-generated EX- file number
+            $patient->file_no = Patient::applyWorkbenchPrefix($fileNo, $workbench);
             $patient->gender = $request->gender;
             $patient->dob = $request->dob;
             $patient->phone_no = $request->phone_no;
@@ -1531,13 +1530,6 @@ class ReceptionWorkbenchController extends Controller
             $patient->registration_workbench = $request->registration_workbench ?? 'reception';
             $patient->registered_by = Auth::id();
             $patient->referred_from = $request->referred_from ?? null;
-
-            // Same rule as the full registration form (PatientController@store): a department with a
-            // configured prefix (e.g. LAB-) always gets it, even when the file number is typed in by hand
-            $expectedPrefix = Patient::getPrefixForWorkbench($patient->registration_workbench);
-            if ($expectedPrefix && !empty($patient->file_no) && !str_starts_with(strtoupper(trim($patient->file_no)), strtoupper($expectedPrefix))) {
-                $patient->file_no = $expectedPrefix . ltrim(trim($patient->file_no), '- ');
-            }
 
             $patient->is_family_principal = $request->has('is_family_principal') && filter_var($request->is_family_principal, FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
             $patient->principal_id = $request->principal_id ?? null;
@@ -1710,6 +1702,23 @@ class ReceptionWorkbenchController extends Controller
         ];
 
         return response()->json($stats);
+    }
+
+    /**
+     * Next file number within a prefix sequence (e.g. LAB-0014 after LAB-0013), or "<prefix>0001".
+     */
+    protected function nextFileNumberFor(string $prefix): string
+    {
+        $last = Patient::whereNotNull('file_no')
+            ->where('file_no', 'like', $prefix . '%')
+            ->orderBy('id', 'desc')
+            ->value('file_no');
+        if (!$last) {
+            return $prefix . '0001';
+        }
+        $next = $this->incrementLastNumericSegment($last);
+
+        return str_starts_with(strtoupper($next), strtoupper($prefix)) ? $next : $prefix . ltrim($next, '- ');
     }
 
     /**

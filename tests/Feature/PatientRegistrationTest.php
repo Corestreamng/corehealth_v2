@@ -536,4 +536,42 @@ class PatientRegistrationTest extends TestCase
             $this->assertEquals('St. Luke Specialist Hospital', $patient->referred_from);
         }
     }
+
+    /** @test */
+    public function test_workbench_prefix_rule_accepts_every_allowed_prefix()
+    {
+        $this->assertEquals('LAB-999888', Patient::applyWorkbenchPrefix('999888', 'lab'));
+        $this->assertEquals('LAB-0007', Patient::applyWorkbenchPrefix('LAB-0007', 'lab'));
+        $this->assertEquals('ANC-0123', Patient::applyWorkbenchPrefix('0123', 'maternity'));
+        $this->assertEquals('PANC-0123', Patient::applyWorkbenchPrefix('PANC-0123', 'maternity'), 'PANC- is a valid maternity prefix and must not become ANC-PANC-');
+        $this->assertEquals('15-51-39', Patient::applyWorkbenchPrefix('15-51-39', 'reception'), 'Normal registrations keep the hospital number');
+        $this->assertEquals('', Patient::applyWorkbenchPrefix('', 'lab'));
+    }
+
+    /** @test */
+    public function test_quick_register_numbers_blank_file_no_in_the_department_sequence()
+    {
+        \Illuminate\Support\Facades\Http::fake();
+        $admin = User::factory()->create(['status' => 1, 'is_admin' => 1]);
+        $base = ['gender' => 'Female', 'dob' => '1994-03-01', 'phone_no' => '08011112222', 'hmo_id' => 1];
+
+        $make = function (array $extra) use ($admin, $base) {
+            $resp = $this->actingAs($admin)->postJson('/reception/patient/quick-register', array_merge($base, ['surname' => 'Seq' . uniqid(), 'firstname' => 'Test'], $extra));
+            $this->assertEquals(200, $resp->status(), $resp->getContent());
+
+            return Patient::find($resp->json('patient.id'));
+        };
+
+        $lab = $make(['registration_workbench' => 'lab']);
+        $this->assertMatchesRegularExpression('/^LAB-\d+$/', $lab->file_no, 'A blank lab registration gets the next LAB- number, not LAB-EX-');
+
+        $nextLab = $make(['registration_workbench' => 'lab']);
+        $this->assertNotEquals($lab->file_no, $nextLab->file_no);
+
+        $walkIn = $make([]);
+        $this->assertStringStartsWith('EX-', $walkIn->file_no);
+
+        $panc = $make(['registration_workbench' => 'maternity', 'file_no' => 'PANC-' . rand(10000, 99999)]);
+        $this->assertStringStartsWith('PANC-', $panc->file_no);
+    }
 }

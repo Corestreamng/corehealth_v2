@@ -413,6 +413,28 @@ class Patient extends Model implements Auditable
     ];
 
     /**
+     * Apply the registering department's file-number prefix to a typed or generated number.
+     * A number that already starts with any of the department's allowed prefixes (e.g. ANC- or
+     * PANC- for maternity) is kept as is; otherwise the main prefix is added. Departments without
+     * a prefix (normal reception registration) and blank numbers are returned unchanged.
+     */
+    public static function applyWorkbenchPrefix(?string $fileNo, ?string $workbench): ?string
+    {
+        $fileNo = $fileNo === null ? null : trim($fileNo);
+        $options = self::getPrefixOptionsForWorkbench($workbench);
+        if ($fileNo === null || $fileNo === '' || !$options) {
+            return $fileNo;
+        }
+        foreach ($options as $option) {
+            if (str_starts_with(strtoupper($fileNo), strtoupper($option))) {
+                return $fileNo;
+            }
+        }
+
+        return $options[0] . ltrim($fileNo, '- ');
+    }
+
+    /**
      * Get prefix options for a given workbench.
      *
      * @return array<string>

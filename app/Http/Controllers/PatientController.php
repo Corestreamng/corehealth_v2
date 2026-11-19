@@ -671,14 +671,8 @@ class PatientController extends Controller
                 $patient->registered_by = Auth::id();
                 $patient->referred_from = $request->referred_from ?? null;
 
-                // Enforce fixed standardized prefix if registered from a department with a configured prefix
-                $expectedPrefix = patient::getPrefixForWorkbench($patient->registration_workbench);
-                if ($expectedPrefix && !empty($patient->file_no)) {
-                    $cleanedFileNo = trim($patient->file_no);
-                    if (!str_starts_with(strtoupper($cleanedFileNo), strtoupper($expectedPrefix))) {
-                        $patient->file_no = $expectedPrefix . ltrim($cleanedFileNo, '- ');
-                    }
-                }
+                // Enforce the registering department's prefix (any of its allowed options, e.g. ANC-/PANC-)
+                $patient->file_no = patient::applyWorkbenchPrefix($patient->file_no, $patient->registration_workbench);
 
                 $patient->dhis_consult_tracker_id = $trackedEntityInstanceId;
                 $patient->dhis_consult_enrollment_id = $enrollmentId;
