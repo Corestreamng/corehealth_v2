@@ -722,7 +722,7 @@ class PatientController extends Controller
 
                 if (appsettings('goonline', 0) == 1) {
                     $fullName = trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? ''));
-                    DispatchCoreHmsSyncJob::dispatch('patient', [
+                    DispatchCoreHmsSyncJob::dispatchSafely('patient', [
                         'name' => $fullName,
                         'gender' => $user->gender ?? null,
                         'dob' => $patient->dob ?? null,

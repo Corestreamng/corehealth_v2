@@ -1532,6 +1532,13 @@ class ReceptionWorkbenchController extends Controller
             $patient->registered_by = Auth::id();
             $patient->referred_from = $request->referred_from ?? null;
 
+            // Same rule as the full registration form (PatientController@store): a department with a
+            // configured prefix (e.g. LAB-) always gets it, even when the file number is typed in by hand
+            $expectedPrefix = Patient::getPrefixForWorkbench($patient->registration_workbench);
+            if ($expectedPrefix && !empty($patient->file_no) && !str_starts_with(strtoupper(trim($patient->file_no)), strtoupper($expectedPrefix))) {
+                $patient->file_no = $expectedPrefix . ltrim(trim($patient->file_no), '- ');
+            }
+
             $patient->is_family_principal = $request->has('is_family_principal') && filter_var($request->is_family_principal, FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
             $patient->principal_id = $request->principal_id ?? null;
             if ($patient->is_family_principal) {
@@ -1633,7 +1640,7 @@ class ReceptionWorkbenchController extends Controller
 
             if (appsettings('goonline', 0) == 1) {
                 $fullName = trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? ''));
-                DispatchCoreHmsSyncJob::dispatch('patient', [
+                DispatchCoreHmsSyncJob::dispatchSafely('patient', [
                     'name' => $fullName,
                     'gender' => $user->gender ?? $patient->gender,
                     'dob' => $patient->dob ?? null,
@@ -2161,7 +2168,7 @@ class ReceptionWorkbenchController extends Controller
 
             if (appsettings('goonline', 0) == 1) {
                 $fullName = trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? ''));
-                DispatchCoreHmsSyncJob::dispatch('patient', [
+                DispatchCoreHmsSyncJob::dispatchSafely('patient', [
                     'name' => $fullName,
                     'gender' => $user->gender ?? $patient->gender,
                     'dob' => $patient->dob ?? null,

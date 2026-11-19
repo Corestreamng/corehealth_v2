@@ -1425,7 +1425,7 @@ class LabWorkbenchController extends Controller
             DB::commit();
 
             if (appsettings('goonline', 0) == 1 && (int)($updateData['status'] ?? $labRequest->status) === 4) {
-                DispatchCoreHmsSyncJob::dispatch(new \App\Services\CoreHms\Events\LabSyncEvent(
+                DispatchCoreHmsSyncJob::dispatchSafely(new \App\Services\CoreHms\Events\LabSyncEvent(
                     $labRequest->id,
                     $labRequest->patient_id,
                     $labRequest->service->name ?? ($labRequest->free_form_name ?? 'Investigation'),
@@ -2525,7 +2525,7 @@ class LabWorkbenchController extends Controller
             DB::commit();
 
             if (appsettings('goonline', 0) == 1) {
-                DispatchCoreHmsSyncJob::dispatch(new \App\Services\CoreHms\Events\LabSyncEvent(
+                DispatchCoreHmsSyncJob::dispatchSafely(new \App\Services\CoreHms\Events\LabSyncEvent(
                     $labRequest->id,
                     $labRequest->patient_id,
                     $labRequest->service->name ?? ($labRequest->free_form_name ?? 'Investigation'),
@@ -2610,7 +2610,7 @@ class LabWorkbenchController extends Controller
             DB::commit();
 
             if (appsettings('goonline', 0) == 1) {
-                DispatchCoreHmsSyncJob::dispatch(new \App\Services\CoreHms\Events\LabSyncEvent(
+                DispatchCoreHmsSyncJob::dispatchSafely(new \App\Services\CoreHms\Events\LabSyncEvent(
                     $labRequest->id,
                     $labRequest->patient_id,
                     $labRequest->service->name ?? ($labRequest->free_form_name ?? 'Investigation'),

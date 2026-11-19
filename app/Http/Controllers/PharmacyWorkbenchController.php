@@ -1806,7 +1806,7 @@ class PharmacyWorkbenchController extends Controller
                     $pr = $item['productRequest'] ?? null;
                     if ($pr) {
                         $posr = $pr->productOrServiceRequest;
-                        DispatchCoreHmsSyncJob::dispatch('dispense', [
+                        DispatchCoreHmsSyncJob::dispatchSafely('dispense', [
                             'drug_name' => $pr->product->name ?? 'Medication',
                             'product_id' => $pr->product_id,
                             'store_name' => $store->name ?? 'Pharmacy Store',
@@ -3593,7 +3593,7 @@ class PharmacyWorkbenchController extends Controller
                     $pr = $item['productRequest'] ?? null;
                     if ($pr) {
                         $posr = $pr->productOrServiceRequest;
-                        DispatchCoreHmsSyncJob::dispatch('dispense', [
+                        DispatchCoreHmsSyncJob::dispatchSafely('dispense', [
                             'drug_name' => $pr->product->name ?? 'Medication',
                             'product_id' => $pr->product_id,
                             'batch_id' => $item['batch_id'] ?? null,

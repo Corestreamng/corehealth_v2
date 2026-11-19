@@ -247,30 +247,24 @@ class PatientProcedureController extends Controller
 
             $procedure->save();
 
-            // CoreHMS sync is best-effort: the outcome is already saved and must not fail if the
-            // remote server is unreachable (the job runs inline when the queue driver is sync).
             if (appsettings('goonline', 0) == 1) {
-                try {
-                    $procName = $procedure->is_free_form ? ($procedure->free_form_name ?? 'Procedure') : ($procedure->service?->service_name ?? 'Procedure');
-                    DispatchCoreHmsSyncJob::dispatch(new \App\Services\CoreHms\Events\ProcedureSyncEvent(
-                        $procedure->id,
-                        $procedure->patient_id,
-                        $procName,
-                        $procedure->outcome ?? 'successful',
-                        'Minor Theater',
-                        $procedure->outcome_notes,
-                        $procedure->nhmis_outcome,
-                        $procedure->nhmis_outcome_raw,
-                        'cash',
-                        0.00,
-                        auth()->id(),
-                        'completed',
-                        null,
-                        now()->toDateTimeString()
-                    ));
-                } catch (\Throwable $syncError) {
-                    \Illuminate\Support\Facades\Log::warning('CoreHMS procedure sync could not be dispatched: ' . $syncError->getMessage(), ['procedure_id' => $procedure->id]);
-                }
+                $procName = $procedure->is_free_form ? ($procedure->free_form_name ?? 'Procedure') : ($procedure->service?->service_name ?? 'Procedure');
+                DispatchCoreHmsSyncJob::dispatchSafely(new \App\Services\CoreHms\Events\ProcedureSyncEvent(
+                    $procedure->id,
+                    $procedure->patient_id,
+                    $procName,
+                    $procedure->outcome ?? 'successful',
+                    'Minor Theater',
+                    $procedure->outcome_notes,
+                    $procedure->nhmis_outcome,
+                    $procedure->nhmis_outcome_raw,
+                    'cash',
+                    0.00,
+                    auth()->id(),
+                    'completed',
+                    null,
+                    now()->toDateTimeString()
+                ));
             }
 
             return response()->json([

@@ -3423,7 +3423,7 @@ class EncounterController extends Controller
                     $diagnosis = $request->doctor_diagnosis ?? $reason;
                     $encounterId = $request->encounter_id ?? ($queue?->id ?? uniqid('enc_'));
 
-                    DispatchCoreHmsSyncJob::dispatch('consultation', [
+                    DispatchCoreHmsSyncJob::dispatchSafely('consultation', [
                         'category' => $clinicName,
                         'health_case' => $reason ?: $diagnosis,
                         'diagnosis' => $diagnosis,

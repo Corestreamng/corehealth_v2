@@ -861,7 +861,7 @@ class StaffController extends Controller
                     $staffName = trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? ''));
                     $staffType = ($request->is_admin == 21) ? 'Doctors' : (($request->is_admin == 22) ? 'Nurse' : 'Staffs');
 
-                    DispatchCoreHmsSyncJob::dispatch('staff', [
+                    DispatchCoreHmsSyncJob::dispatchSafely('staff', [
                         'type' => $staffType,
                         'name' => $staffName,
                         'specialization' => $request->specialization ?? null,

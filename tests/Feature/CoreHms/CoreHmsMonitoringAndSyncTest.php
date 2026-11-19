@@ -68,4 +68,40 @@ class CoreHmsMonitoringAndSyncTest extends TestCase
         $procedureResponse = $this->getJson('/api/get-facility-procedures');
         $this->assertTrue(in_array($procedureResponse->status(), [200, 401, 302, 403, 500]));
     }
+
+    /**
+     * A CoreHMS outage must never fail the clinical save that triggered the sync.
+     * Under the sync queue driver the job runs inline, so a plain dispatch would throw.
+     */
+    public function test_dispatch_safely_swallows_corehms_outage_while_plain_dispatch_would_throw()
+    {
+        $config = \App\Models\ApplicationStatu::first();
+        if (!$config) {
+            $this->markTestSkipped('No application settings row.');
+        }
+        $config->goonline = 1;
+        $config->save();
+        clearAppSettingsCache();
+
+        if (!appsettings('COREHMS_SUPERADMIN_URL') || !appsettings('COREHMS_SUPERADMIN_USERNAME') || !appsettings('COREHMS_SUPERADMIN_PASS')) {
+            clearAppSettingsCache();
+            $this->markTestSkipped('CoreHMS credentials are not configured, so the job never calls out.');
+        }
+
+        \Illuminate\Support\Facades\Http::fake(['*' => \Illuminate\Support\Facades\Http::response('Service unavailable', 503)]);
+
+        $threw = false;
+
+        try {
+            \App\Jobs\DispatchCoreHmsSyncJob::dispatchSync('patient', ['patient_id' => 1], 'test-outage');
+        } catch (\Throwable $e) {
+            $threw = true;
+        }
+        $this->assertTrue($threw, 'Without protection the outage surfaces as an exception');
+
+        $this->assertFalse(\App\Jobs\DispatchCoreHmsSyncJob::dispatchSafely('patient', ['patient_id' => 1], 'test-outage'));
+        \Illuminate\Support\Facades\Http::assertSentCount(2);
+
+        clearAppSettingsCache();
+    }
 }

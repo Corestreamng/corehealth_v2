@@ -5760,7 +5760,7 @@ class NursingWorkbenchController extends Controller
 
             if (appsettings('goonline', 0) == 1) {
                 $ward = \App\Models\Ward::find($bed->ward_id);
-                DispatchCoreHmsSyncJob::dispatch(new \App\Services\CoreHms\Events\AdmissionSyncEvent(
+                DispatchCoreHmsSyncJob::dispatchSafely(new \App\Services\CoreHms\Events\AdmissionSyncEvent(
                     $admission->id,
                     $admission->patient_id,
                     'admitted',
@@ -5973,7 +5973,7 @@ class NursingWorkbenchController extends Controller
 
             if (appsettings('goonline', 0) == 1) {
                 $ward = $admission->bed ? \App\Models\Ward::find($admission->bed->ward_id) : null;
-                DispatchCoreHmsSyncJob::dispatch(new \App\Services\CoreHms\Events\AdmissionSyncEvent(
+                DispatchCoreHmsSyncJob::dispatchSafely(new \App\Services\CoreHms\Events\AdmissionSyncEvent(
                     $admission->id,
                     $admission->patient_id,
                     'discharged',

@@ -80,6 +80,30 @@ class DispatchCoreHmsSyncJob implements ShouldQueue
     }
 
     /**
+     * Queue a sync without ever breaking the clinical action that triggered it.
+     *
+     * CoreHMS sync is best-effort. With a background queue a failure only affects the job,
+     * but with the sync queue driver the job runs inline and its exception would otherwise
+     * fail the save (a consultation, admission, dispense, ...). Failures are logged instead.
+     *
+     * Accepts the same arguments as the constructor.
+     */
+    public static function dispatchSafely(...$arguments): bool
+    {
+        try {
+            app(\Illuminate\Contracts\Bus\Dispatcher::class)->dispatch(new static(...$arguments));
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::warning('CoreHMS sync could not be completed; the clinical record was saved. ' . $e->getMessage(), [
+                'event' => is_object($arguments[0] ?? null) ? get_class($arguments[0]) : ($arguments[0] ?? null),
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
      * Execute the job.
      *
      * @return void
