@@ -163,11 +163,11 @@ class NhmisFullParity185RowsTest extends TestCase
             'encounter_id' => $encSevere->id,
             'product_id' => $product->id,
             'dose' => '120mg IV stat',
-            'status' => 1,
+            'status' => 3, // dispensed: a prescription alone is not treatment given
         ]);
         \Illuminate\Support\Facades\DB::table('product_requests')
             ->where('id', $pr->id)
-            ->update(['created_at' => $periodDate]);
+            ->update(['created_at' => $periodDate, 'dispense_date' => $periodDate]);
 
         // Compile report
         $report = NhmisMonthlyReport::getOrCreateForPeriod(2026, 6, 'v2019');
@@ -181,8 +181,9 @@ class NhmisFullParity185RowsTest extends TestCase
             );
         }
 
-        // Uncomplicated malaria (Row 153) should include patientUncomp but exclude patientSevere
-        $this->assertGreaterThanOrEqual(1, $compiled['row_153:total']);
+        // patientUncomp has a malaria diagnosis but no positive parasitological test, so it is
+        // "clinically diagnosed" (Row 152); Row 153 requires a positive RDT/microscopy result
+        $this->assertGreaterThanOrEqual(1, $compiled['row_152:total']);
         // Severe malaria (Row 154) should include patientSevere
         $this->assertGreaterThanOrEqual(1, $compiled['row_154:total']);
         // Severe malaria treated with Artesunate Injection (Row 159)
@@ -270,6 +271,7 @@ class NhmisFullParity185RowsTest extends TestCase
             'referring_doctor_id' => $doctor->id,
             'referring_clinic_id' => 1,
             'provisional_diagnosis' => 'Severe Complicated Malaria',
+            'referral_type' => 'external', // only referrals out of the facility count
             'reason' => 'For expert tertiary intensive care management',
             'status' => 'pending',
         ]);

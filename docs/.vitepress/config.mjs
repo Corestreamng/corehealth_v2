@@ -76,6 +76,7 @@ export default defineConfig({
             },
             { text: 'Pharmacy & Dispensary', link: '/user-guides/workbenches/pharmacy' },
             { text: 'Medical Laboratory (LIS)', link: '/user-guides/workbenches/laboratory' },
+            { text: 'NHMIS Monthly Summary', link: '/user-guides/workbenches/nhmis' },
             { text: 'Imaging & Radiology', link: '/user-guides/workbenches/imaging' },
             { text: 'Theatre & Surgery', link: '/user-guides/workbenches/theatre' },
             {
@@ -196,6 +197,7 @@ export default defineConfig({
             },
             { text: 'Pharmacy & Dispensing API', link: '/developer/workbenches/pharmacy' },
             { text: 'Laboratory (LIS) API', link: '/developer/workbenches/laboratory' },
+            { text: 'NHMIS Monthly Summary API', link: '/developer/workbenches/nhmis' },
             { text: 'Imaging & Radiology API', link: '/developer/workbenches/imaging' },
             { text: 'Theatre & Surgery API', link: '/developer/workbenches/theatre' },
             {

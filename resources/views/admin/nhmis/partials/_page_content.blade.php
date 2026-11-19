@@ -76,12 +76,20 @@
                                     137, 138, 139, 140, 141, 142, 143, 144, 145, 147, 148, 149,
                                     150, 151, 152, 153, 154, 155, 156, 161, 162, 163, 164, 165
                                 ]);
+                                $totalRec = $values["{$rowId}:total"] ?? ($values["{$rowId}:val"] ?? null);
+                                $rowManualReason = \App\Services\Nhmis\NhmisDataAggregatorService::MANUAL_ROWS[$rowId]
+                                    ?? ($totalRec->metadata['manual_reason'] ?? null);
+                                $noAutoSum = in_array($rowId, ['row_92', 'row_93'], true);
                             @endphp
-                            <tr data-row-id="{{ $rowId }}" data-row-num="{{ $rowNum }}">
+                            <tr data-row-id="{{ $rowId }}" data-row-num="{{ $rowNum }}" @if ($noAutoSum) data-no-autosum="1" @endif>
                                 <td class="cell-num">{{ $rowNum }}</td>
                                 <td class="cell-label">
                                     <div class="d-flex align-items-center justify-content-between">
-                                        <span class="row-label-text">{{ $row['label'] }}</span>
+                                        <span class="row-label-text">{{ $row['label'] }}
+                                            @if ($rowManualReason)
+                                                <span class="badge badge-warning nhmis-manual-badge" title="{{ $rowManualReason }}"><i class="mdi mdi-pencil"></i> Manual</span>
+                                            @endif
+                                        </span>
                                         <div class="row-actions-group d-flex align-items-center ml-2 flex-shrink-0">
                                             <button type="button" 
                                                     class="btn btn-outline-primary btn-xs btn-row-drilldown mr-1" 
@@ -106,23 +114,38 @@
                                         $valRec = $values[$primaryKey] ?? ($values[$altKey] ?? null);
                                         $finalVal = $valRec ? $valRec->final_value : 0;
                                         $autoVal = $valRec ? $valRec->auto_value : 0;
+                                        $cellManual = $valRec ? ($valRec->metadata['manual_reason'] ?? null) : null;
+                                        $unplaced = $valRec ? (int) ($valRec->metadata['unplaced'] ?? 0) : 0;
                                         $isOverridden = $valRec ? (bool)$valRec->is_overridden : false;
                                         $reason = $valRec ? $valRec->override_reason : '';
+                                        if ($cellManual) {
+                                            $cellTitle = 'Not recorded in the EMR. ' . $cellManual;
+                                        } else {
+                                            $cellTitle = $isOverridden
+                                                ? 'Manual override: was ' . $autoVal . ($reason ? ' (Reason: ' . $reason . ')' : '')
+                                                : 'Auto count: ' . $autoVal;
+                                            if ($unplaced) {
+                                                $cellTitle .= ' — includes ' . $unplaced . ' record(s) with no date of birth or sex recorded, counted in the total only';
+                                            }
+                                            $cellTitle .= ' (Double-click to drill down)';
+                                        }
                                         $isTotalCol = $col['is_total'] ?? false;
                                     @endphp
                                     <td class="cell-input-td">
                                         <input type="number" 
                                                min="0" 
-                                               class="nhmis-input {{ $isTotalCol ? 'is-total' : '' }} {{ $isOverridden ? 'is-overridden' : '' }}" 
+                                               class="nhmis-input {{ $isTotalCol ? 'is-total' : '' }} {{ $isOverridden ? 'is-overridden' : '' }} {{ $cellManual ? 'is-manual' : '' }}" 
                                                data-cell-key="{{ $primaryKey }}" 
                                                data-row-id="{{ $rowId }}" 
                                                data-col-key="{{ $cKey }}" 
                                                data-is-total="{{ $isTotalCol ? '1' : '0' }}" 
                                                data-auto-val="{{ $autoVal }}" 
                                                data-initial-val="{{ $finalVal }}" 
+                                               data-unplaced="{{ $unplaced }}" 
                                                value="{{ $finalVal }}" 
+                                               @if ($cellManual) placeholder="Enter" @endif
                                                {{ $report->status === 'locked' ? 'readonly' : '' }} 
-                                               title="{{ $isOverridden ? 'Manual override: was ' . $autoVal . ($reason ? ' (Reason: ' . $reason . ')' : '') : 'Auto count: ' . $autoVal }} (Double-click to drill down)" />
+                                               title="{{ $cellTitle }}" />
                                         @if ($isOverridden)
                                             <span class="override-dot" title="Manually overridden from {{ $autoVal }}"></span>
                                         @endif

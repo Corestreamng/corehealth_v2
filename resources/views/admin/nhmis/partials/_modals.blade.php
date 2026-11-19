@@ -253,6 +253,8 @@
                     </div>
                 </div>
 
+                <div class="alert alert-warning small py-2 mb-3" id="drilldown-notice" hidden></div>
+
                 <!-- Search & Filters Toolbar -->
                 <div class="card bg-light border mb-3">
                     <div class="card-body p-2">
@@ -306,7 +308,7 @@
                                 <th style="width: 15%;">HMO & Scheme</th>
                                 <th style="width: 6%;">Sex</th>
                                 <th style="width: 6%;">Age</th>
-                                <th style="width: 13%;">Doctor / Clinician</th>
+                                <th style="width: 13%;">Source Record</th>
                                 <th style="width: 15%;">Clinical Details / Result</th>
                             </tr>
                         </thead>

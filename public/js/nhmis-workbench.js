@@ -121,10 +121,18 @@
                                 }
                             }
                             if ($input.length) {
-                                const targetVal = (valObj.final !== null && valObj.final !== undefined) ? valObj.final : (valObj.auto ?? 0);
+                                // Manual cells (not recorded in the EMR) stay blank for the records officer to fill
+                                const isManual = !!valObj.manual_reason;
+                                const targetVal = (valObj.final !== null && valObj.final !== undefined) ? valObj.final : (isManual ? '' : (valObj.auto ?? 0));
                                 $input.val(targetVal);
-                                $input.attr('data-auto-val', valObj.auto ?? 0);
+                                $input.attr('data-auto-val', valObj.auto ?? '');
                                 $input.attr('data-initial-val', targetVal);
+                                $input.attr('data-unplaced', valObj.unplaced || 0);
+                                $input.toggleClass('is-manual', isManual);
+                                $input.attr('placeholder', isManual ? 'Enter' : '');
+                                if (isManual) {
+                                    $input.attr('title', 'Not recorded in the EMR. ' + valObj.manual_reason);
+                                }
                                 $input.removeClass('is-dirty');
 
                                 if (valObj.is_overridden) {
@@ -210,11 +218,24 @@
 
         // Only calculate total if there are actually sub-column inputs to sum!
         // Single-column rows (total only) must never have their values overwritten with 0.
+        // Rows whose total is not the sum of its columns (e.g. RI sessions: total = conducted) are skipped.
+        if ($tr.attr('data-no-autosum') === '1') {
+            return;
+        }
         if ($totalInput.length && $subInputs.length > 0) {
-            let sum = 0;
+            // Records with no recorded DOB/sex are counted in the total only ("unplaced")
+            let sum = parseFloat($totalInput.attr('data-unplaced')) || 0;
+            let anyValue = sum > 0;
             $subInputs.each(function () {
-                sum += parseFloat($(this).val()) || 0;
+                const v = $(this).val();
+                if (v !== '' && v !== null) {
+                    anyValue = true;
+                }
+                sum += parseFloat(v) || 0;
             });
+            if (!anyValue && $totalInput.hasClass('is-manual')) {
+                return;
+            }
             $totalInput.val(sum);
             if (!$totalInput.hasClass('is-dirty')) {
                 $totalInput.attr('data-initial-val', sum);
@@ -1068,6 +1089,15 @@
             if (res.success) {
                 $('#drilldown-stat-patients').html(`<i class="mdi mdi-account-multiple"></i> Unique Patients: ${res.unique_patients}`);
                 $('#drilldown-stat-records').html(`<i class="mdi mdi-file-document-outline"></i> Total Records: ${res.total_records}`);
+
+                const notes = [];
+                if (res.manual_reason) {
+                    notes.push('<i class="mdi mdi-pencil"></i> This cell is entered manually: ' + $('<span>').text(res.manual_reason).html());
+                }
+                if (res.unplaced > 0) {
+                    notes.push('<i class="mdi mdi-account-question"></i> ' + res.unplaced + ' record(s) have no date of birth or sex recorded, so they count in the row total but not in an age/sex column. Update those patient records to place them.');
+                }
+                $('#drilldown-notice').html(notes.join('<br>')).prop('hidden', notes.length === 0);
 
                 populateHmoFilters(res.hmos, res.schemes);
                 renderDrillDownTable(res.records, res.from);

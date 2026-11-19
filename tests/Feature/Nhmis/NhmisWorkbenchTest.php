@@ -249,7 +249,7 @@ class NhmisWorkbenchTest extends TestCase
     }
 
     /** @test */
-    public function test_ri_fixed_sessions_drill_down_loads_exact_four_records()
+    public function test_ri_fixed_sessions_are_manual_and_drill_down_explains_why()
     {
         $user = User::first() ?? User::factory()->create(['status' => 1]);
         $report = NhmisMonthlyReport::getOrCreateForPeriod(2026, 8, 'v2019');
@@ -261,10 +261,9 @@ class NhmisWorkbenchTest extends TestCase
             $data = $response->json();
             $this->assertTrue($data['success']);
             $this->assertEquals('row_92:total', $data['cell_key']);
-            $this->assertEquals(4, $data['total_records']);
-            $this->assertEquals(4, $data['unique_patients']);
-            $this->assertCount(4, $data['records']);
-            $this->assertStringContainsString('Fixed Session', $data['records'][0]['patient_name']);
+            // RI session planning is an administrative return, not EMR data: no invented records
+            $this->assertEquals(0, $data['total_records']);
+            $this->assertNotEmpty($data['manual_reason']);
         }
     }
 

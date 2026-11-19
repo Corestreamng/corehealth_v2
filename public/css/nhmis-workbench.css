@@ -233,6 +233,26 @@
     color: #1d4ed8 !important;
 }
 
+/* Cells the EMR cannot compute: entered by the records officer */
+.nhmis-input.is-manual {
+    background-color: #fffbeb;
+    border-style: dashed !important;
+    border-color: #d97706 !important;
+}
+
+.nhmis-input.is-manual::placeholder {
+    color: #b45309;
+    font-size: 0.7rem;
+}
+
+.nhmis-manual-badge {
+    font-size: 0.62rem;
+    font-weight: 600;
+    margin-left: 4px;
+    vertical-align: middle;
+    cursor: help;
+}
+
 .override-dot {
     position: absolute;
     top: 2px;

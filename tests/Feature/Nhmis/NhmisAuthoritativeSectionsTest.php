@@ -61,13 +61,23 @@ class NhmisAuthoritativeSectionsTest extends TestCase
         $this->assertGreaterThanOrEqual(1, $computed['row_1:total']);
         $this->assertGreaterThanOrEqual(1, $computed['row_2:total']);
 
-        // Compare against direct authoritative query on encounters table
-        $rawCount = Encounter::whereBetween('created_at', [
-            Carbon::create(2026, 4, 1)->startOfMonth(),
-            Carbon::create(2026, 4, 1)->endOfMonth(),
-        ])->count();
+        // Attendance = one per patient per day across doctor encounters and nursing-led visits
+        $from = Carbon::create(2026, 4, 1)->startOfMonth();
+        $to = Carbon::create(2026, 4, 1)->endOfMonth();
+        $days = [];
+        foreach (Encounter::whereBetween('created_at', [$from, $to])->whereNotNull('patient_id')->get(['patient_id', 'created_at']) as $e) {
+            $days[$e->patient_id . '|' . $e->created_at->toDateString()] = true;
+        }
+        foreach (['anc_visits' => 'visit_date', 'postnatal_visits' => 'visit_date'] as $table => $col) {
+            foreach (\Illuminate\Support\Facades\DB::table($table)->whereNull('deleted_at')->whereNotNull('patient_id')->whereBetween($col, [$from, $to])->get(['patient_id', $col]) as $v) {
+                $days[$v->patient_id . '|' . substr($v->{$col}, 0, 10)] = true;
+            }
+        }
+        foreach (\Illuminate\Support\Facades\DB::table('immunization_records')->whereNull('deleted_at')->whereNotNull('patient_id')->whereBetween('administered_at', [$from, $to])->get(['patient_id', 'administered_at']) as $v) {
+            $days[$v->patient_id . '|' . substr($v->administered_at, 0, 10)] = true;
+        }
 
-        $this->assertEquals($rawCount, $computed['row_1:total']);
+        $this->assertEquals(count($days), $computed['row_1:total']);
     }
 
     /**
@@ -169,6 +179,8 @@ class NhmisAuthoritativeSectionsTest extends TestCase
             'enrolled_by' => $user->id,
             'enrollment_date' => $ancDate,
             'booking_date' => $ancDate,
+            'lmp' => $ancDate->copy()->subWeeks(16),
+            'edd' => $ancDate->copy()->subWeeks(16)->addDays(280),
             'gestational_age_weeks' => 16,
             'gravida' => 2,
             'para' => 1,
@@ -188,6 +200,15 @@ class NhmisAuthoritativeSectionsTest extends TestCase
         $visit->created_at = $ancDate;
         $visit->save();
 
+        // IPTp is counted from SP actually dispensed by pharmacy (status 3), not from note text
+        $sp = \App\Models\Product::where('product_name', 'like', '%fansidar%')->first()
+            ?? \App\Models\Product::create(['product_name' => 'FANSIDAR X3 (sulfadoxine/pyrimethamine) tab', 'category_id' => 1, 'status' => 1]);
+        $prId = \Illuminate\Support\Facades\DB::table('product_requests')->insertGetId([
+            'patient_id' => $patient->id, 'product_id' => $sp->id, 'qty' => 3, 'status' => 3,
+            'dispense_date' => $ancDate, 'created_at' => $ancDate, 'updated_at' => $ancDate,
+        ]);
+        $this->assertGreaterThan(0, $prId);
+
         $report = NhmisMonthlyReport::getOrCreateForPeriod(2026, 7, 'v2019');
         $computed = $this->aggregator->compileReport($report);
 
@@ -198,7 +219,13 @@ class NhmisAuthoritativeSectionsTest extends TestCase
         $this->assertGreaterThanOrEqual(1, $computed['row_10:total']);
         $this->assertGreaterThanOrEqual(1, $computed['row_11:ga_lt_20wks']);
         $this->assertGreaterThanOrEqual(1, $computed['row_26:total']);
-        $this->assertGreaterThanOrEqual(1, $computed['row_30:total']);
+
+        // LLIN is only computable when an LLIN product exists in the pharmacy catalogue; otherwise it is manual (null)
+        $hasLlin = \App\Models\Product::where('product_name', 'like', '%llin%')->orWhere('product_name', 'like', '%mosquito net%')->orWhere('product_name', 'like', '%bed net%')->get()
+            ->contains(fn ($p) => preg_match('/\\b(llin|bed\\s*net|mosquito\\s*net)\\b/i', $p->product_name));
+        if (!$hasLlin) {
+            $this->assertNull($computed['row_30:total']);
+        }
     }
 
     /**
@@ -471,7 +498,7 @@ class NhmisAuthoritativeSectionsTest extends TestCase
         $this->assertEquals('Full Year (Annual)', $report->month_name);
 
         $computed = $this->aggregator->compileReport($report);
-        $this->assertCount(658, $computed);
+        $this->assertCount(661, $computed); // every cell of the 2019 schema
 
         $fresh = $report->fresh();
         $this->assertEquals('compiled', $fresh->status);
@@ -499,7 +526,7 @@ class NhmisAuthoritativeSectionsTest extends TestCase
         $this->assertStringContainsString('Custom', $report->month_name);
 
         $computed = $this->aggregator->compileReport($report);
-        $this->assertCount(658, $computed);
+        $this->assertCount(661, $computed); // every cell of the 2019 schema
 
         $fresh = $report->fresh();
         $this->assertEquals('compiled', $fresh->status);
