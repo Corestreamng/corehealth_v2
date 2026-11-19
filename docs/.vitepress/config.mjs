@@ -33,6 +33,7 @@ export default defineConfig({
           items: [
             { text: 'Longitudinal Clinical Pathway', link: '/user-guides/clinical-pathway' },
             { text: 'Zero-Scroll Cockpit Standards', link: '/user-guides/cockpit-experience' },
+            { text: 'CoreHealth Staff App (Mobile, Tablet, Desktop)', link: '/user-guides/native-client' },
           ]
         },
         {
@@ -198,6 +199,8 @@ export default defineConfig({
             { text: 'Pharmacy & Dispensing API', link: '/developer/workbenches/pharmacy' },
             { text: 'Laboratory (LIS) API', link: '/developer/workbenches/laboratory' },
             { text: 'NHMIS Monthly Summary API', link: '/developer/workbenches/nhmis' },
+            { text: 'Native Clients (Staff & Patient Apps)', link: '/developer/native-client' },
+            { text: 'Ecosystem & Release Sync', link: '/developer/ecosystem-and-releases' },
             { text: 'Imaging & Radiology API', link: '/developer/workbenches/imaging' },
             { text: 'Theatre & Surgery API', link: '/developer/workbenches/theatre' },
             {

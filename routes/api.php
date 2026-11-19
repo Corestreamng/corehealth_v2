@@ -9,6 +9,7 @@ use App\Http\Controllers\EncounterController;
 use App\Http\Controllers\MedicationChartController;
 use App\Http\Controllers\NursingWorkbenchController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ReceptionWorkbenchController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SpecialistReferralController;
 use App\Http\Controllers\VitalSignController;
@@ -194,6 +195,8 @@ Route::prefix('mobile')->middleware('throttle:10,1')->group(function () {
 // Protected — requires Sanctum token
 Route::prefix('mobile')->middleware('auth:sanctum')->group(function () {
     Route::post('logout', [MobileAuthController::class, 'logout']);
+    // Native staff client navigation: web sidebar sections the user may use
+    Route::get('staff/workspaces', [MobileAuthController::class, 'staffWorkspaces']);
 });
 
 /*
@@ -203,7 +206,7 @@ Route::prefix('mobile')->middleware('auth:sanctum')->group(function () {
 | These routes power the Doctor App's clinical workflow.
 | Existing JSON-returning EncounterController methods are reused directly.
 */
-Route::prefix('mobile/doctor')->middleware('auth:sanctum')->group(function () {
+Route::prefix('mobile/doctor')->middleware(['auth:sanctum', 'native.workspace:doctor'])->group(function () {
 
     // ── Queue Management ──────────────────────────────────────────
     Route::get('queues', [MobileEncounterController::class, 'queues']);
@@ -342,6 +345,35 @@ Route::prefix('mobile/doctor')->middleware('auth:sanctum')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
+| Native Staff Client — Reception / Health Records workspace
+|--------------------------------------------------------------------------
+| Thin route wrappers: every route points at the same ReceptionWorkbenchController
+| method the web workbench uses (routes/reception_workbench.php). No logic lives here.
+| Guard = the web sidebar's Health Records guard (WorkspaceRegistry 'reception').
+*/
+Route::prefix('mobile/reception')->middleware(['auth:sanctum', 'native.workspace:reception'])->group(function () {
+    Route::get('today-stats', [ReceptionWorkbenchController::class, 'getTodayStats']);
+    Route::get('queue-counts', [ReceptionWorkbenchController::class, 'getQueueCounts']);
+    Route::get('queue-list', [ReceptionWorkbenchController::class, 'getQueueList']);
+    Route::get('search-patients', [ReceptionWorkbenchController::class, 'searchPatients']);
+    Route::get('patient/next-file-number', [ReceptionWorkbenchController::class, 'getNextFileNumber']);
+    Route::post('patient/check-file-number', [ReceptionWorkbenchController::class, 'checkFileNumberExists']);
+    Route::post('patient/check-duplicate', [ReceptionWorkbenchController::class, 'checkDuplicatePatient']);
+    Route::post('patient/quick-register', [ReceptionWorkbenchController::class, 'quickRegister']);
+    Route::get('patient/{id}', [ReceptionWorkbenchController::class, 'getPatient']);
+    Route::get('patient/{id}/visits', [ReceptionWorkbenchController::class, 'getVisitHistory']);
+    Route::get('patient/{id}/queue', [ReceptionWorkbenchController::class, 'getPatientQueueEntries']);
+    Route::put('patient/{id}/update', [ReceptionWorkbenchController::class, 'updatePatient']);
+    Route::get('clinics', [ReceptionWorkbenchController::class, 'getClinics']);
+    Route::get('clinics/{id}/doctors', [ReceptionWorkbenchController::class, 'getDoctorsByClinic']);
+    Route::get('services/consultation', [ReceptionWorkbenchController::class, 'getConsultationServices']);
+    Route::get('hmos', [ReceptionWorkbenchController::class, 'getHmos']);
+    Route::post('tariff-preview', [ReceptionWorkbenchController::class, 'getTariffPreview']);
+    Route::post('book-consultation', [ReceptionWorkbenchController::class, 'bookConsultation']);
+});
+
+/*
+|--------------------------------------------------------------------------
 | Mobile Patient Routes — Read-Only Health Records
 |--------------------------------------------------------------------------
 */
@@ -366,7 +398,7 @@ Route::prefix('mobile/patient')->middleware('auth:sanctum')->group(function () {
 | Mobile Chat Routes — Doctor (full chat system)
 |--------------------------------------------------------------------------
 */
-Route::prefix('mobile/doctor/chat')->middleware('auth:sanctum')->group(function () {
+Route::prefix('mobile/doctor/chat')->middleware(['auth:sanctum', 'native.workspace:global'])->group(function () {
     Route::get('conversations', [MobileChatController::class, 'getConversations']);
     Route::get('messages/{conversationId}', [MobileChatController::class, 'getMessages']);
     Route::post('send', [MobileChatController::class, 'sendMessage']);

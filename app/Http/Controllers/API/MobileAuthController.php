@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ApplicationStatu;
 use App\Models\Patient;
 use App\Models\User;
+use App\Support\Navigation\WorkspaceRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -75,10 +76,19 @@ class MobileAuthController extends Controller
                 ], 401);
             }
 
-            // Revoke previous mobile tokens
-            $user->tokens()->where('name', 'mobile-doctor')->delete();
+            // The staff client is for hospital staff only: patients use the patient app, and
+            // deactivated accounts may not sign in (patient accounts carry the PATIENT role only)
+            if (!self::isActiveStaff($user)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'This account cannot sign in to the CoreHealth staff app.',
+                ], 403);
+            }
 
-            $token = $user->createToken('mobile-doctor')->plainTextToken;
+            // Revoke previous staff-client tokens (mobile-doctor is the legacy name)
+            $user->tokens()->whereIn('name', ['mobile-doctor', 'mobile-staff'])->delete();
+
+            $token = $user->createToken('mobile-staff')->plainTextToken;
 
             $staff = $user->staff;
 
@@ -104,6 +114,7 @@ class MobileAuthController extends Controller
                         'designation' => $staff->designation,
                         'photo' => $staff->photo,
                     ] : null,
+                    'workspaces' => WorkspaceRegistry::visibleFor($user),
                 ],
             ]);
         } catch (\Exception $e) {
@@ -114,6 +125,38 @@ class MobileAuthController extends Controller
                 'message' => 'Login failed. Please try again.',
             ], 500);
         }
+    }
+
+    /**
+     * Workspaces (web sidebar sections and items) the signed-in staff member may use, in
+     * sidebar order. The native client builds its navigation from this list.
+     */
+    public function staffWorkspaces(Request $request)
+    {
+        $user = $request->user();
+        if (!self::isActiveStaff($user)) {
+            return response()->json(['status' => false, 'message' => 'Staff access only.'], 403);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'roles' => $user->getRoleNames(),
+                'workspaces' => WorkspaceRegistry::visibleFor($user),
+            ],
+        ]);
+    }
+
+    /** Active account with a staff profile or any non-patient role. */
+    public static function isActiveStaff(?User $user): bool
+    {
+        if (!$user || (int) $user->status !== 1) {
+            return false;
+        }
+
+        // staff_profile() uses withDefault(), so check for a real staff row
+        return \App\Models\Staff::where('user_id', $user->id)->exists()
+            || $user->getRoleNames()->contains(fn ($role) => strtoupper($role) !== 'PATIENT');
     }
 
     /**

@@ -66,7 +66,43 @@ Code follows PSR-12. Commits and PRs must pass the `lint` step in `.github/workf
 - **NDPA 2023:** affirmative consent for sensitive data (Section 30) via `CheckNdpaConsent` (`X-NDPA-Consent-Status`); PII sanitization and deterministic pseudonymization via `NdprSanitizerService` before any external handoff.
 - **Terminologies:** LOINC + UCUM (vitals/labs), WHO ATC (medications), ICD-10 (diagnoses).
 
-## 8. Gotchas
+## 8. Native clients (`native_clients/`)
+Two Flutter apps, both following the same native standards (responsive, no duplicated logic, release-synced): the **patient app** (`patient_app`, patients' own records; rules in its `CLAUDE.md`) and the **staff app** (`client_app`), one app for all hospital staff: **every web sidebar workspace, same order, same role guards**, adaptive for phone, tablet and desktop. Full rules: `native_clients/client_app/CLAUDE.md`. The essentials:
+- **Single source of truth:** `App\Support\Navigation\WorkspaceRegistry` mirrors the sidebar. Change the sidebar and the registry together; `tests/Feature/NativeClient` enforces it. The app shows what `GET /api/mobile/staff/workspaces` returns.
+- **No duplication:** mobile routes (`routes/api.php`, `mobile/<workspace>`) point at the same controller methods the web uses. When output must be adapted, add a thin `API\Mobile<Workspace>Controller` that only adapts and calls the web controller or service. Never copy business rules into mobile controllers or Dart.
+- **Guards:** every mobile route group uses `native.workspace:<registry key>`. Only active staff pass, so patients cannot reach staff data.
+- **Parity:** every feature that touches a workspace closes web parity for the screens it touches, and updates the parity table in `docs/developer/native-client.md`. Items that aren't native yet open their web page, so none is ever hidden.
+- **Verify:** `flutter analyze`, `flutter test`, `phpunit tests/Feature/NativeClient`, and check the app at phone, tablet and desktop widths.
+- **Patient app:** `/api/mobile/patient/*` only ever exposes the signed-in patient's own records. Staff login refuses patient accounts, and patient features reuse existing models and services, never staff endpoints.
+
+## 9. Ecosystem: every change considers every component
+CoreHealth is one product spread over several repos. Details and release procedure: `docs/developer/ecosystem-and-releases.md`.
+
+| Component | Path (repo) | Contract with core |
+|---|---|---|
+| CoreHMS Super Admin | `Corehealth-Super-Admin` (submodule) | `DispatchCoreHmsSyncJob` events → `api/event-notification.php`; forms/versions API |
+| Native staff app | `native_clients/client_app` (submodule) | `/api/mobile/staff\|doctor\|reception\|…`, WorkspaceRegistry |
+| Patient app | `native_clients/patient_app` (submodule) | `/api/mobile/patient/*`, `/api/mobile/patient/chat/*` |
+| Scribe SDKs | `sdks/js-scribe-sdk`, `sdks/python-scribe-sdk` (submodules) | Interop/scribe REST API, their `openapi/` + `postman/` |
+| DHIS2 | external | `dhis_*` Hospital Config settings, patient tracker IDs, NHMIS |
+| WeCare247 | `wecare247` (submodule) | `API\WeCareIntegrationController`, `wecare_*` settings |
+
+- **Impact check on every change:** for each component, ask whether this change touches a contract it uses: a route, a payload or response field, an event, a model field, a setting, a role/permission, or the sidebar. If it does, update that component in the same change, with its tests and docs. If it doesn't, say so.
+- **Contracts never drift:**
+  - API changes update the SDKs' OpenAPI and Postman files and both SDKs.
+  - Mobile API changes update the native app that uses them.
+  - CoreHMS event changes update Super Admin's receiver.
+  - WeCare and DHIS payload changes update the integration on both sides.
+- **Commit messages** end with an `Ecosystem impact:` line listing each component as `updated`, or `not affected` with the reason.
+- **Docs cover every affected component:** core `docs/` plus the component's own README or docs.
+- **Submodules:** commit and push inside the submodule first, then commit the new pointer in core. Never commit a pointer to an unpushed commit, or one you did not mean to change (`git diff --submodule`).
+- **Releases stay in sync:** one core tag (§6) per release.
+  - Every component that changed since the last release gets a version bump (`pubspec.yaml`, `package.json`, `pyproject.toml`) and the same tag in its own repo.
+  - `docs/releases/<TAG>.md` carries a component matrix: component → version, tag, commit, and changed or unchanged.
+  - Don't tag until all submodules are clean, pushed and pointed to.
+
+## 10. Gotchas
+- **Cached routes hide new routes.** If `bootstrap/cache/routes-v7.php` exists, run `php artisan route:cache` after adding routes (tests: set `APP_ROUTES_CACHE` to a missing file).
 - **Cached config breaks PHPUnit.** If `bootstrap/cache/config.php` exists, tests ignore `phpunit.xml` and hit the dev database with CSRF on (HTTP 419 failures). Run `php artisan config:clear` first.
 - **A 500 passes the status assertion above.** When a feature test "passes", check the response body in new or changed tests so errors are not hidden.
 - **CoreHMS sync must never break a clinical save.** Dispatch with `DispatchCoreHmsSyncJob::dispatchSafely(...)`, not `::dispatch(...)`, in controllers (the sync queue driver runs jobs inline).
