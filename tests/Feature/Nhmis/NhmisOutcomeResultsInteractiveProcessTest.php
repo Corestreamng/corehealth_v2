@@ -22,6 +22,10 @@ class NhmisOutcomeResultsInteractiveProcessTest extends TestCase
         parent::setUp();
         $this->adminUser = User::find(1) ?? User::factory()->create(['status' => 1]);
         $this->patient = Patient::first() ?? Patient::factory()->create();
+
+        // Saving outcomes may dispatch CoreHMS sync jobs (run inline under the sync queue);
+        // never call a real external server from the test suite.
+        \Illuminate\Support\Facades\Http::fake();
     }
 
     /** @test */
