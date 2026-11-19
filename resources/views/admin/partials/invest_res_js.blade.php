@@ -732,6 +732,12 @@ window.InvestResultEntry = (function() {
                     _currentNhmisMapping = res;
                     _renderNhmisOutcomeBar(res, request);
                 }
+            },
+            error: function(xhr) {
+                // Never fail silently: the server may still require an outcome for this test
+                if (window.toastr) {
+                    toastr.warning('Could not load the NHMIS outcome options for this test (HTTP ' + xhr.status + '). If saving is blocked, contact the administrator.');
+                }
             }
         });
     }

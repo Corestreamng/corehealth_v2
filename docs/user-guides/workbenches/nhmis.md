@@ -43,7 +43,7 @@ The **NHMIS Monthly Summary Workbench** fills the national *NHMIS Health Facilit
 
 Care-seeking time and transport (34-35), newborn immediate care (51-54), newborn danger signs (57-58), KMC (61-62), AEFI investigations (89-90), RI operations and funds (91-97), birth registration (98-100), CMAM outcomes (109), FP referrals from other units (127), ADR referrals and NAFDAC reports (134, 185), TB symptom screening and TB referrals (161, 163), post-GBV care (173) and fistula follow-up (178-180).
 
-Some rows become manual only because a product or test does not exist in CoreHealth, for example LLIN, magnesium sulphate, rectal artesunate, anti-snake venom, implants or a malaria RDT. Add the product to the pharmacy catalogue, or link the test in **Service Links**, and those rows start counting automatically.
+Rows counted from pharmacy dispensing or lab tests are also manual while **nothing is linked** to them in **Service Links**. For example: LLIN, magnesium sulphate, rectal artesunate, anti-snake venom, implants or a malaria RDT. Link your own product or test (adding it to the catalogue first if needed) and the row starts counting at the next compile.
 
 ---
 
@@ -60,11 +60,16 @@ Some rows become manual only because a product or test does not exist in CoreHea
 
 ---
 
-## 4. Keep lab rows accurate with Service Links
+## 4. Keep lab and pharmacy rows accurate with Service Links
 
-**Where to click:** **Service Links** (top-right). Link each national indicator to your own lab, imaging and theatre services. Only linked services feed the lab rows, so check them after adding new tests to the price list. See [NHMIS Service Linking](/user-guides/workbenches/laboratory#_5-2-linking-hospital-services-to-nhmis-indicators) for step-by-step instructions.
+**Where to click:** **Service Links** (top-right). Each facility names its tests and drugs differently, so you tell CoreHealth which of **your** items count for each national indicator. Only linked items are counted.
 
-![Service Linking window](/images/workbenches/nhmis-service-linking-modal.png)
+- **Lab / Imaging / Procedure:** link tests and theatre services (malaria microscopy, HBsAg, VDRL, caesarean section and so on). See [NHMIS Service Linking](/user-guides/workbenches/laboratory#_5-2-linking-hospital-services-to-nhmis-indicators) for step-by-step instructions.
+- **Pharmacy:** link the products for each drug group: IPTp SP, LLIN, iron/folic acid, ACT, artesunate injection, ORS, zinc, amoxicillin, deworming, Vitamin A, contraceptives, MgSO4, anti-snake venom, hepatitis antivirals and others. The description under each group names the form rows it feeds. Only items actually **dispensed** count.
+
+![Pharmacy drug groups in Service Links](/images/workbenches/nhmis-pharmacy-links.png)
+
+**Auto-Detect** suggests links by name for both tests and products; review the suggestions before compiling. Inactive products stay listed with their names, because their dispensing history still counts for past months.
 
 ---
 

@@ -532,6 +532,8 @@
         meta: {},
         services: [],
         serviceById: {},
+        products: [],        // pharmacy catalogue for drug-group (product) indicators
+        productById: {},
         original: {},
         working: {},
         selected: null,
@@ -579,9 +581,20 @@
         });
     }
 
+    // Product (pharmacy) indicators link products; all others link services. IDs are only comparable within one kind.
+    function nhmIsProduct(code) {
+        return ((nhm.indicators[code] || {}).kind || '') === 'product';
+    }
+
+    function nhmItemById(code, id) {
+        const map = nhmIsProduct(code) ? nhm.productById : nhm.serviceById;
+        return map[id] || { id: id, service_name: (nhmIsProduct(code) ? 'Product #' : 'Service #') + id };
+    }
+
     function nhmIndicatorsUsing(serviceId, exceptCode) {
+        const kind = nhmIsProduct(exceptCode);
         return Object.keys(nhm.working).filter(function (c) {
-            return c !== exceptCode && nhm.working[c].indexOf(serviceId) !== -1;
+            return c !== exceptCode && nhmIsProduct(c) === kind && nhm.working[c].indexOf(serviceId) !== -1;
         });
     }
 
@@ -705,11 +718,13 @@
             const payload = {};
             dirty.forEach(function (code) {
                 const m = nhm.meta[code] || {};
-                payload[code] = {
-                    service_ids: nhm.working[code],
-                    supported_outcomes: m.supported_outcomes || null,
-                    positive_outcomes: m.positive_outcomes || null
-                };
+                payload[code] = nhmIsProduct(code)
+                    ? { product_ids: nhm.working[code] }
+                    : {
+                        service_ids: nhm.working[code],
+                        supported_outcomes: m.supported_outcomes || null,
+                        positive_outcomes: m.positive_outcomes || null
+                    };
             });
 
             const $btn = $(this);
@@ -751,14 +766,18 @@
             nhm.services = (res.services || []).map(function (s) { s.id = Number(s.id); return s; });
             nhm.serviceById = {};
             nhm.services.forEach(function (s) { nhm.serviceById[s.id] = s; });
+            nhm.products = (res.products || []).map(function (p) { p.id = Number(p.id); p.category_name = 'Pharmacy'; return p; });
+            nhm.productById = {};
+            nhm.products.forEach(function (p) { nhm.productById[p.id] = p; });
             nhm.original = {};
             Object.keys(nhm.indicators).forEach(function (code) {
                 const m = nhm.meta[code] || {};
                 nhm.original[code] = (m.service_ids || []).map(Number);
                 // Keep names for linked services outside the active catalogue (inactive / other category)
+                const byId = m.kind === 'product' ? nhm.productById : nhm.serviceById;
                 (m.services || []).forEach(function (s) {
-                    if (!nhm.serviceById[s.id]) {
-                        nhm.serviceById[s.id] = { id: Number(s.id), service_name: s.name, service_code: '', category_id: null, category_name: 'Not in active catalogue' };
+                    if (!byId[s.id]) {
+                        byId[s.id] = { id: Number(s.id), service_name: s.name, service_code: '', category_id: null, category_name: 'Not in active catalogue' };
                     }
                 });
             });
@@ -798,7 +817,7 @@
     function nhmModalityOf(meta) { return (meta && meta.service_type) || 'investigation'; }
 
     function nhmModalityIcon(mod) {
-        return mod === 'imaging' ? 'mdi-radiology-box' : (mod === 'procedure' ? 'mdi-needle' : 'mdi-flask-outline');
+        return mod === 'pharmacy' ? 'mdi-pill' : (mod === 'imaging' ? 'mdi-radiology-box' : (mod === 'procedure' ? 'mdi-needle' : 'mdi-flask-outline'));
     }
 
     function nhmRenderIndicatorList() {
@@ -848,7 +867,8 @@
         const meta = nhm.indicators[code] || {};
         const linked = nhm.working[code] || [];
         const q = nhm.catalogSearch;
-        return nhm.services.filter(function (s) {
+        const source = nhmIsProduct(code) ? nhm.products : nhm.services;
+        return source.filter(function (s) {
             if (linked.indexOf(s.id) !== -1) return false;
             if (!nhm.catalogAll && meta.category_id && Number(s.category_id) !== Number(meta.category_id)) return false;
             if (q) {
@@ -894,12 +914,15 @@
         const ordered = linked.filter(function (id) { return original.indexOf(id) === -1; })
             .concat(linked.filter(function (id) { return original.indexOf(id) !== -1; }));
         let linkedHtml = ordered.map(function (id) {
-            const s = nhm.serviceById[id] || { id: id, service_name: 'Service #' + id };
+            const s = nhmItemById(code, id);
             return nhmServiceRow(s, 'unlink', code, original.indexOf(id) === -1 ? 'is-new' : '');
         }).join('');
         const removedCount = original.filter(function (id) { return linked.indexOf(id) === -1; }).length;
+        const isProduct = nhmIsProduct(code);
+        const noun = isProduct ? 'products' : 'services';
         if (!linked.length) {
-            linkedHtml = '<div class="nhm-empty nhm-empty-sm"><i class="mdi mdi-link-variant-off"></i> No services linked — results for this indicator will not be counted.</div>';
+            linkedHtml = '<div class="nhm-empty nhm-empty-sm"><i class="mdi mdi-link-variant-off"></i> No ' + noun + ' linked — '
+                + (isProduct ? 'the form rows that count this drug group stay blank for manual entry.' : 'results for this indicator will not be counted.') + '</div>';
         }
 
         $detail.html(
@@ -911,7 +934,7 @@
             + '</div>'
 
             + '<div class="nhm-block">'
-            + '<div class="nhm-block-head"><span><i class="mdi mdi-link-variant"></i> Linked services <span class="nhm-pill">' + linked.length + '</span>'
+            + '<div class="nhm-block-head"><span><i class="mdi mdi-link-variant"></i> Linked ' + noun + ' <span class="nhm-pill">' + linked.length + '</span>'
             + (removedCount ? ' <span class="nhm-removed">' + removedCount + ' will be unlinked</span>' : '') + '</span>'
             + '<span class="nhm-block-actions">'
             + (dirty ? '<button type="button" class="btn btn-link btn-sm p-0" id="nhm-revert-one"><i class="mdi mdi-undo"></i> Revert</button>' : '')
@@ -920,10 +943,10 @@
             + '<div class="nhm-svc-list nhm-linked">' + linkedHtml + '</div></div>'
 
             + '<div class="nhm-block nhm-block-grow">'
-            + '<div class="nhm-block-head"><span><i class="mdi mdi-plus-circle-outline"></i> Add services</span>'
-            + '<label class="nhm-check mb-0"><input type="checkbox" id="nhm-catalog-all"' + (nhm.catalogAll ? ' checked' : '') + '> All categories</label></div>'
+            + '<div class="nhm-block-head"><span><i class="mdi mdi-plus-circle-outline"></i> Add ' + noun + '</span>'
+            + (isProduct ? '' : '<label class="nhm-check mb-0"><input type="checkbox" id="nhm-catalog-all"' + (nhm.catalogAll ? ' checked' : '') + '> All categories</label>') + '</div>'
             + '<div class="nhm-search mb-2"><i class="mdi mdi-magnify"></i>'
-            + '<input type="search" class="form-control form-control-sm" id="nhm-catalog-search" placeholder="Search hospital services by name or code..." autocomplete="off" value="' + nhmEsc(nhm.catalogSearch) + '"></div>'
+            + '<input type="search" class="form-control form-control-sm" id="nhm-catalog-search" placeholder="' + (isProduct ? 'Search pharmacy products by name or code...' : 'Search hospital services by name or code...') + '" autocomplete="off" value="' + nhmEsc(nhm.catalogSearch) + '"></div>'
             + '<div class="nhm-svc-list nhm-catalog" id="nhm-catalog"></div></div>'
         );
         nhmRenderCatalog();
@@ -935,8 +958,8 @@
         let html = matches.slice(0, LIMIT).map(function (s) { return nhmServiceRow(s, 'link', nhm.selected); }).join('');
         if (!matches.length) {
             html = '<div class="nhm-empty nhm-empty-sm">'
-                + (nhm.catalogSearch ? 'No services match "' + nhmEsc(nhm.catalogSearch) + '".' : 'No more services in this category.')
-                + (nhm.catalogAll ? '' : ' Try ticking <b>All categories</b>.') + '</div>';
+                + (nhm.catalogSearch ? 'Nothing matches "' + nhmEsc(nhm.catalogSearch) + '".' : 'Nothing left to link here.')
+                + (nhmIsProduct(nhm.selected) || nhm.catalogAll ? '' : ' Try ticking <b>All categories</b>.') + '</div>';
         } else {
             html += '<div class="nhm-catalog-foot"><span>'
                 + (matches.length > LIMIT ? 'Showing ' + LIMIT + ' of ' + matches.length + ' — refine your search' : matches.length + ' available') + '</span>'

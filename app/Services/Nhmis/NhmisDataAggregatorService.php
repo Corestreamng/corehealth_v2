@@ -96,8 +96,6 @@ class NhmisDataAggregatorService
 
     protected ?array $pregnancyIndex = null;
 
-    protected array $productExistsCache = [];
-
     /* =====================================================================
      | Public API
      * ===================================================================== */
@@ -199,7 +197,7 @@ class NhmisDataAggregatorService
         $this->dynamicManual = [];
         $this->diagCache = [];
         $this->history = [];
-        $this->productMatchCache = [];
+        $this->productLinkCache = [];
         $this->pregnancyIndex = null;
         $this->encounters = null;
 
@@ -741,16 +739,14 @@ class NhmisDataAggregatorService
      * ===================================================================== */
 
     /**
-     * @param array<string> $likes  SQL LIKE fragments to pre-filter product names
-     * @param string|null   $regex  PHP regex the product name must match (word boundaries)
+     * Dispensed items of the products linked to an NHMIS drug group (Service Links → Pharmacy).
      */
-    protected function dispensed(array $likes, ?string $regex, ?array $patientIds, Carbon $from, Carbon $to, ?string $excludeRegex = null): Collection
+    protected function dispensed(string $drugGroup, ?array $patientIds, Carbon $from, Carbon $to): Collection
     {
         if ($patientIds !== null && empty($patientIds)) {
             return collect();
         }
-        // Resolve matching catalogue items first (small table), then hit product_requests by indexed product_id
-        $products = $this->matchingProducts($likes, $regex, $excludeRegex);
+        $products = $this->linkedProducts($drugGroup);
         if (!$products) {
             return collect();
         }
@@ -773,34 +769,28 @@ class NhmisDataAggregatorService
             ->values();
     }
 
-    /** @return array<int, string> product id => name, for catalogue items matching the pattern */
-    protected function matchingProducts(array $likes, ?string $regex, ?string $excludeRegex = null): array
+    /** @return array<int, string> product id => name */
+    protected function linkedProducts(string $drugGroup): array
     {
-        $key = md5(json_encode([$likes, $regex, $excludeRegex]));
-        if (!isset($this->productMatchCache[$key])) {
-            $this->productMatchCache[$key] = DB::table('products')
-                ->where(function ($q) use ($likes) {
-                    foreach ($likes as $l) {
-                        $q->orWhere('product_name', 'like', '%' . $l . '%');
-                    }
-                })
-                ->pluck('product_name', 'id')
-                ->filter(function ($name) use ($regex, $excludeRegex) {
-                    $n = strtolower($name);
-
-                    return (!$regex || preg_match($regex, $n)) && (!$excludeRegex || !preg_match($excludeRegex, $n));
-                })
-                ->all();
-        }
-
-        return $this->productMatchCache[$key];
+        return $this->productLinkCache[$drugGroup] ??= \App\Models\NhmisProductMapping::getLinkedProducts($drugGroup);
     }
 
-    protected array $productMatchCache = [];
+    protected array $productLinkCache = [];
 
-    protected function productExists(array $likes, ?string $regex, ?string $excludeRegex = null): bool
+    /**
+     * Pharmacy-based cells need at least one product linked to the drug group; otherwise they are manual.
+     */
+    protected function requireProducts(string $drugGroup, array $cells): bool
     {
-        return (bool) $this->matchingProducts($likes, $regex, $excludeRegex);
+        if ($this->linkedProducts($drugGroup)) {
+            return true;
+        }
+        $label = \App\Models\NhmisProductMapping::INDICATORS[$drugGroup]['label'] ?? $drugGroup;
+        foreach ($cells as $c) {
+            $this->markManual($c, "No pharmacy product is linked to \"{$label}\". Link it in Service Links (Pharmacy) to compute this row.");
+        }
+
+        return false;
     }
 
     /* =====================================================================

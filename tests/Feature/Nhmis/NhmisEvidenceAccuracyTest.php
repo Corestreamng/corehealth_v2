@@ -191,4 +191,35 @@ class NhmisEvidenceAccuracyTest extends TestCase
         $this->assertEmpty($r['evidence']['row_30:total'] ?? [], 'Amoxi"cillin" is not an LLIN');
         $this->assertEmpty($r['evidence']['row_31:total'] ?? [], 'Prescribed but not dispensed is not given');
     }
+
+    /** @test */
+    public function test_pharmacy_rows_count_only_products_linked_in_service_links()
+    {
+        \App\Models\NhmisProductMapping::where('indicator_code', 'llin')->delete();
+        $woman = $this->patient();
+        DB::table('maternity_enrollments')->insert(['patient_id' => $woman->id, 'enrolled_by' => $this->doctor->id, 'enrollment_date' => $this->day, 'status' => 'active', 'lmp' => '2029-10-01', 'edd' => '2030-07-08', 'created_at' => $this->day, 'updated_at' => $this->day]);
+        $net = DB::table('products')->insertGetId(['user_id' => $this->doctor->id, 'product_name' => 'TREATED NET (ward stock) test', 'category_id' => 1, 'status' => 1, 'created_at' => $this->day, 'updated_at' => $this->day]);
+        DB::table('product_requests')->insert(['patient_id' => $woman->id, 'product_id' => $net, 'qty' => 1, 'status' => 3, 'dispense_date' => $this->day, 'created_at' => $this->day, 'updated_at' => $this->day]);
+
+        // Nothing linked to the LLIN drug group: the row is manual, never a guessed number
+        $r = $this->build();
+        $this->assertNull($r['values']['row_30:total']);
+        $this->assertStringContainsString('Service Links', $r['manual']['row_30:total']);
+
+        // Link the facility's own product name through the Service Links endpoint
+        $admin = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['SUPERADMIN', 'ADMIN']))->first();
+        if (!$admin) {
+            $this->markTestSkipped('No admin user to save links.');
+        }
+        $save = $this->actingAs($admin)->postJson('/nhmis-workbench/service-mappings', ['mappings' => ['llin' => ['product_ids' => [$net]]]]);
+        $this->assertEquals(200, $save->status());
+
+        $r = $this->build();
+        $this->assertEquals(1, $r['values']['row_30:total']);
+        $this->assertEquals($woman->id, $r['evidence']['row_30:total'][0]['patient_id']);
+
+        // Unlinking everything makes it manual again
+        $this->actingAs($admin)->postJson('/nhmis-workbench/service-mappings', ['mappings' => ['llin' => ['product_ids' => []]]]);
+        $this->assertNull($this->build()['values']['row_30:total']);
+    }
 }

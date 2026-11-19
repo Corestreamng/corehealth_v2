@@ -157,4 +157,28 @@ class NhmisResultsTrackingToggleTest extends TestCase
         $this->assertTrue($freeText->json('is_mapped'), 'Free-text items still resolve by whole-word name');
         $this->assertEquals('hepatitis_b', $freeText->json('indicator_code'));
     }
+
+    /**
+     * Non-admin clinicians must get the NHMIS outcome options (the result-entry outcome bar),
+     * otherwise they cannot pick an outcome and the server rejects their save.
+     *
+     * @test
+     */
+    public function test_non_admin_clinicians_can_load_outcome_options_but_not_the_workbench()
+    {
+        foreach (['LAB SCIENTIST', 'NURSE', 'DOCTOR', 'RADIOLOGIST'] as $role) {
+            if (!\Spatie\Permission\Models\Role::where('name', $role)->exists()) {
+                continue;
+            }
+            $user = User::factory()->create(['status' => 1]);
+            $user->assignRole($role);
+
+            $lookup = $this->actingAs($user)->getJson('/nhmis-workbench/service-mapping/0?service_name=' . urlencode('Malaria Microscopy (MP)'));
+            $this->assertEquals(200, $lookup->status(), "{$role} must be able to load NHMIS outcome options");
+            $this->assertTrue($lookup->json('success'));
+
+            $workbench = $this->actingAs($user)->get('/nhmis-workbench');
+            $this->assertEquals(403, $workbench->status(), "{$role} must not open the NHMIS workbench");
+        }
+    }
 }

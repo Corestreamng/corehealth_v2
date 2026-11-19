@@ -148,7 +148,7 @@
                     <h5 class="modal-title mb-0" id="modalServiceMappingsTitle">
                         <i class="mdi mdi-link-variant"></i> NHMIS Service Linking
                     </h5>
-                    <small class="text-muted">Link your hospital services to national NHMIS indicators so results are counted in the monthly return.</small>
+                    <small class="text-muted">Link your lab, imaging and theatre services, and your pharmacy products, to the NHMIS indicators they count towards.</small>
                 </div>
                 <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
@@ -185,6 +185,7 @@
                                 <button type="button" class="nhm-chip" data-modality="investigation"><i class="mdi mdi-flask-outline"></i> Lab</button>
                                 <button type="button" class="nhm-chip" data-modality="imaging"><i class="mdi mdi-radiology-box"></i> Imaging</button>
                                 <button type="button" class="nhm-chip" data-modality="procedure"><i class="mdi mdi-needle"></i> Procedure</button>
+                                <button type="button" class="nhm-chip" data-modality="pharmacy"><i class="mdi mdi-pill"></i> Pharmacy</button>
                             </div>
                             <label class="nhm-check mb-0">
                                 <input type="checkbox" id="nhm-unlinked-only"> Show unlinked only

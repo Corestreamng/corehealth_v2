@@ -288,11 +288,8 @@ trait AggregatesClinicalSections
 
     protected function aggregateMalaria(): void
     {
-        $llin = [['llin', 'bed net', 'mosquito net', 'insecticid'], '/\b(llin|bed\s*net|mosquito\s*net|insecticid\w*\s*(treated)?\s*net)\b/'];
-        if (!$this->productExists($llin[0], $llin[1])) {
-            $this->markManual('row_146', 'No LLIN/bed net product exists in the pharmacy catalogue.');
-        } else {
-            foreach ($this->dispensed($llin[0], $llin[1], null, $this->from, $this->to) as $r) {
+        if ($this->requireProducts('llin', ['row_146'])) {
+            foreach ($this->dispensed('llin', null, $this->from, $this->to) as $r) {
                 $age = $this->ageYears($r->patient_id, $r->dt);
                 if ($age !== null && $age < 5) {
                     $this->add('row_146', 'total', 'Dispensed', $r->id, $r->patient_id, $r->dt, $r->product_name);
@@ -360,19 +357,14 @@ trait AggregatesClinicalSections
         }
 
         $allPids = array_unique(array_merge(array_keys($positive), array_keys($diagnosed), array_keys($severe)));
-        $act = $this->dispensed(
-            ['artemether', 'lumefantrine', 'coartem', 'amodiaquine', 'piperaquine', 'artemisinin', 'lonart', 'alaxin', 'anate', 'camosunate', 'zomal'],
-            '/(artemether|lumefantrine|coartem|amodiaquine|piperaquine|artemisinin|lonart|alaxin|\banate\b|camosunate|zomal)/',
-            $allPids,
-            $this->from,
-            $this->to->copy()->addDays(3),
-            '/\binj/'
-        )->groupBy('patient_id');
-        $otherOral = $this->dispensed(['quinine', 'chloroquine'], '/\b(quinine|chloroquine)\b/', $allPids, $this->from, $this->to->copy()->addDays(3), '/\binj|hydroxy/')->groupBy('patient_id');
-        $artesInj = $this->dispensed(['artesunate'], '/artesunate/', array_keys($severe), $this->from, $this->to->copy()->addDays(3), '/amodiaquine|anate|rectal|supp/')
-            ->filter(fn ($r) => preg_match('/inj|60\s*mg|120\s*mg/', strtolower($r->product_name)))->groupBy('patient_id');
-        $otherInj = $this->dispensed(['artemether', 'quinine'], '/(artemether|quinine)/', array_keys($severe), $this->from, $this->to->copy()->addDays(3))
-            ->filter(fn ($r) => preg_match('/\binj/', strtolower($r->product_name)))->groupBy('patient_id');
+        $this->requireProducts('act', ['row_155', 'row_156']);
+        $this->requireProducts('other_oral_antimalarial', ['row_157']);
+        $this->requireProducts('artesunate_injection', ['row_159']);
+        $this->requireProducts('other_injectable_antimalarial', ['row_160']);
+        $act = $this->dispensed('act', $allPids, $this->from, $this->to->copy()->addDays(3))->groupBy('patient_id');
+        $otherOral = $this->dispensed('other_oral_antimalarial', $allPids, $this->from, $this->to->copy()->addDays(3))->groupBy('patient_id');
+        $artesInj = $this->dispensed('artesunate_injection', array_keys($severe), $this->from, $this->to->copy()->addDays(3))->groupBy('patient_id');
+        $otherInj = $this->dispensed('other_injectable_antimalarial', array_keys($severe), $this->from, $this->to->copy()->addDays(3))->groupBy('patient_id');
 
         foreach ($positive as $pid => $p) {
             if (isset($severe[$pid])) {
@@ -401,11 +393,7 @@ trait AggregatesClinicalSections
             }
         }
 
-        $rectal = ['artesunate'];
-        $hasRectal = $this->productExists($rectal, '/artesunate.*(rectal|supp)|(rectal|supp).*artesunate/');
-        if (!$hasRectal) {
-            $this->markManual('row_158', 'No rectal artesunate product exists in the pharmacy catalogue.');
-        }
+        $hasRectal = $this->requireProducts('rectal_artesunate', ['row_158']);
         foreach ($severe as $pid => $e) {
             $col = $this->malariaCol($pid, $e->created_at);
             $this->add('row_154', $col, 'Encounter', $e->id, $pid, $e->created_at, 'Severe malaria: ' . $this->diagnosisLabel($e));
@@ -418,7 +406,7 @@ trait AggregatesClinicalSections
             }
         }
         if ($hasRectal) {
-            foreach ($this->dispensed($rectal, '/artesunate.*(rectal|supp)|(rectal|supp).*artesunate/', array_keys($severe), $this->from, $this->to) as $r) {
+            foreach ($this->dispensed('rectal_artesunate', array_keys($severe), $this->from, $this->to) as $r) {
                 $this->add('row_158', $this->malariaCol($r->patient_id, $r->dt), 'Dispensed', $r->id, $r->patient_id, $r->dt, 'Pre-referral rectal artesunate');
             }
         }
@@ -458,8 +446,8 @@ trait AggregatesClinicalSections
             return $sex . '_' . ($age < 20 ? '10_19y' : 'ge_20y');
         };
         $hep = [
-            'hepatitis_b' => ['row_164', 'row_165', 'row_166', 'row_167', [['tenofovir', 'entecavir'], '/\b(tenofovir|entecavir)\b/']],
-            'hepatitis_c' => ['row_168', 'row_169', 'row_170', 'row_171', [['sofosbuvir', 'daclatasvir', 'velpatasvir', 'ledipasvir'], '/\b(sofosbuvir|daclatasvir|velpatasvir|ledipasvir)\b/']],
+            'hepatitis_b' => ['row_164', 'row_165', 'row_166', 'row_167', 'hbv_antiviral'],
+            'hepatitis_c' => ['row_168', 'row_169', 'row_170', 'row_171', 'hcv_antiviral'],
         ];
         foreach ($hep as $ind => [$tRow, $pRow, $txRow, $refRow, $drug]) {
             if (!$this->requireLinks($ind, [$tRow, $pRow, $txRow, $refRow], str_replace('_', ' ', $ind))) {
@@ -482,10 +470,8 @@ trait AggregatesClinicalSections
                     $this->add($pRow, $hepCol($pid, $date), 'Lab Request', $lr->id, $pid, $date, ($lr->service->service_name ?? 'Test') . ' positive');
                 }
             }
-            if (!$this->productExists($drug[0], $drug[1])) {
-                $this->markManual($txRow, 'No antiviral for this hepatitis exists in the pharmacy catalogue.');
-            } else {
-                foreach ($this->dispensed($drug[0], $drug[1], array_keys($pos), $this->from, $this->to)->unique('patient_id') as $r) {
+            if ($this->requireProducts($drug, [$txRow])) {
+                foreach ($this->dispensed($drug, array_keys($pos), $this->from, $this->to)->unique('patient_id') as $r) {
                     $this->add($txRow, $hepCol($r->patient_id, $r->dt), 'Dispensed', $r->id, $r->patient_id, $r->dt, 'Antiviral dispensed: ' . $r->product_name);
                 }
             }
@@ -574,11 +560,8 @@ trait AggregatesClinicalSections
                 }
             }
         }
-        $asv = [['venom', 'antivenin', 'asv'], '/(anti\s*-?\s*snake|venom|antivenin|\basv\b)/'];
-        if (!$this->productExists($asv[0], $asv[1])) {
-            $this->markManual('row_184', 'No anti-snake venom product exists in the pharmacy catalogue.');
-        } else {
-            foreach ($this->dispensed($asv[0], $asv[1], $snake, $this->from, $this->to)->unique('patient_id') as $r) {
+        if ($this->requireProducts('antivenom', ['row_184'])) {
+            foreach ($this->dispensed('antivenom', $snake, $this->from, $this->to)->unique('patient_id') as $r) {
                 $this->add('row_184', $this->sexCol($r->patient_id), 'Dispensed', $r->id, $r->patient_id, $r->dt, $r->product_name);
             }
         }

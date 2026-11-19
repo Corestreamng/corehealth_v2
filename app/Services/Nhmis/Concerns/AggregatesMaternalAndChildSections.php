@@ -129,14 +129,8 @@ trait AggregatesMaternalAndChildSections
                 }
             }
         }
-        $syphTx = $this->dispensed(
-            ['penicillin', 'benzathine', 'erythromycin', 'azithromycin', 'ceftriaxone', 'rocephin', 'ocexone'],
-            '/(penicillin|benzathine|erythromycin|azithromycin|ceftriaxone|rocephin|ocexone)/',
-            array_keys($positives['syphilis_vdrl'] ?? []),
-            $this->from,
-            $this->to,
-            '/oint/'
-        );
+        $this->requireProducts('syphilis_treatment', ['row_19']);
+        $syphTx = $this->dispensed('syphilis_treatment', array_keys($positives['syphilis_vdrl'] ?? []), $this->from, $this->to);
         foreach ($syphTx->unique('patient_id') as $r) {
             $this->add('row_19', 'total', 'Dispensed', $r->id, $r->patient_id, $r->dt, 'Treated: ' . $r->product_name);
         }
@@ -148,10 +142,9 @@ trait AggregatesMaternalAndChildSections
         }
 
         // Rows 26-29: IPTp-SP doses (dose number = SP dispenses in this pregnancy up to this one)
-        $spLike = ['fansidar', 'sulfadoxine', 'pyrimethamine', 'maloxine', 'amalar', 'laridox', 'swidar'];
-        $spRe = '/(fansidar|sulfadoxine|pyrimethamine|maloxine|amalar|laridox|swidar)/';
-        $current = $this->dispensed($spLike, $spRe, null, $this->from, $this->to)->filter(fn ($r) => $this->isPregnantOn($r->patient_id, $r->dt));
-        $history = $this->dispensed($spLike, $spRe, $current->pluck('patient_id')->unique()->all(), $this->from->copy()->subMonths(10), $this->to)->groupBy('patient_id');
+        $this->requireProducts('iptp_sp', ['row_26', 'row_27', 'row_28', 'row_29']);
+        $current = $this->dispensed('iptp_sp', null, $this->from, $this->to)->filter(fn ($r) => $this->isPregnantOn($r->patient_id, $r->dt));
+        $history = $this->dispensed('iptp_sp', $current->pluck('patient_id')->unique()->all(), $this->from->copy()->subMonths(10), $this->to)->groupBy('patient_id');
         foreach ($current as $r) {
             $start = $this->pregnancyStartOn($r->patient_id, $r->dt);
             $n = $history[$r->patient_id]->filter(fn ($h) => Carbon::parse($h->dt)->gte($start) && Carbon::parse($h->dt)->lte(Carbon::parse($r->dt)))
@@ -166,23 +159,15 @@ trait AggregatesMaternalAndChildSections
         }
 
         // Row 30: LLIN; Row 31: iron / folic acid
-        $llin = [['llin', 'bed net', 'mosquito net', 'insecticid'], '/\b(llin|bed\s*net|mosquito\s*net|insecticid\w*\s*(treated)?\s*net)\b/'];
-        if (!$this->productExists($llin[0], $llin[1])) {
-            $this->markManual('row_30', 'No LLIN/bed net product exists in the pharmacy catalogue.');
-        } else {
-            foreach ($this->dispensed($llin[0], $llin[1], null, $this->from, $this->to)->unique('patient_id') as $r) {
+        if ($this->requireProducts('llin', ['row_30'])) {
+            foreach ($this->dispensed('llin', null, $this->from, $this->to)->unique('patient_id') as $r) {
                 if ($this->isPregnantOn($r->patient_id, $r->dt)) {
                     $this->add('row_30', 'total', 'Dispensed', $r->id, $r->patient_id, $r->dt, $r->product_name);
                 }
             }
         }
-        $ifa = $this->dispensed(
-            ['ferrous', 'fersolat', 'folic', 'fefol', 'ranferon', 'chemiron', 'haematinic', 'hematinic'],
-            '/\b(ferrous|fersolat\w*|folic|fefol|ranferon|chemiron|ha?ematinic\w*)\b/',
-            null,
-            $this->from,
-            $this->to
-        )
+        $this->requireProducts('ifa', ['row_31']);
+        $ifa = $this->dispensed('ifa', null, $this->from, $this->to)
             ->filter(fn ($r) => $this->isPregnantOn($r->patient_id, $r->dt))->unique('patient_id');
         foreach ($ifa as $r) {
             $this->add('row_31', 'total', 'Dispensed', $r->id, $r->patient_id, $r->dt, $r->product_name);
@@ -202,7 +187,8 @@ trait AggregatesMaternalAndChildSections
         $pidOf = fn ($d) => $d->patient_id ?: $d->enrol_patient_id;
         $this->loadPatients($deliveries->map($pidOf));
         $partographIds = DB::table('delivery_partograph')->whereIn('delivery_record_id', $deliveries->pluck('id'))->pluck('delivery_record_id')->unique()->flip();
-        $miso = $this->dispensed(['misoprostol', 'cytotec'], '/(misoprostol|cytotec)/', $deliveries->map($pidOf)->filter()->values()->all(), $this->from->copy()->subDay(), $this->to->copy()->addDay(), '/arthrotec|diclofenac/')->groupBy('patient_id');
+        $this->requireProducts('misoprostol', ['row_42:misoprostol']);
+        $miso = $this->dispensed('misoprostol', $deliveries->map($pidOf)->filter()->values()->all(), $this->from->copy()->subDay(), $this->to->copy()->addDay())->groupBy('patient_id');
         $deliveredPatients = [];
 
         foreach ($deliveries as $d) {
@@ -260,11 +246,8 @@ trait AggregatesMaternalAndChildSections
         }
 
         // Row 43: MgSO4
-        $mg = [['magnesium', 'mgso4'], '/(magnesium\s*sul|mgso4)/'];
-        if (!$this->productExists($mg[0], $mg[1])) {
-            $this->markManual('row_43', 'No magnesium sulphate product exists in the pharmacy catalogue.');
-        } else {
-            foreach ($this->dispensed($mg[0], $mg[1], null, $this->from, $this->to)->unique('patient_id') as $r) {
+        if ($this->requireProducts('mgso4', ['row_43'])) {
+            foreach ($this->dispensed('mgso4', null, $this->from, $this->to)->unique('patient_id') as $r) {
                 if ($this->isPregnantOrPostpartum($r->patient_id, $r->dt)) {
                     $this->add('row_43', 'total', 'Dispensed', $r->id, $r->patient_id, $r->dt, $r->product_name);
                 }
@@ -574,7 +557,7 @@ trait AggregatesMaternalAndChildSections
         foreach (ImmunizationRecord::whereBetween('administered_at', [$this->from, $this->to])->where('vaccine_name', 'like', '%vitamin a%')->get() as $r) {
             $vitA[] = [$r->patient_id, $r->administered_at, 'Immunization', $r->id, 'Vitamin A (immunization record)'];
         }
-        foreach ($this->dispensed(['vitamin a', 'retinol'], '/(vitamin\s*a\b|retinol)/', null, $this->from, $this->to) as $r) {
+        foreach ($this->dispensed('vitamin_a', null, $this->from, $this->to) as $r) {
             $vitA[] = [$r->patient_id, $r->dt, 'Dispensed', $r->id, $r->product_name];
         }
         $seenVa = [];
@@ -587,10 +570,8 @@ trait AggregatesMaternalAndChildSections
             $this->add($m < 12 ? 'row_105_6_11m' : 'row_105_12_59m', $this->sexCol($pid), $src, $id, $pid, $date, $label);
         }
 
-        if (!$this->productExists(['micronutrient powder', 'mnp'], '/(micronutrient\s*powder|\bmnp\b)/')) {
-            $this->markManual('row_106', 'No micronutrient powder product exists in the pharmacy catalogue.');
-        } else {
-            foreach ($this->dispensed(['micronutrient powder', 'mnp'], '/(micronutrient\s*powder|\bmnp\b)/', null, $this->from, $this->to)->unique('patient_id') as $r) {
+        if ($this->requireProducts('mnp', ['row_106'])) {
+            foreach ($this->dispensed('mnp', null, $this->from, $this->to)->unique('patient_id') as $r) {
                 $m = $this->ageMonths($r->patient_id, $r->dt);
                 if ($m !== null && $m >= 6 && $m <= 23) {
                     $this->add('row_106', $this->sexCol($r->patient_id), 'Dispensed', $r->id, $r->patient_id, $r->dt, $r->product_name);
@@ -598,7 +579,8 @@ trait AggregatesMaternalAndChildSections
             }
         }
 
-        foreach ($this->dispensed(['albendazole', 'mebendazole', 'vermox', 'zentel'], '/(albendazole|mebendazole|vermox|zentel)/', null, $this->from, $this->to)->unique('patient_id') as $r) {
+        $this->requireProducts('deworming', ['row_107']);
+        foreach ($this->dispensed('deworming', null, $this->from, $this->to)->unique('patient_id') as $r) {
             $m = $this->ageMonths($r->patient_id, $r->dt);
             if ($m !== null && $m >= 12 && $m <= 59) {
                 $this->add('row_107', $this->sexCol($r->patient_id), 'Dispensed', $r->id, $r->patient_id, $r->dt, $r->product_name);
@@ -665,8 +647,10 @@ trait AggregatesMaternalAndChildSections
 
         $window = fn ($e, $rows) => $rows->filter(fn ($r) => Carbon::parse($r->dt)->between(Carbon::parse($e->created_at)->subDay(), Carbon::parse($e->created_at)->addDays(3)));
         $diar = array_keys($cases['row_110'] ?? []);
-        $ors = $this->dispensed(['oral rehydration', 'ors'], '/(oral\s*rehydration|\bors\b)/', $diar, $this->from->copy()->subDay(), $this->to->copy()->addDays(3))->groupBy('patient_id');
-        $zinc = $this->dispensed(['zinc'], '/\bzinc\b/', $diar, $this->from->copy()->subDay(), $this->to->copy()->addDays(3), '/oxide|anusol/')->groupBy('patient_id');
+        $this->requireProducts('ors', ['row_111']);
+        $this->requireProducts('zinc', ['row_111']);
+        $ors = $this->dispensed('ors', $diar, $this->from->copy()->subDay(), $this->to->copy()->addDays(3))->groupBy('patient_id');
+        $zinc = $this->dispensed('zinc', $diar, $this->from->copy()->subDay(), $this->to->copy()->addDays(3))->groupBy('patient_id');
         foreach ($cases['row_110'] ?? [] as $pid => $e) {
             $o = isset($ors[$pid]) ? $window($e, $ors[$pid]) : collect();
             $z = isset($zinc[$pid]) ? $window($e, $zinc[$pid]) : collect();
@@ -675,7 +659,8 @@ trait AggregatesMaternalAndChildSections
             }
         }
         $pneu = array_keys($cases['row_112'] ?? []);
-        $amox = $this->dispensed(['amoxi', 'amoxy'], '/amox[iy]/', $pneu, $this->from->copy()->subDay(), $this->to->copy()->addDays(3), '/esofag|clarithro/')->groupBy('patient_id');
+        $this->requireProducts('amoxicillin', ['row_113']);
+        $amox = $this->dispensed('amoxicillin', $pneu, $this->from->copy()->subDay(), $this->to->copy()->addDays(3))->groupBy('patient_id');
         foreach ($cases['row_112'] ?? [] as $pid => $e) {
             $a = isset($amox[$pid]) ? $window($e, $amox[$pid]) : collect();
             if ($a->isNotEmpty()) {
@@ -689,41 +674,23 @@ trait AggregatesMaternalAndChildSections
      * --------------------------------------------------------------- */
     protected function aggregateFamilyPlanning(): void
     {
+        // method => drug group linked in Service Links (Pharmacy)
         $methods = [
-            'oral' => [['levofem', 'microgynon', 'combined oral', 'exluton', 'microlut', 'oral contracep'], '/(levofem|microgynon|combined\s*oral|exluton|microlut|oral\s*contracep)/'],
-            'ec' => [['postinor', 'emergency contracep', 'levonorgestrel 1.5'], '/(postinor|emergency\s*contracep|levonorgestrel\s*1\.5)/'],
-            'noristerat' => [['noristerat'], '/noristerat/'],
-            'dmpa_im' => [['depo', 'dmpa'], '/(depo[\s-]*provera|\bdmpa\b)/'],
-            'dmpa_sc' => [['sayana', 'dmpa-sc', 'dmpa sc'], '/(sayana|dmpa[\s-]*sc)/'],
-            'iud' => [['iucd', 'copper t', 'iud'], '/(iucd|copper\s*t\b|\biud\b|cu[\s-]*t\s*380)/'],
-            'lng_ius' => [['mirena', 'lng-ius', 'lng ius'], '/(mirena|lng[\s-]*ius)/'],
-            'implanon' => [['implanon'], '/implanon/'],
-            'jadelle' => [['jadelle'], '/jadelle/'],
-            'male_condom' => [['condom'], '/condom/'],
-            'female_condom' => [['female condom', 'femidom'], '/(female\s*condom|femidom)/'],
+            'oral' => 'fp_oral_pill', 'ec' => 'fp_emergency_pill', 'noristerat' => 'fp_noristerat', 'dmpa_im' => 'fp_dmpa_im',
+            'dmpa_sc' => 'fp_dmpa_sc', 'iud' => 'fp_iud', 'lng_ius' => 'fp_lng_ius', 'implanon' => 'fp_implanon',
+            'jadelle' => 'fp_jadelle', 'male_condom' => 'fp_male_condom', 'female_condom' => 'fp_female_condom',
         ];
         $cells = [
             'oral' => ['row_118', 'row_119'], 'ec' => ['row_120'], 'noristerat' => ['row_121:noristerat'], 'dmpa_im' => ['row_121:dmpa_im'],
-            'dmpa_sc' => ['row_121:provider_dmpa_sc', 'row_121:self_inject_dmpa_sc'], 'iud' => ['row_122:cut_380a_10y'], 'lng_ius' => ['row_122:lng_ius_5y'],
+            'dmpa_sc' => ['row_121:provider_dmpa_sc'], 'iud' => ['row_122:cut_380a_10y'], 'lng_ius' => ['row_122:lng_ius_5y'],
             'implanon' => ['row_123:implanon_nxt'], 'jadelle' => ['row_123:jadelle'], 'male_condom' => ['row_125', 'row_126:male_condom'], 'female_condom' => ['row_126:female_condom'],
         ];
-        $methodNames = [
-            'oral' => 'oral contraceptive pill', 'ec' => 'emergency contraceptive pill', 'noristerat' => 'Noristerat',
-            'dmpa_im' => 'DMPA-IM (Depo-Provera)', 'dmpa_sc' => 'DMPA-SC (Sayana Press)', 'iud' => 'copper IUD',
-            'lng_ius' => 'LNG-IUS', 'implanon' => 'Implanon NXT', 'jadelle' => 'Jadelle',
-            'male_condom' => 'male condom', 'female_condom' => 'female condom',
-        ];
         $all = collect();
-        foreach ($methods as $m => [$likes, $re]) {
-            if (!$this->productExists($likes, $re, $m === 'male_condom' ? '/female|femidom/' : null)) {
-                foreach ($cells[$m] as $c) {
-                    $this->markManual($c, 'No ' . $methodNames[$m] . ' product exists in the pharmacy catalogue.');
-                }
-
+        foreach ($methods as $m => $group) {
+            if (!$this->requireProducts($group, $cells[$m])) {
                 continue;
             }
-            $rows = $this->dispensed($likes, $re, null, $this->from, $this->to, $m === 'male_condom' ? '/female|femidom/' : null);
-            foreach ($rows as $r) {
+            foreach ($this->dispensed($group, null, $this->from, $this->to) as $r) {
                 $r->method = $m;
                 $all->push($r);
             }
@@ -787,8 +754,8 @@ trait AggregatesMaternalAndChildSections
         $prior = [];
         if ($clients->isNotEmpty()) {
             $priorRows = collect();
-            foreach ($methods as $m => [$likes, $re]) {
-                $priorRows = $priorRows->merge($this->dispensed($likes, $re, $clients->pluck('patient_id')->all(), Carbon::create(2000), $this->from->copy()->subSecond()));
+            foreach ($methods as $group) {
+                $priorRows = $priorRows->merge($this->dispensed($group, $clients->pluck('patient_id')->all(), Carbon::create(2000), $this->from->copy()->subSecond()));
             }
             $prior = $priorRows->pluck('patient_id')->flip()->all();
         }

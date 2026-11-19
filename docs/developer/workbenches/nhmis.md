@@ -8,7 +8,8 @@
   - `GET /` (`nhmis.workbench`): form for a period (`year`, `month`; `0` = full year, `255` = custom range).
   - `POST /compile`: `NhmisDataAggregatorService::compileReport()`.
   - `GET /drill-down` (`nhmis.drill-down`): evidence records for `cell_key` + `report_id`.
-  - Service linking routes: see the [Laboratory reference](/developer/workbenches/laboratory#_4-nhmis-outcome-tracking-service-linking).
+  - Service linking routes: see the [Laboratory reference](/developer/workbenches/laboratory#_4-nhmis-outcome-tracking-service-linking). `GET /service-mappings` also returns pharmacy drug groups (`kind: product`, `service_type: pharmacy`) and the active product catalogue; `POST /service-mappings` accepts `{ <drug_group>: { product_ids: [] } }`; auto-detect fills both service and product links.
+  - `GET /service-mapping/{serviceId}` (outcome options for result entry) is exempt from `authorizeAccess()`. Every signed-in clinician needs it to see the outcome bar; before, non-admins got 403, so the bar never showed and saves were then rejected for the missing outcome.
 
 ## 2. Evidence engine (single source of truth)
 `App\Services\Nhmis\NhmisDataAggregatorService` with the traits `Concerns\AggregatesClinicalSections` and `Concerns\AggregatesMaternalAndChildSections`.
@@ -26,7 +27,7 @@
 | Pregnancy | `maternity_enrollments.lmp` → first `delivery_records.delivery_date` (or EDD + 14 d). `isPregnantOrPostpartum()` adds 42 days. |
 | Diagnoses | `diagnosisStatus()`: structured items (ICD prefix or keyword in name; custom items by name; `comment_1` QUERY/DIFFRENTIAL = query) plus the assessment section of `encounters.notes` (`ass`, `assessment`, `diagnosis`, `impression`, `dx`, `managed for`). Returns `confirmed`, `query` or null; negations (`no`, `nil`, `negative`, `denies`…) are skipped. |
 | New cases | `patientsWithPriorDiagnosis()`: no earlier encounter with the condition (any note text). IMCI uses a 14-day window. |
-| Pharmacy | `dispensed()`: `product_requests.status = 3`, dated `dispense_date` (else `created_at`); product names matched with word-boundary regexes. |
+| Pharmacy | `dispensed($drugGroup, …)`: products linked to the drug group in `nhmis_product_mappings` (model `NhmisProductMapping`, 31 groups in `INDICATORS`), `product_requests.status = 3`, dated `dispense_date` (else `created_at`). With no linked product, `requireProducts()` makes the cells manual. The groups' name patterns are only Auto-Detect suggestions (`suggestProducts()` / `autoPopulateDefaults()`, also run once by the migration so existing facilities keep their counts). |
 | Lab | `resultedLabs()`: services linked in `nhmis_service_mappings`, result present, dated `COALESCE(sample_date, created_at)`. Positive = `nhmis_outcome`, else parsed result. |
 | Attendance | One per patient-day across encounters, ANC, PNC and immunization visits. Inpatient days are those between `admission_requests.created_at` and `discharge_date` (encounters carry no admission link). |
 

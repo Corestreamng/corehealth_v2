@@ -20,11 +20,14 @@ class NhmisWorkbenchController extends Controller
     public function __construct(NhmisDataAggregatorService $aggregator)
     {
         $this->aggregator = $aggregator;
+        // The workbench is restricted to administrators and Health Records heads, but the
+        // mapping lookup is used by every clinician entering lab/imaging/procedure results
+        // (it drives the NHMIS outcome bar), so it only requires a signed-in user.
         $this->middleware(function ($request, $next) {
             $this->authorizeAccess();
 
             return $next($request);
-        });
+        })->except(['getMappingForService']);
     }
 
     /**
@@ -187,11 +190,37 @@ class NhmisWorkbenchController extends Controller
             ];
         }
 
+        // Pharmacy drug groups (products counted by pharmacy-based rows), linked the same way
+        $productLinks = \App\Models\NhmisProductMapping::with('product:id,product_name')->get()->groupBy('indicator_code');
+        foreach (\App\Models\NhmisProductMapping::INDICATORS as $code => $meta) {
+            $indicators[$code] = [
+                'label' => $meta['label'],
+                'section' => 'Pharmacy: ' . $meta['section'],
+                'description' => 'Dispensed products counted in form row(s) ' . $meta['rows'] . '.',
+                'service_type' => 'pharmacy',
+                'kind' => 'product',
+                'category_id' => null,
+            ];
+            $linked = $productLinks->get($code, collect());
+            $data[$code] = [
+                'code' => $code,
+                'label' => $meta['label'],
+                'kind' => 'product',
+                'service_ids' => $linked->pluck('product_id')->map(fn ($id) => (int) $id)->values(),
+                'services' => $linked->map(fn ($m) => ['id' => $m->product_id, 'name' => $m->product?->product_name ?? "Product #{$m->product_id}"])->values(),
+                'supported_outcomes' => [],
+                'positive_outcomes' => [],
+            ];
+        }
+
+        $products = DB::table('products')->where('status', 1)->orderBy('product_name')->get(['id', 'product_name as service_name', 'product_code as service_code']);
+
         return response()->json([
             'success' => true,
             'indicators' => $indicators,
             'mappings' => $data,
             'services' => $availableServices,
+            'products' => $products,
         ]);
     }
 
@@ -207,6 +236,18 @@ class NhmisWorkbenchController extends Controller
         $incoming = $request->input('mappings', []);
 
         foreach ($incoming as $indicatorCode => $data) {
+            if (isset(\App\Models\NhmisProductMapping::INDICATORS[$indicatorCode])) {
+                $productIds = array_values(array_unique(array_filter(array_map('intval', (array) ($data['product_ids'] ?? $data['service_ids'] ?? [])))));
+                \App\Models\NhmisProductMapping::where('indicator_code', $indicatorCode)->whereNotIn('product_id', $productIds ?: [0])->delete();
+                foreach ($productIds as $pId) {
+                    \App\Models\NhmisProductMapping::firstOrCreate(
+                        ['indicator_code' => $indicatorCode, 'product_id' => $pId],
+                        ['notes' => 'Configured by ' . (auth()->user()?->surname ?? 'User')]
+                    );
+                }
+
+                continue;
+            }
             if (!isset(NhmisServiceMapping::INDICATORS[$indicatorCode])) {
                 continue;
             }
@@ -245,10 +286,11 @@ class NhmisWorkbenchController extends Controller
     public function autoDetectServiceMappings()
     {
         $added = NhmisServiceMapping::autoPopulateDefaults();
+        $addedProducts = \App\Models\NhmisProductMapping::autoPopulateDefaults();
 
         return response()->json([
             'success' => true,
-            'message' => "Auto-detected and configured {$added} service delegations based on hospital catalogue.",
+            'message' => "Auto-detected {$added} service link(s) and {$addedProducts} pharmacy product link(s) from the hospital catalogue. Review them before compiling.",
         ]);
     }
 
