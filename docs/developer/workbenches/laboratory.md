@@ -26,9 +26,20 @@
 - **Session Accession Reuse**: Detects existing samples collected for the patient today, allowing accession grouping.
 - **Cross-Patient Collision Guard**: Aborts any attempt to reuse an existing lab number for a different patient at both client validation and transaction level.
 
-## 4. Testing Verification
+## 4. NHMIS Outcome Tracking & Service Linking
+- **Killswitch**: `application_status.enable_nhmis_results_tracking` (boolean, default `true`; migration `2026_11_19_130000_add_nhmis_results_tracking_to_application_status`). Edited in `HospitalConfigController@update` and read through `appsettings('enable_nhmis_results_tracking')`.
+- **Backend gate**: When the flag is off, the `NhmisServiceMapping` lookup is skipped in `LabWorkbenchController`, `LabServiceRequestController`, `ImagingWorkbenchController` and `ImagingServiceRequestController`. No 422 is raised and `nhmis_outcome` / `nhmis_classified_at` stay null.
+- **Frontend gate**: `resources/views/admin/partials/invest_res_js.blade.php` exposes `_nhmisTrackingEnabled`. `_setupNhmisOutcome()` returns early, so the outcome bar never renders.
+- **Service linking routes** (`nhmis.` prefix, `NhmisWorkbenchController`):
+  - `GET /nhmis-workbench/service-mappings` (`nhmis.service-mappings`): indicators, current links, and the available service catalogue.
+  - `POST /nhmis-workbench/service-mappings` (`nhmis.save-service-mappings`): JSON body `{mappings: {<indicator_code>: {service_ids: [], supported_outcomes, positive_outcomes}}}`. Each indicator sent is fully replaced, and an empty `service_ids` clears its links.
+  - `POST /nhmis-workbench/service-mappings/auto-detect` (`nhmis.auto-detect-service-mappings`).
+- **UI**: The `#modalServiceMappings` markup lives in `resources/views/admin/nhmis/partials/_modals.blade.php`. Its logic is section 9 of `public/js/nhmis-workbench.js`: client-side `original` / `working` state, with only changed indicators sent as JSON. Styles are the `.nhm-*` rules in `public/css/nhmis-workbench.css`.
+
+## 5. Testing Verification
 ```bash
 vendor/bin/phpunit tests/Feature/Lab/LabWorkbenchTest.php
+vendor/bin/phpunit tests/Feature/Nhmis/NhmisResultsTrackingToggleTest.php
 ```
 
 👉 **[Read User Story Guide for Laboratory](/user-guides/workbenches/laboratory)**

@@ -220,6 +220,7 @@ class HospitalConfigController extends Controller
             'enable_ei_billing' => 'boolean',
             'enable_ei_lab' => 'boolean',
             'enable_ei_doctor' => 'boolean',
+            'enable_nhmis_results_tracking' => 'boolean',
 
             // WeCare247 Integration
             'wecare_enabled' => 'nullable|boolean',
@@ -286,6 +287,7 @@ class HospitalConfigController extends Controller
         $validated['enable_ei_billing'] = $request->has('enable_ei_billing');
         $validated['enable_ei_lab'] = $request->has('enable_ei_lab');
         $validated['enable_ei_doctor'] = $request->has('enable_ei_doctor');
+        $validated['enable_nhmis_results_tracking'] = $request->has('enable_nhmis_results_tracking');
 
         // WeCare247 Checkboxes
         $validated['wecare_enabled'] = $request->has('wecare_enabled');

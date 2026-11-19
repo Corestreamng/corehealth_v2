@@ -2183,6 +2183,21 @@
                                     </div>
                                 </div>
 
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row">
+                                        <div>
+                                            <label for="enable_nhmis_results_tracking" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                <i class="mdi mdi-database-check-outline text-success mr-1"></i>NHMIS Results Outcome Tracking
+                                            </label>
+                                            <small class="text-muted d-block">When enabled, lab/imaging result entry requires selecting an NHMIS clinical outcome for mapped services. Disable to bypass NHMIS outcome capture globally.</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="enable_nhmis_results_tracking" id="enable_nhmis_results_tracking" value="1" {{ ($config->enable_nhmis_results_tracking ?? true) ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
                                 <hr class="my-3">
                                 <h6 class="text-muted mb-3" style="font-weight: 600;"><i class="mdi mdi-clipboard-edit-outline mr-1"></i> Result Entry Permissions</h6>
 

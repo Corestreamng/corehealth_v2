@@ -101,6 +101,7 @@ window.InvestResultEntry = (function() {
     var _currentV2ExistingData = null;
     var _hasV2Template = false;
     var _currentNhmisMapping = null;
+    var _nhmisTrackingEnabled = {{ (appsettings('enable_nhmis_results_tracking') ?? true) ? 'true' : 'false' }};
 
     /**
      * Populate the modal with request data and template.
@@ -710,6 +711,9 @@ window.InvestResultEntry = (function() {
         $('#nhmis_outcome_raw').val('');
         $('#nhmis_indicator_badge').text('');
         _currentNhmisMapping = null;
+
+        // Admin killswitch: Hospital Config → NHMIS Results Outcome Tracking
+        if (!_nhmisTrackingEnabled) return;
 
         var sId = request.service_id || (request.service ? request.service.id : null);
         var sName = request.service ? (request.service.name || '') : (request.service_name || '');

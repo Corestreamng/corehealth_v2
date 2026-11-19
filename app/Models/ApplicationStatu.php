@@ -81,6 +81,7 @@ class ApplicationStatu extends Model implements Auditable
         'nurse_self_approve_lab_result',
         'doctor_self_approve_imaging_result',
         'nurse_self_approve_imaging_result',
+        'enable_nhmis_results_tracking',
 
         // SMTP Configuration
         'smtp_host',
@@ -139,6 +140,7 @@ class ApplicationStatu extends Model implements Auditable
     ];
 
     protected $casts = [
+        'enable_nhmis_results_tracking' => 'boolean',
         'llm_config' => 'array',
         'show_branded_homepage' => 'boolean',
         'show_prescription_dose_on_receipt' => 'boolean',

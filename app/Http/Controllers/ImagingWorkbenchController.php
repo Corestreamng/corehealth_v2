@@ -1147,10 +1147,11 @@ class ImagingWorkbenchController extends Controller
                 }
             }
 
-            // Only classify for NHMIS if the service is mapped to an NHMIS indicator
+            // Only classify for NHMIS if tracking is enabled and the service is mapped to an NHMIS indicator
+            $nhmisTrackingEnabled = (bool) (appsettings('enable_nhmis_results_tracking') ?? true);
             $sId = $imagingRequest->service_id ?? ($imagingRequest->productOrServiceRequest?->service_id ?? null);
-            $mapping = $sId ? \App\Models\NhmisServiceMapping::where('service_id', $sId)->first() : null;
-            if (!$mapping && $imagingRequest->service_name) {
+            $mapping = ($nhmisTrackingEnabled && $sId) ? \App\Models\NhmisServiceMapping::where('service_id', $sId)->first() : null;
+            if ($nhmisTrackingEnabled && !$mapping && $imagingRequest->service_name) {
                 $sName = $imagingRequest->service_name;
                 $mapping = \App\Models\NhmisServiceMapping::whereHas('service', function ($q) use ($sName) {
                     $q->where('service_name', $sName);

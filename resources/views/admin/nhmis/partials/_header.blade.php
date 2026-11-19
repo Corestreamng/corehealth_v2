@@ -61,8 +61,8 @@
         </div>
         <div class="col-md-4 col-sm-12 text-md-right mt-2 mt-md-0">
             <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="btn btn-outline-dark" id="btn-service-mappings" title="Configure facility service delegations for lab investigations">
-                    <i class="mdi mdi-flask-round-bottom"></i> Delegations
+                <button type="button" class="btn btn-outline-dark" id="btn-service-mappings" title="Link hospital services to NHMIS indicators">
+                    <i class="mdi mdi-link-variant"></i> Service Links
                 </button>
                 <button type="button" class="btn btn-outline-info" id="btn-clinical-audit" title="Search clinical encounters and diagnostic definitions">
                     <i class="mdi mdi-microscope"></i> Audit

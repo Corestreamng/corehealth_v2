@@ -141,80 +141,77 @@
      MODAL 4: Service Delegations Modal (Facility Service Catalog Mapping)
      ========================================================================= --}}
 <div class="modal fade" id="modalServiceMappings" tabindex="-1" role="dialog" aria-labelledby="modalServiceMappingsTitle" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-light">
-                <h5 class="modal-title font-weight-bold text-dark" id="modalServiceMappingsTitle">
-                    <i class="mdi mdi-flask-round-bottom text-primary"></i> NHMIS Service Delegations & Multi-Modality Mapping
-                </h5>
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content nhm-modal">
+            <div class="modal-header nhm-header">
+                <div>
+                    <h5 class="modal-title mb-0" id="modalServiceMappingsTitle">
+                        <i class="mdi mdi-link-variant"></i> NHMIS Service Linking
+                    </h5>
+                    <small class="text-muted">Link your hospital services to national NHMIS indicators so results are counted in the monthly return.</small>
+                </div>
                 <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body p-3">
-                <div class="alert alert-info small mb-3 d-flex flex-wrap justify-content-between align-items-center">
-                    <div class="mb-2 mb-md-0" style="max-width: 65%;">
-                        <i class="mdi mdi-information-outline"></i>
-                        Facilities maintain independent service catalogs. Map each national standard NHMIS clinical indicator below to your local hospital services (supports multiple price tiers/service codes).
-                    </div>
-                    <div class="btn-group btn-group-sm">
-                        <button type="button" class="btn btn-outline-primary" id="btn-autodetect-mappings">
-                            <i class="mdi mdi-auto-fix"></i> Auto-Detect Defaults
-                        </button>
-                        <button type="button" class="btn btn-outline-warning" id="btn-run-historical-backfill">
-                            <i class="mdi mdi-history"></i> Run Historical Backfill
-                        </button>
-                    </div>
+
+            <div class="nhm-toolbar">
+                <div class="nhm-stats" id="nhm-stats">
+                    <span class="nhm-stat"><b id="nhm-stat-linked">0</b> linked</span>
+                    <span class="nhm-stat nhm-stat-warn"><b id="nhm-stat-unlinked">0</b> unlinked</span>
+                    <span class="nhm-stat nhm-stat-dirty" id="nhm-stat-dirty" hidden><b id="nhm-dirty-count">0</b> unsaved</span>
                 </div>
-
-                {{-- Modality Filter Navigation --}}
-                <ul class="nav nav-pills nav-fill mb-3" id="mapping-modality-tabs" role="tablist">
-                    <li class="nav-item">
-                        <a class="nav-link active py-2 font-weight-bold" data-modality="all" href="javascript:void(0);">
-                            <i class="mdi mdi-format-list-bulleted"></i> All Indicators
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link py-2 font-weight-bold" data-modality="investigation" href="javascript:void(0);">
-                            <i class="mdi mdi-flask-outline"></i> Laboratory (Cat 2)
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link py-2 font-weight-bold" data-modality="imaging" href="javascript:void(0);">
-                            <i class="mdi mdi-radiology-box"></i> Imaging (Cat 6)
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link py-2 font-weight-bold" data-modality="procedure" href="javascript:void(0);">
-                            <i class="mdi mdi-needle"></i> Procedures (Cat 8)
-                        </a>
-                    </li>
-                </ul>
-
-                <div class="table-responsive" style="max-height: 500px;">
-                    <table class="table table-sm table-hover table-bordered" id="table-service-mappings">
-                        <thead class="thead-light">
-                            <tr>
-                                <th style="width: 28%;">NHMIS Standard Indicator</th>
-                                <th style="width: 14%;">Domain / Type</th>
-                                <th style="width: 42%;">Delegated Hospital Services (Multi-Select)</th>
-                                <th style="width: 16%;">Standardized Outcome Preset</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-service-mappings">
-                            <tr>
-                                <td colspan="4" class="text-center text-muted py-4">
-                                    <i class="mdi mdi-loading mdi-spin"></i> Loading configured service delegations...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-outline-primary" id="btn-autodetect-mappings" title="Match services to indicators by name keywords">
+                        <i class="mdi mdi-auto-fix"></i> Auto-Detect
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="btn-run-historical-backfill" title="Re-classify past results using the current links">
+                        <i class="mdi mdi-history"></i> Backfill History
+                    </button>
                 </div>
             </div>
-            <div class="modal-footer bg-light py-2">
+
+            <div class="modal-body p-0">
+                <div class="nhm-layout">
+                    {{-- Left: indicator list --}}
+                    <aside class="nhm-indicators">
+                        <div class="nhm-pane-head">
+                            <div class="nhm-search">
+                                <i class="mdi mdi-magnify"></i>
+                                <input type="search" class="form-control form-control-sm" id="nhm-indicator-search" placeholder="Search indicators..." autocomplete="off">
+                            </div>
+                            <div class="nhm-chips" id="mapping-modality-tabs">
+                                <button type="button" class="nhm-chip active" data-modality="all">All</button>
+                                <button type="button" class="nhm-chip" data-modality="investigation"><i class="mdi mdi-flask-outline"></i> Lab</button>
+                                <button type="button" class="nhm-chip" data-modality="imaging"><i class="mdi mdi-radiology-box"></i> Imaging</button>
+                                <button type="button" class="nhm-chip" data-modality="procedure"><i class="mdi mdi-needle"></i> Procedure</button>
+                            </div>
+                            <label class="nhm-check mb-0">
+                                <input type="checkbox" id="nhm-unlinked-only"> Show unlinked only
+                            </label>
+                        </div>
+                        <div class="nhm-indicator-list" id="nhm-indicator-list">
+                            <div class="nhm-empty"><span class="spinner-border spinner-border-sm"></span> Loading indicators...</div>
+                        </div>
+                    </aside>
+
+                    {{-- Right: selected indicator detail --}}
+                    <section class="nhm-detail" id="nhm-detail">
+                        <div class="nhm-empty nhm-empty-lg">
+                            <i class="mdi mdi-gesture-tap"></i>
+                            <div>Select an indicator on the left to view and edit its linked services.</div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <div class="modal-footer nhm-footer">
+                <button type="button" class="btn btn-sm btn-link text-muted mr-auto" id="btn-discard-mappings" disabled>
+                    <i class="mdi mdi-undo"></i> Discard changes
+                </button>
                 <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-sm btn-primary" id="btn-save-service-mappings">
-                    <i class="mdi mdi-content-save"></i> Save Delegations
+                <button type="button" class="btn btn-sm btn-primary" id="btn-save-service-mappings" disabled>
+                    <i class="mdi mdi-content-save"></i> Save Changes
                 </button>
             </div>
         </div>
