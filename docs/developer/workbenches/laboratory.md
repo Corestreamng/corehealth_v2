@@ -34,6 +34,8 @@
   - `GET /nhmis-workbench/service-mappings` (`nhmis.service-mappings`): indicators, current links, and the available service catalogue.
   - `POST /nhmis-workbench/service-mappings` (`nhmis.save-service-mappings`): JSON body `{mappings: {<indicator_code>: {service_ids: [], supported_outcomes, positive_outcomes}}}`. Each indicator sent is fully replaced, and an empty `service_ids` clears its links.
   - `POST /nhmis-workbench/service-mappings/auto-detect` (`nhmis.auto-detect-service-mappings`).
+  - `GET /nhmis-workbench/service-mapping/{serviceId}` (`nhmis.service-mapping-single`): the lookup behind the result-entry outcome bar. A catalogue service (`serviceId > 0`) is resolved **only** by its saved links. Name keywords are used only when `serviceId` is `0` (free-form items that cannot be linked).
+- **Keyword matching**: `NhmisServiceMapping::nameMatchesKeyword()` / `matchIndicatorByName()` match whole words only, so `hb` does not match "HBsAg" and `pt` does not match "SGPT". Used by Auto-Detect, the free-text lookup, and free-form procedure outcomes (`PatientProcedureController`).
 - **UI**: The `#modalServiceMappings` markup lives in `resources/views/admin/nhmis/partials/_modals.blade.php`. Its logic is section 9 of `public/js/nhmis-workbench.js`: client-side `original` / `working` state, with only changed indicators sent as JSON. Styles are the `.nhm-*` rules in `public/css/nhmis-workbench.css`.
 
 ## 5. Testing Verification

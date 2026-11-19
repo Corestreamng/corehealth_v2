@@ -82,7 +82,9 @@ flowchart LR
 
 Nothing is stored until you press **Save Changes**. Newly linked services appear at the top in blue, and changed indicators carry a blue dot. **Revert** undoes one indicator, and **Discard changes** undoes everything. Closing the window with unsaved changes asks for confirmation first.
 
-**Auto-Detect** matches services to indicators by name. **Backfill History** re-classifies earlier results using the saved links.
+The outcome bar appears only for services linked here. If a test shows the bar unexpectedly, find it in this window: it is linked to the indicator named on the bar.
+
+**Auto-Detect** matches services to indicators by whole words in their names, and its suggestions are worth reviewing. **Backfill History** re-classifies earlier results using the saved links.
 
 ### 5.3 Downstream handover
 

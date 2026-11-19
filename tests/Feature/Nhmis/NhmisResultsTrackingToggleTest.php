@@ -128,4 +128,33 @@ class NhmisResultsTrackingToggleTest extends TestCase
         $this->assertEquals(200, $unlink->status());
         $this->assertEquals(0, NhmisServiceMapping::where('indicator_code', 'hepatitis_b')->count());
     }
+
+    /** @test */
+    public function test_keyword_matching_is_whole_word_only()
+    {
+        $this->assertTrue(NhmisServiceMapping::nameMatchesKeyword('Haemoglobin (Hb)', 'hb'));
+        $this->assertFalse(NhmisServiceMapping::nameMatchesKeyword('HBsAg Viral Load', 'hb'));
+        $this->assertFalse(NhmisServiceMapping::nameMatchesKeyword('ALT (SGPT)', 'pt'));
+        $this->assertFalse(NhmisServiceMapping::nameMatchesKeyword('Nasal Packing (Nurse)', 'pac'));
+        $this->assertEquals('caesarean_section', NhmisServiceMapping::matchIndicatorByName('Emergency Caesarean Section', 'procedure'));
+    }
+
+    /** @test */
+    public function test_unlinked_catalogue_service_is_not_guessed_from_its_name()
+    {
+        $service = Service::create([
+            'user_id' => $this->adminUser->id,
+            'service_name' => 'Hepatitis B Unlinked Guess Test ' . uniqid(),
+            'category_id' => 2,
+            'status' => 1,
+        ]);
+
+        $linkedOnly = $this->actingAs($this->adminUser)->getJson('/nhmis-workbench/service-mapping/' . $service->id . '?service_name=' . urlencode($service->service_name));
+        $this->assertEquals(200, $linkedOnly->status());
+        $this->assertFalse($linkedOnly->json('is_mapped'), 'A catalogue service with no link must not show the NHMIS bar');
+
+        $freeText = $this->actingAs($this->adminUser)->getJson('/nhmis-workbench/service-mapping/0?service_name=' . urlencode($service->service_name));
+        $this->assertTrue($freeText->json('is_mapped'), 'Free-text items still resolve by whole-word name');
+        $this->assertEquals('hepatitis_b', $freeText->json('indicator_code'));
+    }
 }

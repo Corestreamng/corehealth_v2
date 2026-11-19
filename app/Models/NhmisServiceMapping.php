@@ -339,6 +339,37 @@ class NhmisServiceMapping extends Model implements Auditable
     }
 
     /**
+     * Whole-word keyword match, so short keywords like "hb", "mp" or "tb"
+     * do not match inside "HBsAg", "Complete" or "Lipid Profile".
+     */
+    public static function nameMatchesKeyword(string $name, string $keyword): bool
+    {
+        $pattern = '/(?<![a-z0-9])' . preg_quote(strtolower(trim($keyword)), '/') . '(?![a-z0-9])/';
+
+        return (bool) preg_match($pattern, strtolower($name));
+    }
+
+    /**
+     * Resolve an indicator code from a free-text name (only for items that cannot be
+     * linked in the Service Linking window, e.g. free-form procedures).
+     */
+    public static function matchIndicatorByName(string $name, ?string $serviceType = null): ?string
+    {
+        foreach (self::INDICATORS as $code => $meta) {
+            if ($serviceType && ($meta['service_type'] ?? 'investigation') !== $serviceType) {
+                continue;
+            }
+            foreach ($meta['keywords'] as $kw) {
+                if (self::nameMatchesKeyword($name, $kw)) {
+                    return $code;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Populate default service delegations across Lab, Imaging, and Procedures
      */
     public static function autoPopulateDefaults(): int
@@ -356,7 +387,16 @@ class NhmisServiceMapping extends Model implements Auditable
                     foreach ($keywords as $kw) {
                         $q->orWhere('service_name', 'like', "%{$kw}%");
                     }
-                })->get();
+                })->get()
+                ->filter(function ($s) use ($keywords) {
+                    foreach ($keywords as $kw) {
+                        if (self::nameMatchesKeyword($s->service_name, $kw)) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                });
 
             foreach ($services as $s) {
                 $exists = static::where('indicator_code', $code)->where('service_id', $s->id)->exists();

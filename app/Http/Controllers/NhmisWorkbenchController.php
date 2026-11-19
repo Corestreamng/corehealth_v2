@@ -275,25 +275,23 @@ class NhmisWorkbenchController extends Controller
                 $q->where('service_name', $sName);
             })->first();
 
-            if (!$mapping) {
-                // Match against indicator keywords
-                foreach (NhmisServiceMapping::INDICATORS as $code => $meta) {
-                    foreach ($meta['keywords'] as $kw) {
-                        if (stripos($sName, $kw) !== false) {
-                            $presets = NhmisServiceMapping::getPresetsForIndicator($code);
+            // Keyword guessing is only for free-text items with no catalogue service
+            // (they cannot be linked). Catalogue services are governed solely by the
+            // Service Linking window, matching what the result-save controllers enforce.
+            $code = (!$mapping && (int) $serviceId <= 0) ? NhmisServiceMapping::matchIndicatorByName($sName) : null;
+            if ($code) {
+                $meta = NhmisServiceMapping::INDICATORS[$code];
+                $presets = NhmisServiceMapping::getPresetsForIndicator($code);
 
-                            return response()->json([
-                                'success' => true,
-                                'is_mapped' => true,
-                                'indicator_code' => $code,
-                                'indicator_label' => $meta['label'] ?? $code,
-                                'service_type' => $meta['service_type'] ?? 'investigation',
-                                'supported_outcomes' => $presets['supported'],
-                                'positive_outcomes' => $presets['positive'],
-                            ]);
-                        }
-                    }
-                }
+                return response()->json([
+                    'success' => true,
+                    'is_mapped' => true,
+                    'indicator_code' => $code,
+                    'indicator_label' => $meta['label'] ?? $code,
+                    'service_type' => $meta['service_type'] ?? 'investigation',
+                    'supported_outcomes' => $presets['supported'],
+                    'positive_outcomes' => $presets['positive'],
+                ]);
             }
         }
 

@@ -212,18 +212,10 @@ class PatientProcedureController extends Controller
                     $q->where('service_name', $sName);
                 })->first();
             }
-            if (!$mapping && $sName) {
-                foreach (\App\Models\NhmisServiceMapping::INDICATORS as $code => $meta) {
-                    if (($meta['service_type'] ?? '') === 'procedure') {
-                        foreach ($meta['keywords'] as $kw) {
-                            if (stripos($sName, $kw) !== false) {
-                                $mapping = (object) ['indicator_code' => $code];
-
-                                break 2;
-                            }
-                        }
-                    }
-                }
+            // Free-form procedures cannot be linked, so fall back to whole-word name matching
+            if (!$mapping && !$sId && $sName) {
+                $code = \App\Models\NhmisServiceMapping::matchIndicatorByName($sName, 'procedure');
+                $mapping = $code ? (object) ['indicator_code' => $code] : null;
             }
 
             if ($mapping) {
