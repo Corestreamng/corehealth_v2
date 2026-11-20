@@ -371,11 +371,6 @@ Route::prefix('mobile/doctor')->middleware(['auth:sanctum', 'native.workspace:do
     Route::get('diagnosis-favorites', [DiagnosisFavoriteController::class, 'index']);
     Route::post('diagnosis-favorites', [DiagnosisFavoriteController::class, 'store']);
     Route::delete('diagnosis-favorites/{id}', [DiagnosisFavoriteController::class, 'destroy']);
-    Route::post('llm/polish-note', [LlmController::class, 'polishNote']);
-    Route::post('llm/patient-summary', [LlmController::class, 'generatePatientSummary']);
-    Route::post('llm/clinical-scribe/process', [LlmController::class, 'processScribeSession']);
-    Route::post('llm/clinical-scribe/convert-format', [LlmController::class, 'convertFormat']);
-    Route::post('llm/clinical-scribe/sign', [LlmController::class, 'signScribeSession']);
 
     // ── Clinical story, treatment plans, care plan (non-pharm) ──
     Route::get('encounters/{encounter}/clinical-story/timeline', [EncounterController::class, 'getClinicalStoryTimeline']);
@@ -447,6 +442,15 @@ Route::prefix('mobile/doctor')->middleware(['auth:sanctum', 'native.workspace:do
 | the `mobile/doctor` prefix the app already calls.
 */
 Route::prefix('mobile/doctor')->middleware(['auth:sanctum', 'native.workspace:doctor|nursing|maternity'])->group(function () {
+    // AI scribe, patient briefing and note polish: LlmController serves the doctor, nursing and maternity studios
+    Route::post('llm/polish-note', [LlmController::class, 'polishNote']);
+    Route::post('llm/patient-summary', [LlmController::class, 'generatePatientSummary']);
+    Route::post('llm/clinical-scribe/process', [LlmController::class, 'processScribeSession']);
+    Route::post('llm/clinical-scribe/convert-format', [LlmController::class, 'convertFormat']);
+    Route::post('llm/clinical-scribe/sign', [LlmController::class, 'signScribeSession']);
+    // Clinical story by patient (the web nursing and maternity pages include the same partial)
+    Route::get('patients/{patient}/clinical-story', [EncounterController::class, 'getPatientClinicalStoryFallback'])->whereNumber('patient');
+    Route::get('patients/{patient}/clinical-story/timeline', [EncounterController::class, 'getPatientClinicalStoryTimeline'])->whereNumber('patient');
     Route::post('vitals', [VitalSignController::class, 'store']);
     Route::get('patient/{patientId}/vitals', [NursingWorkbenchController::class, 'getPatientVitals']);
     Route::get('patient/{patientId}/nursing-notes', [MobileEncounterController::class, 'getNursingNotes']);

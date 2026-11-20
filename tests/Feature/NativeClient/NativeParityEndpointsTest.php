@@ -335,4 +335,30 @@ class NativeParityEndpointsTest extends TestCase
         Sanctum::actingAs($this->staff('NURSE'));
         $this->getJson('/api/mobile/maternity/queue/counts')->assertStatus(403);
     }
+
+    /** @test */
+    public function test_clinical_story_and_scribe_routes_are_shared_by_doctor_nursing_and_maternity_only()
+    {
+        $pid = $this->anyPatientId();
+        foreach (['DOCTOR', 'NURSE', 'MATERNITY'] as $role) {
+            Sanctum::actingAs($this->staff($role));
+            $this->assertJsonOk("/api/mobile/doctor/patients/{$pid}/clinical-story/timeline");
+            // The scribe's sign step only records an audit; it must be reachable for each role.
+            $resp = $this->postJson('/api/mobile/doctor/llm/clinical-scribe/sign', ['patient_id' => $pid, 'role' => strtolower($role) === 'doctor' ? 'doctor' : (strtolower($role) === 'nurse' ? 'nurse' : 'maternity'), 'final_signed_note' => '<p>test</p>']);
+            $this->assertSame(200, $resp->status(), $role . ': ' . substr($resp->getContent(), 0, 200));
+        }
+        Sanctum::actingAs($this->staff('BILLER'));
+        $this->getJson("/api/mobile/doctor/patients/{$pid}/clinical-story/timeline")->assertStatus(403);
+        $this->postJson('/api/mobile/doctor/llm/clinical-scribe/sign', ['patient_id' => $pid, 'final_signed_note' => 'x'])->assertStatus(403);
+    }
+
+    /** @test */
+    public function test_direct_medication_calendar_is_available_to_nurses()
+    {
+        Sanctum::actingAs($this->staff('NURSE'));
+        $pid = $this->anyPatientId();
+        $resp = $this->getJson("/api/mobile/doctor/patient/{$pid}/medication-chart/direct-calendar?drug_source=patient_own&external_drug_name=Nothing");
+        $this->assertSame(200, $resp->status(), substr($resp->getContent(), 0, 200));
+        $this->assertArrayHasKey('schedules', $resp->json());
+    }
 }
