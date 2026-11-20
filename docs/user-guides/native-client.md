@@ -149,6 +149,9 @@ flowchart LR
     D --> E["Lab / Imaging / Pharmacy / Billing"]
 ```
 
+## Billing desk
+Open **Billing → Billing Desk**. Start your shift, search a patient or pick one from the payment queue (Emergency, All unpaid, HMO items, Credit accounts). A patient's bill has tabs: **Billing** (select items, adjust quantity and discount, **Pay** by cash, POS, transfer, mobile, split, account balance, staff or organisation, or print an **Invoice**), **Walk-in**, **Receipts**, **Admissions** (bill by category) and **Account** (deposit, withdraw, adjust, statement). Receipts show as readable text; printing stays on the web.
+
 Everything the app saves goes through the same hospital system as the web, so billing, queues and records update for every department immediately.
 
 ---

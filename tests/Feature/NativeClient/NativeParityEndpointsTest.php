@@ -228,4 +228,28 @@ class NativeParityEndpointsTest extends TestCase
         $this->assertEquals($queue->id, \App\Models\Encounter::find($encId)->queue_id);
         $this->assertEquals(\App\Enums\QueueStatus::IN_CONSULTATION, $queue->fresh()->status);
     }
+
+    /** @test */
+    public function test_billing_desk_endpoints_return_json_for_billers()
+    {
+        Sanctum::actingAs($this->staff('BILLER'));
+        $pid = $this->anyPatientId();
+        foreach (['active-shift', 'queue-counts', 'payment-queue?filter=all', 'search-patients?q=an', 'my-transactions', 'banks/active',
+            "patient/{$pid}/billing-data", "patient/{$pid}/billing-defaults", "patient/{$pid}/receipts", "patient/{$pid}/account-summary",
+            "patient/{$pid}/account-transactions", "patient/{$pid}/admissions", 'context'] as $path) {
+            $this->assertJsonOk('/api/mobile/billing/' . $path);
+        }
+    }
+
+    /** @test */
+    public function test_billing_desk_refuses_roles_outside_billing()
+    {
+        $other = $this->staff('DOCTOR');
+        if ($other->can('billing-workbench') || $other->hasRole('BILLER')) {
+            $this->markTestSkipped('Doctor role has billing access in this database.');
+        }
+        Sanctum::actingAs($other);
+        $this->getJson('/api/mobile/billing/queue-counts')->assertStatus(403);
+        $this->postJson('/api/mobile/billing/process-payment', [])->assertStatus(403);
+    }
 }

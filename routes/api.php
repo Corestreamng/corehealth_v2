@@ -523,12 +523,71 @@ Route::prefix('mobile/reception')->middleware(['auth:sanctum', 'native.workspace
 
 /*
 |--------------------------------------------------------------------------
+| Native Staff Client — Billing workspace
+|--------------------------------------------------------------------------
+| Same BillingWorkbenchController (and Reception walk-in) methods the web billing
+| workbench calls. Guard = the web sidebar's Billing guard (WorkspaceRegistry 'billing').
+*/
+Route::prefix('mobile/billing')->middleware(['auth:sanctum', 'native.workspace:billing'])->group(function () {
+    // Desk: shift, payment queue, search
+    Route::get('active-shift', [BillingWorkbenchController::class, 'getActiveBillingShift']);
+    Route::post('start-shift', [BillingWorkbenchController::class, 'startBillingShift']);
+    Route::post('end-shift', [BillingWorkbenchController::class, 'endBillingShift']);
+    Route::get('queue-counts', [BillingWorkbenchController::class, 'getQueueCounts']);
+    Route::get('payment-queue', [BillingWorkbenchController::class, 'getPaymentQueue']);
+    Route::get('search-patients', [BillingWorkbenchController::class, 'searchPatients']);
+
+    // Patient: items to pay, receipts, account, admissions
+    Route::get('patient/{id}/billing-data', [BillingWorkbenchController::class, 'getPatientBillingData']);
+    Route::get('patient/{id}/billing-defaults', [BillingWorkbenchController::class, 'getPatientBillingDefaults']);
+    Route::get('patient/{id}/receipts', [BillingWorkbenchController::class, 'getPatientReceipts']);
+    Route::get('patient/{id}/transactions', [BillingWorkbenchController::class, 'getPatientTransactions']);
+    Route::get('patient/{id}/account-summary', [BillingWorkbenchController::class, 'getPatientAccountSummary']);
+    Route::get('patient/{id}/account-transactions', [BillingWorkbenchController::class, 'getAccountTransactions']);
+    Route::post('patient/{id}/generate-statement', [BillingWorkbenchController::class, 'generateStatement']);
+    Route::get('patient/{id}/admissions', [BillingWorkbenchController::class, 'getAdmissionHistory']);
+    Route::get('admission/{id}/bill', [BillingWorkbenchController::class, 'getAdmissionBillDetail']);
+
+    // Payments, receipts and account transactions
+    Route::post('process-payment', [BillingWorkbenchController::class, 'processPayment']);
+    Route::get('payment/{id}/details', [BillingWorkbenchController::class, 'getPaymentDetails']);
+    Route::post('print-receipt', [BillingWorkbenchController::class, 'printReceipt']);
+    Route::post('print-invoice', [BillingWorkbenchController::class, 'printInvoice']);
+    Route::get('print-deposit-receipt/{id}', [BillingWorkbenchController::class, 'printDepositReceipt']);
+    Route::post('create-account', [BillingWorkbenchController::class, 'createPatientAccount']);
+    Route::post('make-deposit', [BillingWorkbenchController::class, 'makeAccountDeposit']);
+    Route::post('account-transaction', [BillingWorkbenchController::class, 'processAccountTransaction']);
+    Route::post('void-transaction', [BillingWorkbenchController::class, 'voidTransaction']);
+    Route::post('adjust-payment', [BillingWorkbenchController::class, 'adjustPaymentMethod']);
+    Route::get('my-transactions', [BillingWorkbenchController::class, 'getMyTransactions']);
+    Route::get('manage-transactions', [BillingWorkbenchController::class, 'getManageTransactions']);
+
+    // Lookups for checkout
+    Route::get('banks/active', [BankController::class, 'getActiveBanks']);
+    Route::get('staff-list', [BillingWorkbenchController::class, 'getStaffList']);
+    Route::get('organization-list', [BillingWorkbenchController::class, 'getOrganizationList']);
+
+    // Walk-in sales (the web billing page embeds the same walk-in module)
+    Route::get('context', [MobileReceptionController::class, 'context']);
+    Route::get('services/lab', [ReceptionWorkbenchController::class, 'getLabServices']);
+    Route::get('services/imaging', [ReceptionWorkbenchController::class, 'getImagingServices']);
+    Route::get('services/procedure', [ReceptionWorkbenchController::class, 'getProcedureServices']);
+    Route::get('products', [ReceptionWorkbenchController::class, 'getProducts']);
+    Route::post('tariff-preview', [ReceptionWorkbenchController::class, 'getTariffPreview']);
+    Route::post('book-walkin', [ReceptionWorkbenchController::class, 'bookWalkinServices']);
+    Route::get('patient/{id}/recent-requests', [ReceptionWorkbenchController::class, 'getRecentRequests']);
+    Route::delete('request/{type}/{id}/discard', [ReceptionWorkbenchController::class, 'discardServiceRequest']);
+    Route::get('request/{type}/{id}/details', [ReceptionWorkbenchController::class, 'getRequestDetails']);
+});
+
+/*
+|--------------------------------------------------------------------------
 | Native Staff Client — features shared by Health Records and Doctors
 |--------------------------------------------------------------------------
 | Both web workbenches include these (contacts, price list, emergency intake, appointments,
 | clinical alerts, patient edit, admission request). Same controllers as the web.
 */
-Route::prefix('mobile/shared')->middleware(['auth:sanctum', 'native.workspace:reception|doctor'])->group(function () {
+Route::prefix('mobile/shared')->middleware(['auth:sanctum', 'native.workspace:reception|doctor|billing|nursing|maternity'])->group(function () {
     Route::get('hospital-contacts', [HospitalContactController::class, 'index']);
     Route::post('hospital-contacts', [HospitalContactController::class, 'store']);
     Route::put('hospital-contacts/{id}', [HospitalContactController::class, 'update']);

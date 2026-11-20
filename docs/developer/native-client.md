@@ -18,6 +18,7 @@ Two Flutter apps live in `native_clients/`:
 | Prefix | Guard | Controllers (same as web) |
 |---|---|---|
 | `api/mobile/staff/*` | active staff | `MobileAuthController` (login, `workspaces`, `settings`) |
+| `api/mobile/billing/*` | `native.workspace:billing` (shared lookups also open to reception, doctor, nursing, maternity) | `BillingWorkbenchController` (all billing desk actions), `BankController`, `SalesApi` shared with reception |
 | `api/mobile/reception/*` | `native.workspace:reception` | `ReceptionWorkbenchController` (queue, search, registration, booking, walk-in, service requests, HMO validation), `SpecialistReferralController` (pending desk), `BillingWorkbenchController` (my transactions, staff/org lists, account summary), `BankController`, adapter `API\MobileReceptionController` (`context`, `process-payment`) |
 | `api/mobile/shared/*` | `native.workspace:reception\|doctor` | Registration and lookup, `HospitalContactController`, `WorkbenchPriceListController`, `ClinicalAlertController`, `DoctorAppointmentController`, `EmergencyIntakeController`, `MorgueController@getServices`, `WardController`, `AdmissionRequestController@store`, `AdmissionModuleController` |
 | `api/mobile/doctor/*` | `native.workspace:doctor` | `EncounterController`, `MobileEncounterController`, `DoctorAppointmentController` (calendar, timer), `DiagnosisFavoriteController`, `LlmController` (polish, briefing, scribe), `TreatmentPlanController`, `NonPharmOrderController`, `ResultViewController`, `PatientProfileController`, `MedicalReportController`, `Lab/ImagingWorkbenchController` (result entry), `NhmisWorkbenchController@getMappingForService`, `MedicationChartController`, `IntakeOutputChartController`, `SpecialistReferralController`, `VitalSignController` |
@@ -46,7 +47,7 @@ Two Flutter apps live in `native_clients/`:
 | 1 | Home / Messenger | `global` | Home (workspace tiles), Messenger | — |
 | 2 | Staff Workspace (ESS, supplies) | `staff_workspace` | — | All items |
 | 3 | Health Records | `reception` | Every reception workbench feature: front desk, full registration and edit (photo, old records, family, fees, age modes), walk-in and emergency registration, queue filters, patient hub (profile, visits, service requests, appointments, admissions), family booking with re-bill and tariff preview, walk-in sales, checkout (all payment methods), HMO validation, referrals desk, appointments, my transactions, alerts, contacts, price list, emergency intake | Pages: All Encounters, NHMIS report. Workbench: reports and charts, printing (card, routing slip, receipts A4), ward dashboard (Nursing), morgue admission (Morgue) |
-| 4 | Billing | `billing` | — | All |
+| 4 | Billing | `billing` | Native: cashier shift, payment queue, patient bill (select, qty/discount, pay: cash/POS/transfer/mobile/split/account/bill-to-staff/org, invoice), walk-in sales, receipts, admissions bill, patient account (deposit/withdraw/adjust/statement), my and manage transactions (void, adjust). Web-only: printing layouts, reports | All |
 | 5 | Pharmacy | `pharmacy` | — | All |
 | 6 | Store / Inventory | `store` | — | All |
 | 7 | Nursing | `nursing` | — | All |
