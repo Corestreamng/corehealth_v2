@@ -200,6 +200,8 @@ class MobileEncounterController extends Controller
 
         return [
             'queue_id' => $queue->id,
+            // Latest encounter of this queue entry, so past visits can be opened (web: "View Details").
+            'encounter_id' => \App\Models\Encounter::where('queue_id', $queue->id)->latest('id')->value('id'),
             'patient_id' => $queue->patient_id,
             'patient_name' => $patient && $patient->user ? $patient->user->name : 'Unknown',
             'file_no' => $patient->file_no ?? '',
@@ -493,8 +495,10 @@ class MobileEncounterController extends Controller
                     ] : null,
                     'existing_diagnosis' => $existingDiagnosis,
                     'settings' => [
-                        'require_diagnosis' => (bool) appsettings('requirediagnosis'),
-                        'note_edit_duration' => (int) appsettings('note_edit_duration', 30),
+                        'require_diagnosis' => \App\Support\ClientSettings::workbench()['require_diagnosis'],
+                        // Web key is note_edit_window; note_edit_duration kept for older app builds.
+                        'note_edit_window' => \App\Support\ClientSettings::workbench()['note_edit_window'],
+                        'note_edit_duration' => \App\Support\ClientSettings::workbench()['note_edit_window'],
                     ],
                 ],
             ]);
@@ -689,8 +693,10 @@ class MobileEncounterController extends Controller
                     'prescriptions' => $prescriptions,
                     'procedures' => $procedures,
                     'settings' => [
-                        'require_diagnosis' => (bool) appsettings('requirediagnosis'),
-                        'note_edit_duration' => (int) appsettings('note_edit_duration', 30),
+                        'require_diagnosis' => \App\Support\ClientSettings::workbench()['require_diagnosis'],
+                        // Web key is note_edit_window; note_edit_duration kept for older app builds.
+                        'note_edit_window' => \App\Support\ClientSettings::workbench()['note_edit_window'],
+                        'note_edit_duration' => \App\Support\ClientSettings::workbench()['note_edit_window'],
                     ],
                 ],
             ]);

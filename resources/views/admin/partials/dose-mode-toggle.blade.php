@@ -11,8 +11,9 @@
 --}}
 @php
     $prefix = $prefix ?? '';
-    $enableStructured = (bool) (appsettings('enable_structured_dose') ?? 1);
-    $defaultMode      = appsettings('default_dose_mode') ?? 'structured';
+    $clientSettings   = \App\Support\ClientSettings::workbench();
+    $enableStructured = $clientSettings['enable_structured_dose'];
+    $defaultMode      = $clientSettings['default_dose_mode'];
     // If structured is globally disabled, force default to simple
     if (!$enableStructured) { $defaultMode = 'simple'; }
 @endphp

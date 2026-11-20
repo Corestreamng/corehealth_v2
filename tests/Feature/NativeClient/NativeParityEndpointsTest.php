@@ -1,0 +1,189 @@
+<?php
+
+namespace Tests\Feature\NativeClient;
+
+use App\Models\Patient;
+use App\Models\User;
+use Laravel\Sanctum\Sanctum;
+use Spatie\Permission\Models\Role;
+use Tests\TestCase;
+
+/**
+ * Every mobile wrapper added for reception and doctor parity answers with JSON from the web
+ * controller (no 500s hidden behind the status assertion), and keeps the sidebar guards.
+ */
+class NativeParityEndpointsTest extends TestCase
+{
+    protected function staff(string $role): User
+    {
+        if (!Role::where('name', $role)->exists()) {
+            $this->markTestSkipped("{$role} role missing.");
+        }
+        $user = User::factory()->create(['status' => 1]);
+        $user->assignRole($role);
+
+        return $user;
+    }
+
+    protected function anyPatientId(): int
+    {
+        $id = Patient::query()->value('id');
+        if (!$id) {
+            $this->markTestSkipped('No patient in the test database.');
+        }
+
+        return (int) $id;
+    }
+
+    /** Asserts a JSON answer that isn't a server error. */
+    protected function assertJsonOk(string $uri, array $headers = []): void
+    {
+        $resp = $this->getJson($uri, $headers);
+        $this->assertContains($resp->status(), [200, 422], "{$uri} returned {$resp->status()}: " . substr($resp->getContent(), 0, 300));
+        $this->assertIsArray(json_decode($resp->getContent(), true), "{$uri} did not return JSON");
+    }
+
+    /** @test */
+    public function test_reception_parity_endpoints_return_json()
+    {
+        Sanctum::actingAs($this->staff('RECEPTIONIST'));
+        $pid = $this->anyPatientId();
+        $ajax = ['X-Requested-With' => 'XMLHttpRequest'];
+
+        foreach ([
+            '/api/mobile/reception/context',
+            '/api/mobile/reception/services/lab?q=a',
+            '/api/mobile/reception/services/imaging?q=a',
+            '/api/mobile/reception/services/procedure?q=a',
+            '/api/mobile/reception/products?q=a',
+            "/api/mobile/reception/patient/{$pid}/recent-requests",
+            "/api/mobile/reception/patient/{$pid}/service-requests",
+            "/api/mobile/reception/patient/{$pid}/service-requests-stats",
+            '/api/mobile/reception/hmo-pending-validation',
+            '/api/mobile/reception/hmo-pending-count',
+            '/api/mobile/reception/referrals/pending',
+            '/api/mobile/reception/referrals/pending-count',
+            '/api/mobile/reception/banks/active',
+            "/api/mobile/reception/patient/{$pid}/account-summary",
+            "/api/mobile/shared/patient/{$pid}/admissions",
+            '/api/mobile/shared/emergency/clinics',
+            '/api/mobile/shared/emergency/services',
+            '/api/mobile/shared/emergency/available-beds',
+            '/api/mobile/shared/ward-availability',
+            "/api/mobile/shared/patient/{$pid}/alerts",
+            '/api/mobile/shared/appointments/list?date=' . now()->toDateString(),
+        ] as $uri) {
+            $this->assertJsonOk($uri);
+        }
+        $this->assertJsonOk('/api/mobile/reception/my-transactions?from=' . now()->toDateString() . '&to=' . now()->toDateString(), $ajax);
+        $this->assertJsonOk('/api/mobile/shared/hospital-contacts?draw=1&start=0&length=10', $ajax);
+        $this->assertJsonOk('/api/mobile/shared/price-list/services?draw=1&start=0&length=10', $ajax);
+        $this->assertJsonOk('/api/mobile/shared/price-list/products?draw=1&start=0&length=10', $ajax);
+
+        $ctx = $this->getJson('/api/mobile/reception/context')->json();
+        $this->assertArrayHasKey('can_bill', $ctx);
+        $this->assertArrayHasKey('registration_services', $ctx);
+    }
+
+    /** @test */
+    public function test_doctor_parity_endpoints_return_json()
+    {
+        Sanctum::actingAs($this->staff('DOCTOR'));
+        $pid = $this->anyPatientId();
+
+        foreach ([
+            '/api/mobile/doctor/queue/calendar-events?start=' . now()->startOfWeek()->toDateString() . '&end=' . now()->endOfWeek()->toDateString(),
+            '/api/mobile/doctor/diagnosis-favorites',
+            "/api/mobile/doctor/patient/{$pid}/treatment-plans",
+            "/api/mobile/doctor/non-pharm-orders/patient/{$pid}",
+            "/api/mobile/doctor/result-views/unviewed-counts/{$pid}",
+            "/api/mobile/doctor/patient/{$pid}/profiles",
+            '/api/mobile/shared/ward-availability',
+            "/api/mobile/shared/patient/{$pid}/alerts",
+        ] as $uri) {
+            $this->assertJsonOk($uri);
+        }
+    }
+
+    /** @test */
+    public function test_new_groups_keep_the_sidebar_guards()
+    {
+        Sanctum::actingAs($this->staff('DOCTOR'));
+        $this->assertEquals(403, $this->getJson('/api/mobile/reception/hmo-pending-count')->status());
+
+        Sanctum::actingAs($this->staff('RECEPTIONIST'));
+        $this->assertEquals(403, $this->getJson('/api/mobile/doctor/diagnosis-favorites')->status());
+        $this->assertEquals(200, $this->getJson('/api/mobile/shared/ward-availability')->status());
+    }
+
+    /** @test */
+    public function test_payment_wrapper_applies_the_web_billing_rule()
+    {
+        if (!Role::where('name', 'RECEPTIONIST')->exists()) {
+            $this->markTestSkipped('RECEPTIONIST role missing.');
+        }
+        $user = $this->staff('RECEPTIONIST');
+        Sanctum::actingAs($user);
+        $canBill = \App\Http\Controllers\ReceptionWorkbenchController::userCanBill($user);
+        $resp = $this->postJson('/api/mobile/reception/process-payment', ['patient_id' => $this->anyPatientId(), 'payment_type' => 'CASH', 'items' => []]);
+        // Without billing rights: refused before reaching billing. With them: billing's own validation (422).
+        $this->assertEquals($canBill ? 422 : 403, $resp->status(), substr($resp->getContent(), 0, 300));
+    }
+
+    /** @test */
+    public function test_more_doctor_parity_endpoints_return_json()
+    {
+        Sanctum::actingAs($this->staff('DOCTOR'));
+        $pid = $this->anyPatientId();
+        $ajax = ['X-Requested-With' => 'XMLHttpRequest'];
+
+        foreach ([
+            '/api/mobile/doctor/treatment-plans',
+            "/api/mobile/doctor/patient/{$pid}/medical-reports",
+            "/api/mobile/doctor/patient/{$pid}/report-data",
+            "/api/mobile/shared/patient/{$pid}/admissions",
+            '/api/mobile/shared/search-patients?q=ab',
+            '/api/mobile/shared/hmos',
+            '/api/mobile/shared/registration-context',
+            '/api/mobile/shared/patient/next-file-number?workbench=doctor&prefix=DOC-',
+        ] as $uri) {
+            $this->assertJsonOk($uri);
+        }
+        $this->assertJsonOk("/api/mobile/doctor/patient/{$pid}/investigation-actions?draw=1&start=0&length=5", $ajax);
+        $this->assertJsonOk("/api/mobile/doctor/patient/{$pid}/imaging-actions?draw=1&start=0&length=5", $ajax);
+    }
+
+    /** @test */
+    public function test_staff_settings_follow_hospital_config()
+    {
+        Sanctum::actingAs($this->staff('DOCTOR'));
+        $resp = $this->getJson('/api/mobile/staff/settings');
+        $this->assertEquals(200, $resp->status());
+        $data = $resp->json('data');
+        $this->assertSame(\App\Support\ClientSettings::workbench()['default_dose_mode'], $data['default_dose_mode']);
+        foreach (['enable_structured_dose', 'default_dose_mode', 'require_diagnosis', 'note_edit_window', 'llm_enabled', 'enable_ei_doctor', 'allow_doctor_set_procedure_price'] as $key) {
+            $this->assertArrayHasKey($key, $data);
+        }
+        // Structured dosing off forces simple mode, exactly as the web encounter page does.
+        $structuredOn = (bool) (appsettings('enable_structured_dose') ?? 1);
+        $this->assertSame($structuredOn ? (appsettings('default_dose_mode') ?? 'structured') : 'simple', $data['default_dose_mode']);
+
+        $this->assertArrayHasKey('settings', $this->getJson('/api/mobile/staff/workspaces')->json('data'));
+    }
+
+    /** @test */
+    public function test_represcribe_from_past_encounter_lists_items()
+    {
+        $encounters = \App\Models\Encounter::query()->latest('id')->take(2)->get();
+        if ($encounters->count() < 2) {
+            $this->markTestSkipped('Needs two encounters.');
+        }
+        Sanctum::actingAs($this->staff('DOCTOR'));
+        [$current, $source] = [$encounters[0], $encounters[1]];
+        $resp = $this->getJson("/api/mobile/doctor/encounters/{$current->id}/encounter-items/{$source->id}");
+        $this->assertEquals(200, $resp->status(), substr($resp->getContent(), 0, 300));
+        foreach (['labs', 'imaging', 'prescriptions', 'procedures'] as $k) {
+            $this->assertArrayHasKey($k, $resp->json('items'));
+        }
+    }
+}

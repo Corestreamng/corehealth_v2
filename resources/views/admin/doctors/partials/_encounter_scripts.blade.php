@@ -5,6 +5,7 @@
     $pId = $patient->id ?? request()->get('patient_id', 0);
     $encId = $encounter->id ?? request()->get('encounter_id', '');
 @endphp
+@php $clientSettings = \App\Support\ClientSettings::workbench(); @endphp
 <script>
     window.WORKBENCH_CONFIG = {
         csrf: '{{ csrf_token() }}',
@@ -13,18 +14,18 @@
         queueId: '{{ request()->get("queue_id", "") }}',
         encounterId: '{{ $encId }}',
         patientWeight: {!! json_encode($patientWeight ?? null) !!},
-        enableStructuredDose: {{ (bool) (appsettings('enable_structured_dose') ?? 1) ? 'true' : 'false' }},
-        defaultDoseMode: '{{ (bool) (appsettings('enable_structured_dose') ?? 1) ? (appsettings('default_dose_mode') ?? 'structured') : 'simple' }}',
-        allowDoctorSetProcedurePrice: {{ (bool) (appsettings('allow_doctor_set_procedure_price') ?? 0) ? 'true' : 'false' }},
-        procedureCategoryId: {{ (int) (appsettings('procedure_category_id', 8) ?: 8) }},
-        investigationCategoryId: {{ (int) (appsettings('investigation_category_id', 2) ?: 2) }},
-        imagingCategoryId: {{ (int) (appsettings('imaging_category_id', 6) ?: 6) }},
-        labRequiresApproval: {{ (bool) appsettings('lab_results_require_approval') ? 'true' : 'false' }},
-        imagingRequiresApproval: {{ (bool) appsettings('imaging_results_require_approval') ? 'true' : 'false' }},
-        doctorSelfApproveLab: {{ (bool) appsettings('doctor_self_approve_lab_result') ? 'true' : 'false' }},
-        nurseSelfApproveLab: {{ (bool) appsettings('nurse_self_approve_lab_result') ? 'true' : 'false' }},
-        doctorSelfApproveImaging: {{ (bool) appsettings('doctor_self_approve_imaging_result') ? 'true' : 'false' }},
-        nurseSelfApproveImaging: {{ (bool) appsettings('nurse_self_approve_imaging_result') ? 'true' : 'false' }},
+        enableStructuredDose: {{ $clientSettings['enable_structured_dose'] ? 'true' : 'false' }},
+        defaultDoseMode: '{{ $clientSettings['default_dose_mode'] }}',
+        allowDoctorSetProcedurePrice: {{ $clientSettings['allow_doctor_set_procedure_price'] ? 'true' : 'false' }},
+        procedureCategoryId: {{ $clientSettings['procedure_category_id'] }},
+        investigationCategoryId: {{ $clientSettings['investigation_category_id'] }},
+        imagingCategoryId: {{ $clientSettings['imaging_category_id'] }},
+        labRequiresApproval: {{ $clientSettings['lab_results_require_approval'] ? 'true' : 'false' }},
+        imagingRequiresApproval: {{ $clientSettings['imaging_results_require_approval'] ? 'true' : 'false' }},
+        doctorSelfApproveLab: {{ $clientSettings['doctor_self_approve_lab_result'] ? 'true' : 'false' }},
+        nurseSelfApproveLab: {{ $clientSettings['nurse_self_approve_lab_result'] ? 'true' : 'false' }},
+        doctorSelfApproveImaging: {{ $clientSettings['doctor_self_approve_imaging_result'] ? 'true' : 'false' }},
+        nurseSelfApproveImaging: {{ $clientSettings['nurse_self_approve_imaging_result'] ? 'true' : 'false' }},
         routes: {
             'patient-form-list': '{{ url("/patient-form-list") }}/' + ('{{ $pId }}' || '0'),
             'EncounterHistoryList': '{{ url("/EncounterHistoryList") }}/' + ('{{ $pId }}' || '0'),

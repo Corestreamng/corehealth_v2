@@ -1,18 +1,40 @@
 <?php
 
+use App\Http\Controllers\AdmissionModuleController;
+use App\Http\Controllers\AdmissionRequestController;
 use App\Http\Controllers\API\DataEndpoint;
 use App\Http\Controllers\API\MobileAuthController;
 use App\Http\Controllers\API\MobileChatController;
 use App\Http\Controllers\API\MobileEncounterController;
 use App\Http\Controllers\API\MobilePatientController;
+use App\Http\Controllers\API\MobileReceptionController;
+use App\Http\Controllers\BankController;
+use App\Http\Controllers\BillingWorkbenchController;
+use App\Http\Controllers\ClinicalAlertController;
+use App\Http\Controllers\DiagnosisFavoriteController;
+use App\Http\Controllers\DoctorAppointmentController;
+use App\Http\Controllers\EmergencyIntakeController;
 use App\Http\Controllers\EncounterController;
+use App\Http\Controllers\HospitalContactController;
+use App\Http\Controllers\ImagingWorkbenchController;
+use App\Http\Controllers\LabWorkbenchController;
+use App\Http\Controllers\LlmController;
+use App\Http\Controllers\MedicalReportController;
 use App\Http\Controllers\MedicationChartController;
+use App\Http\Controllers\MorgueController;
+use App\Http\Controllers\NhmisWorkbenchController;
+use App\Http\Controllers\NonPharmOrderController;
 use App\Http\Controllers\NursingWorkbenchController;
+use App\Http\Controllers\PatientProfileController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReceptionWorkbenchController;
+use App\Http\Controllers\ResultViewController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SpecialistReferralController;
+use App\Http\Controllers\TreatmentPlanController;
 use App\Http\Controllers\VitalSignController;
+use App\Http\Controllers\WardController;
+use App\Http\Controllers\WorkbenchPriceListController;
 use App\Models\ProcedureCategory;
 use App\Models\Product;
 use App\Models\Service;
@@ -197,6 +219,7 @@ Route::prefix('mobile')->middleware('auth:sanctum')->group(function () {
     Route::post('logout', [MobileAuthController::class, 'logout']);
     // Native staff client navigation: web sidebar sections the user may use
     Route::get('staff/workspaces', [MobileAuthController::class, 'staffWorkspaces']);
+    Route::get('staff/settings', [MobileAuthController::class, 'staffSettings']);
 });
 
 /*
@@ -320,6 +343,23 @@ Route::prefix('mobile/doctor')->middleware(['auth:sanctum', 'native.workspace:do
     // ── Medication Chart (reuse existing JSON controller) ────────
     Route::get('patient/{patient}/medication-chart', [MedicationChartController::class, 'getPatientPrescribedDrugs']);
     Route::get('patient/{patient}/medication-chart/overview', [MedicationChartController::class, 'overview']);
+    // Medication administration record and intake/output actions (web: Nurse Charts tab)
+    Route::get('patient/{patient}/medication-chart/calendar/{medication}/{start_date?}', [MedicationChartController::class, 'calendar']);
+    Route::get('patient/{patient}/medication-chart/direct-calendar', [MedicationChartController::class, 'directCalendar']);
+    Route::post('patient/{patient}/medication-chart/administer-direct', [MedicationChartController::class, 'administerDirect']);
+    Route::post('patient/{patient}/dismiss-prescription', [MedicationChartController::class, 'nurseDismissPrescription']);
+    Route::post('medication-chart/schedule', [MedicationChartController::class, 'storeTiming']);
+    Route::post('medication-chart/administer', [MedicationChartController::class, 'administer']);
+    Route::post('medication-chart/edit', [MedicationChartController::class, 'editAdministration']);
+    Route::post('medication-chart/delete', [MedicationChartController::class, 'deleteAdministration']);
+    Route::post('medication-chart/remove-schedule', [MedicationChartController::class, 'removeSchedule']);
+    Route::post('medication-chart/discontinue', [MedicationChartController::class, 'discontinue']);
+    Route::post('medication-chart/resume', [MedicationChartController::class, 'resume']);
+    Route::get('patient/{patient}/intake-output/logs/{period}', [\App\Http\Controllers\IntakeOutputChartController::class, 'periodLogs']);
+    Route::post('intake-output/start', [\App\Http\Controllers\IntakeOutputChartController::class, 'startPeriod']);
+    Route::post('intake-output/record', [\App\Http\Controllers\IntakeOutputChartController::class, 'storeRecord']);
+    Route::post('intake-output/end', [\App\Http\Controllers\IntakeOutputChartController::class, 'endPeriod']);
+    Route::delete('intake-output/record/{record}', [\App\Http\Controllers\IntakeOutputChartController::class, 'deleteRecord']);
 
     // ── Intake/Output Charts (reuse existing JSON controller) ────
     Route::get('patient/{patient}/intake-output', [\App\Http\Controllers\IntakeOutputChartController::class, 'index']);
@@ -341,6 +381,74 @@ Route::prefix('mobile/doctor')->middleware(['auth:sanctum', 'native.workspace:do
 
     // ── Other Admissions (hospital-wide) ─────────────────────────
     Route::get('admissions/all', [MobileEncounterController::class, 'allAdmissions']);
+
+    // ── Queue calendar + consultation timer (My Queues / encounter header) ──
+    Route::get('queue/calendar-events', [DoctorAppointmentController::class, 'getUnifiedCalendarEvents']);
+    Route::get('queue/{queue}/timer/status', [DoctorAppointmentController::class, 'getTimerStatus']);
+    Route::post('queue/{queue}/timer/start', [DoctorAppointmentController::class, 'startTimer']);
+    Route::post('queue/{queue}/timer/pause', [DoctorAppointmentController::class, 'pauseTimer']);
+
+    // ── Clinical notes: diagnosis favourites, AI note polish ──
+    Route::get('diagnosis-favorites', [DiagnosisFavoriteController::class, 'index']);
+    Route::post('diagnosis-favorites', [DiagnosisFavoriteController::class, 'store']);
+    Route::delete('diagnosis-favorites/{id}', [DiagnosisFavoriteController::class, 'destroy']);
+    Route::post('llm/polish-note', [LlmController::class, 'polishNote']);
+    Route::post('llm/patient-summary', [LlmController::class, 'generatePatientSummary']);
+    Route::post('llm/clinical-scribe/process', [LlmController::class, 'processScribeSession']);
+    Route::post('llm/clinical-scribe/convert-format', [LlmController::class, 'convertFormat']);
+    Route::post('llm/clinical-scribe/sign', [LlmController::class, 'signScribeSession']);
+
+    // ── Clinical story, treatment plans, care plan (non-pharm) ──
+    Route::get('encounters/{encounter}/clinical-story/timeline', [EncounterController::class, 'getClinicalStoryTimeline']);
+    Route::get('encounters/{encounter}/clinical-story', [EncounterController::class, 'getPatientClinicalStory']);
+    Route::get('patient/{patient}/treatment-plans', [TreatmentPlanController::class, 'forPatient']);
+    Route::post('encounters/{encounter}/apply-treatment-plan', [TreatmentPlanController::class, 'applyToEncounter']);
+    Route::post('treatment-plans/from-current', [TreatmentPlanController::class, 'fromCurrent']);
+    Route::get('treatment-plans', [TreatmentPlanController::class, 'index']);
+    Route::post('encounters/{encounter}/apply-combo', [EncounterController::class, 'applyCombo']);
+    Route::post('patient/{patient}/treatment-plans', [TreatmentPlanController::class, 'storeForPatient']);
+    Route::get('treatment-plans/{treatmentPlan}', [TreatmentPlanController::class, 'show']);
+    Route::put('treatment-plans/{treatmentPlan}', [TreatmentPlanController::class, 'update']);
+    Route::put('treatment-plans/{treatmentPlan}/progress', [TreatmentPlanController::class, 'updateProgress']);
+    Route::put('treatment-plans/{treatmentPlan}/retire', [TreatmentPlanController::class, 'retire']);
+    Route::get('treatment-plans/{treatmentPlan}/linked-items', [TreatmentPlanController::class, 'linkedItems']);
+    Route::post('treatment-plans/{treatmentPlan}/attach-note', [TreatmentPlanController::class, 'attachNote']);
+    Route::get('non-pharm-orders/patient/{patient_id}', [NonPharmOrderController::class, 'getPatientOrders']);
+    Route::post('non-pharm-orders', [NonPharmOrderController::class, 'store']);
+    Route::post('non-pharm-orders/{id}/complete', [NonPharmOrderController::class, 'complete']);
+    Route::delete('non-pharm-orders/{id}', [NonPharmOrderController::class, 'destroy']);
+
+    // ── Results: viewed tracking ──
+    Route::post('result-views', [ResultViewController::class, 'store']);
+    Route::get('result-views/unviewed-counts/{patient_id}', [ResultViewController::class, 'unviewedCounts']);
+
+    // ── Result entry from the encounter (perform / enter / edit), same as the web doctor page ──
+    Route::get('patient/{patient_id}/investigation-actions', [EncounterController::class, 'investigationHistoryList']);
+    Route::get('patient/{patient_id}/imaging-actions', [EncounterController::class, 'imagingHistoryList']);
+    Route::get('lab/requests/{id}', [LabWorkbenchController::class, 'getLabRequest']);
+    Route::get('lab/requests/{id}/attachments', [LabWorkbenchController::class, 'getRequestAttachments']);
+    Route::post('lab/record-billing', [LabWorkbenchController::class, 'recordBilling']);
+    Route::post('lab/claim-self-perform', [LabWorkbenchController::class, 'claimSelfPerform']);
+    Route::post('lab/save-result', [LabWorkbenchController::class, 'saveResult']);
+    Route::get('imaging/requests/{id}', [ImagingWorkbenchController::class, 'getImagingRequest']);
+    Route::get('imaging/requests/{id}/attachments', [ImagingWorkbenchController::class, 'getRequestAttachments']);
+    Route::post('imaging/record-billing', [ImagingWorkbenchController::class, 'recordBilling']);
+    Route::post('imaging/claim-self-perform', [ImagingWorkbenchController::class, 'claimSelfPerform']);
+    Route::post('imaging/save-result', [ImagingWorkbenchController::class, 'saveResult']);
+    Route::get('nhmis/service-mapping/{serviceId}', [NhmisWorkbenchController::class, 'getMappingForService']);
+
+    // ── Patient profiles (saved questionnaires) and inpatient discharge ──
+    Route::get('patient/{patient_id}/profiles', [PatientProfileController::class, 'listPatientForm']);
+
+    // ── Medical reports (web: Report Builder) ──
+    Route::get('patient/{patient_id}/medical-reports', [MedicalReportController::class, 'listByPatient']);
+    Route::get('patient/{patient_id}/report-data', [MedicalReportController::class, 'getPatientData']);
+    Route::post('medical-reports', [MedicalReportController::class, 'store']);
+    Route::get('medical-reports/{medical_report}', [MedicalReportController::class, 'show']);
+    Route::put('medical-reports/{medical_report}', [MedicalReportController::class, 'update']);
+    Route::post('medical-reports/{medical_report}/finalize', [MedicalReportController::class, 'finalize']);
+    Route::delete('medical-reports/{medical_report}', [MedicalReportController::class, 'destroy']);
+    Route::post('admissions/{admission_req_id}/discharge', [AdmissionRequestController::class, 'dischargePatientApi']);
 });
 
 /*
@@ -370,6 +478,111 @@ Route::prefix('mobile/reception')->middleware(['auth:sanctum', 'native.workspace
     Route::get('hmos', [ReceptionWorkbenchController::class, 'getHmos']);
     Route::post('tariff-preview', [ReceptionWorkbenchController::class, 'getTariffPreview']);
     Route::post('book-consultation', [ReceptionWorkbenchController::class, 'bookConsultation']);
+
+    // Page context the web workbench is rendered with (billing permission, registration fees)
+    Route::get('context', [MobileReceptionController::class, 'context']);
+
+    // Walk-in sales (Walk-in Sales tab)
+    Route::get('services/lab', [ReceptionWorkbenchController::class, 'getLabServices']);
+    Route::get('services/imaging', [ReceptionWorkbenchController::class, 'getImagingServices']);
+    Route::get('services/procedure', [ReceptionWorkbenchController::class, 'getProcedureServices']);
+    Route::get('products', [ReceptionWorkbenchController::class, 'getProducts']);
+    Route::post('book-walkin', [ReceptionWorkbenchController::class, 'bookWalkinServices']);
+    Route::get('patient/{id}/recent-requests', [ReceptionWorkbenchController::class, 'getRecentRequests']);
+
+    // Service Requests tab
+    Route::get('patient/{id}/service-requests', [ReceptionWorkbenchController::class, 'getServiceRequests']);
+    Route::get('patient/{id}/service-requests-stats', [ReceptionWorkbenchController::class, 'getServiceRequestsStats']);
+    Route::get('request/{type}/{id}/details', [ReceptionWorkbenchController::class, 'getRequestDetails']);
+    Route::delete('request/{type}/{id}/discard', [ReceptionWorkbenchController::class, 'discardServiceRequest']);
+
+    // HMO Pending Validation
+    Route::get('hmo-pending-validation', [ReceptionWorkbenchController::class, 'getHmoPendingValidation']);
+    Route::get('hmo-pending-count', [ReceptionWorkbenchController::class, 'getHmoPendingCount']);
+    Route::post('hmo-validate/{id}', [ReceptionWorkbenchController::class, 'validateHmoRequest']);
+    Route::post('hmo-batch-validate', [ReceptionWorkbenchController::class, 'batchValidateHmo']);
+
+    // Pending referrals desk
+    Route::get('referrals/pending', [SpecialistReferralController::class, 'getPendingReferrals']);
+    Route::get('referrals/pending-count', [SpecialistReferralController::class, 'getPendingReferralCount']);
+    Route::get('referrals/{referral}/detail', [SpecialistReferralController::class, 'getReferralDetail']);
+    Route::post('referrals/{referral}/book', [SpecialistReferralController::class, 'bookReferralAppointment']);
+    Route::post('referrals/{referral}/refer-out', [SpecialistReferralController::class, 'referOut']);
+    Route::post('referrals/{referral}/cancel', [SpecialistReferralController::class, 'cancelReferral']);
+    Route::post('referrals/{referral}/decline', [SpecialistReferralController::class, 'declineReferral']);
+
+    // Checkout and cashier (web: payment modal + My Transactions); payment gated like the web page
+    Route::post('process-payment', [MobileReceptionController::class, 'processPayment']);
+    Route::get('my-transactions', [BillingWorkbenchController::class, 'getMyTransactions']);
+    Route::get('banks/active', [BankController::class, 'getActiveBanks']);
+    Route::get('billing/staff-list', [BillingWorkbenchController::class, 'getStaffList']);
+    Route::get('billing/organization-list', [BillingWorkbenchController::class, 'getOrganizationList']);
+    Route::get('patient/{id}/account-summary', [BillingWorkbenchController::class, 'getPatientAccountSummary']);
+
+});
+
+/*
+|--------------------------------------------------------------------------
+| Native Staff Client — features shared by Health Records and Doctors
+|--------------------------------------------------------------------------
+| Both web workbenches include these (contacts, price list, emergency intake, appointments,
+| clinical alerts, patient edit, admission request). Same controllers as the web.
+*/
+Route::prefix('mobile/shared')->middleware(['auth:sanctum', 'native.workspace:reception|doctor'])->group(function () {
+    Route::get('hospital-contacts', [HospitalContactController::class, 'index']);
+    Route::post('hospital-contacts', [HospitalContactController::class, 'store']);
+    Route::put('hospital-contacts/{id}', [HospitalContactController::class, 'update']);
+    Route::delete('hospital-contacts/{id}', [HospitalContactController::class, 'destroy']);
+    Route::get('price-list/services', [WorkbenchPriceListController::class, 'getServices']);
+    Route::get('price-list/products', [WorkbenchPriceListController::class, 'getProducts']);
+    Route::get('price-list/tariffs', [WorkbenchPriceListController::class, 'getTariffs']);
+
+    // Patient registration and lookup (both web workbenches open the same patient form)
+    Route::get('search-patients', [ReceptionWorkbenchController::class, 'searchPatients']);
+    Route::get('patient/next-file-number', [ReceptionWorkbenchController::class, 'getNextFileNumber']);
+    Route::post('patient/check-file-number', [ReceptionWorkbenchController::class, 'checkFileNumberExists']);
+    Route::post('patient/check-duplicate', [ReceptionWorkbenchController::class, 'checkDuplicatePatient']);
+    Route::post('patient/quick-register', [ReceptionWorkbenchController::class, 'quickRegister']);
+    Route::get('patient/{id}', [ReceptionWorkbenchController::class, 'getPatient'])->whereNumber('id');
+    Route::get('hmos', [ReceptionWorkbenchController::class, 'getHmos']);
+    Route::get('registration-context', [MobileReceptionController::class, 'context']);
+
+    // Patient record (edit) and safety alerts
+    Route::put('patient/{id}/update', [ReceptionWorkbenchController::class, 'updatePatient']);
+    Route::get('patient/{patientId}/alerts', [ClinicalAlertController::class, 'index']);
+    Route::post('patient/{patientId}/alerts', [ClinicalAlertController::class, 'store']);
+    Route::put('patient/{patientId}/alerts/{alertId}', [ClinicalAlertController::class, 'update']);
+    Route::delete('patient/{patientId}/alerts/{alertId}', [ClinicalAlertController::class, 'destroy']);
+
+    // Appointments (reception Appointments tab, doctor queue actions)
+    Route::get('appointments/list', [DoctorAppointmentController::class, 'getAppointments']);
+    Route::get('appointments/available-slots', [DoctorAppointmentController::class, 'getAvailableSlots']);
+    Route::post('appointments/create', [DoctorAppointmentController::class, 'createAppointment']);
+    Route::get('appointments/{appointment}/chain', [DoctorAppointmentController::class, 'getAppointmentChain']);
+    Route::get('appointments/{appointment}/available-doctors', [DoctorAppointmentController::class, 'getAvailableDoctors']);
+    Route::post('appointments/{appointment}/check-in', [DoctorAppointmentController::class, 'checkIn']);
+    Route::post('appointments/{appointment}/cancel', [DoctorAppointmentController::class, 'cancel']);
+    Route::post('appointments/{appointment}/no-show', [DoctorAppointmentController::class, 'markNoShow']);
+    Route::post('appointments/{appointment}/reschedule', [DoctorAppointmentController::class, 'reschedule']);
+    Route::post('appointments/{appointment}/reassign', [DoctorAppointmentController::class, 'reassignDoctor']);
+
+    // Emergency intake (both workbenches' red button)
+    Route::get('emergency/clinics', [EmergencyIntakeController::class, 'getClinics']);
+    Route::get('emergency/services', [EmergencyIntakeController::class, 'getServices']);
+    Route::get('emergency/available-beds', [EmergencyIntakeController::class, 'getEmergencyBeds']);
+    Route::get('emergency/search-patient', [EmergencyIntakeController::class, 'searchPatient']);
+    Route::get('emergency/morgue-services', [MorgueController::class, 'getServices']);
+    Route::post('emergency/intake', [EmergencyIntakeController::class, 'intake']);
+    Route::get('services/lab', [ReceptionWorkbenchController::class, 'getLabServices']);
+    Route::get('services/imaging', [ReceptionWorkbenchController::class, 'getImagingServices']);
+
+    // Ward admission request (doctor Admit button; reception admits from emergency)
+    Route::get('ward-availability', [WardController::class, 'getAvailability']);
+
+    // Admissions module (reception Admissions tab; doctor header admission status)
+    Route::get('patient/{id}/admissions', [AdmissionModuleController::class, 'getPatientAdmissions']);
+    Route::get('admission/{id}/detail', [AdmissionModuleController::class, 'getAdmissionDetail']);
+    Route::post('admission-requests', [AdmissionRequestController::class, 'store']);
 });
 
 /*

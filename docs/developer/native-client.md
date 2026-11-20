@@ -17,9 +17,16 @@ Two Flutter apps live in `native_clients/`:
 ### Mobile route groups
 | Prefix | Guard | Controllers (same as web) |
 |---|---|---|
-| `api/mobile/reception/*` | `native.workspace:reception` | `ReceptionWorkbenchController` (today-stats, queue-counts, queue-list, search-patients, patient, visits, queue, next-file-number, check-file-number, check-duplicate, quick-register, update, clinics, doctors, consultation services, hmos, tariff-preview, book-consultation) |
-| `api/mobile/doctor/*` | `native.workspace:doctor` | `EncounterController`, `MobileEncounterController`, `SpecialistReferralController`, `VitalSignController`, `MedicationChartController`, `DoctorAppointmentController`, ... |
+| `api/mobile/staff/*` | active staff | `MobileAuthController` (login, `workspaces`, `settings`) |
+| `api/mobile/reception/*` | `native.workspace:reception` | `ReceptionWorkbenchController` (queue, search, registration, booking, walk-in, service requests, HMO validation), `SpecialistReferralController` (pending desk), `BillingWorkbenchController` (my transactions, staff/org lists, account summary), `BankController`, adapter `API\MobileReceptionController` (`context`, `process-payment`) |
+| `api/mobile/shared/*` | `native.workspace:reception\|doctor` | Registration and lookup, `HospitalContactController`, `WorkbenchPriceListController`, `ClinicalAlertController`, `DoctorAppointmentController`, `EmergencyIntakeController`, `MorgueController@getServices`, `WardController`, `AdmissionRequestController@store`, `AdmissionModuleController` |
+| `api/mobile/doctor/*` | `native.workspace:doctor` | `EncounterController`, `MobileEncounterController`, `DoctorAppointmentController` (calendar, timer), `DiagnosisFavoriteController`, `LlmController` (polish, briefing, scribe), `TreatmentPlanController`, `NonPharmOrderController`, `ResultViewController`, `PatientProfileController`, `MedicalReportController`, `Lab/ImagingWorkbenchController` (result entry), `NhmisWorkbenchController@getMappingForService`, `MedicationChartController`, `IntakeOutputChartController`, `SpecialistReferralController`, `VitalSignController` |
 | `api/mobile/doctor/chat/*` | `native.workspace:global` | `MobileChatController` |
+
+### Hospital Config in the app
+`App\Support\ClientSettings::workbench()` computes the `appsettings()` values that change workbench behaviour (dose mode, structured dosing, treatment plans, emergency intake switches, procedure pricing, result approval, note edit window, `llm_enabled`, ...) with the web's defaults. The web encounter page (`_encounter_scripts`, `dose-mode-toggle`) reads it, and the app receives the same array from login, `staff/workspaces` and `staff/settings` (`ClientSettings` in Dart). Never hard-code these defaults in the app.
+
+**Rules that decide per-row actions** (appointment actions, referral desk actions, result perform/enter/edit) stay on the server: the app reads which buttons the web list rendered, so a permission change on the server changes both.
 
 ## 2. App architecture
 - **`core/workspaces/`:**
@@ -38,7 +45,7 @@ Two Flutter apps live in `native_clients/`:
 |---|---|---|---|---|
 | 1 | Home / Messenger | `global` | Home (workspace tiles), Messenger | — |
 | 2 | Staff Workspace (ESS, supplies) | `staff_workspace` | — | All items |
-| 3 | Health Records | `reception` | Front Desk (search, today and queue stats), New Patient (duplicate check, next file number), Queue (filters, paging), Patient record, Book consultation | All Encounters, NHMIS report; web workbench extras: walk-in services and cart, HMO validation, service requests, reports, routing slip, patient edit, family links, photo/documents |
+| 3 | Health Records | `reception` | Every reception workbench feature: front desk, full registration and edit (photo, old records, family, fees, age modes), walk-in and emergency registration, queue filters, patient hub (profile, visits, service requests, appointments, admissions), family booking with re-bill and tariff preview, walk-in sales, checkout (all payment methods), HMO validation, referrals desk, appointments, my transactions, alerts, contacts, price list, emergency intake | Pages: All Encounters, NHMIS report. Workbench: reports and charts, printing (card, routing slip, receipts A4), ward dashboard (Nursing), morgue admission (Morgue) |
 | 4 | Billing | `billing` | — | All |
 | 5 | Pharmacy | `pharmacy` | — | All |
 | 6 | Store / Inventory | `store` | — | All |
@@ -47,7 +54,7 @@ Two Flutter apps live in `native_clients/`:
 | 9 | Maternity | `maternity` | — | All |
 | 10 | Medical Laboratory | `lab` | — | All |
 | 11 | Imaging / Radiology | `radiology` | — | All |
-| 12 | Doctors | `doctor` | Dashboard, My Queues + consultation (13 tabs), Investigations | Maternity Workbench; remaining items in `docs_archive/MOBILE_WEB_PARITY_PLAN.md` |
+| 12 | Doctors | `doctor` | My Queues (ribbon, filters, calendar, history, open past encounters) and every New Encounter tab and action: treatment plans, clinical story, vitals trends, nurse charts with MAR and I/O actions, notes (favourites, templates, AI polish, web status/course values), orders (order sets, bundles, re-order from past encounter, result entry), care plan, admit/discharge, server timer, alerts, edit patient, AI Scribe Studio, medical report builder, conclude (outcomes, death record, follow-up) | Maternity Workbench. Legacy patient-profile questionnaires (filling), printing |
 | 13 | HMO Executive | `hmo` | — | All |
 | 14 | Accounting | `accounting` | — | All |
 | 15 | Human Resources | `hr` | — | All |

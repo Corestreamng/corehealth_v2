@@ -825,6 +825,63 @@ trait ClinicalOrdersTrait
     }
 
     /**
+     * Get all items from a specific encounter, grouped by type.
+     * Used for "Re-prescribe all from encounter" feature.
+     *
+     * @param int $encounterId
+     * @return array  ['labs' => [...], 'imaging' => [...], 'prescriptions' => [...], 'procedures' => [...]]
+     */
+    protected function getEncounterItems(int $encounterId): array
+    {
+        $labs = LabServiceRequest::where('encounter_id', $encounterId)
+            ->with('service:id,service_name,service_code')
+            ->get(['id', 'service_id', 'note']);
+
+        $imaging = ImagingServiceRequest::where('encounter_id', $encounterId)
+            ->with('service:id,service_name,service_code')
+            ->get(['id', 'service_id', 'note']);
+
+        $prescriptions = ProductRequest::where('encounter_id', $encounterId)
+            ->with('product:id,product_name')
+            ->get(['id', 'product_id', 'dose']);
+
+        $procedures = Procedure::where('encounter_id', $encounterId)
+            ->get(['id', 'service_id', 'priority', 'pre_notes']);
+
+        return [
+            'labs' => $labs->map(fn ($l) => [
+                'id' => $l->id,
+                'service_id' => $l->service_id,
+                'name' => optional($l->service)->service_name ?? 'Unknown',
+                'note' => $l->note,
+            ])->toArray(),
+            'imaging' => $imaging->map(fn ($i) => [
+                'id' => $i->id,
+                'service_id' => $i->service_id,
+                'name' => optional($i->service)->service_name ?? 'Unknown',
+                'note' => $i->note,
+            ])->toArray(),
+            'prescriptions' => $prescriptions->map(fn ($p) => [
+                'id' => $p->id,
+                'product_id' => $p->product_id,
+                'name' => optional($p->product)->product_name ?? 'Unknown',
+                'dose' => $p->dose,
+            ])->toArray(),
+            'procedures' => $procedures->map(function ($proc) {
+                $svc = Service::find($proc->service_id);
+
+                return [
+                    'id' => $proc->id,
+                    'service_id' => $proc->service_id,
+                    'name' => optional($svc)->service_name ?? 'Unknown',
+                    'priority' => $proc->priority,
+                    'note' => $proc->pre_notes,
+                ];
+            })->toArray(),
+        ];
+    }
+
+    /**
      * Fetch the last N encounters for a patient.
      */
     protected function recentEncountersForPatient(int $patientId, int $limit = 5, ?int $exceptId = null): \Illuminate\Support\Collection

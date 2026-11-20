@@ -6,19 +6,7 @@
 <script src="{{ asset('plugins/fullcalendar/fullcalendar.min.js') }}"></script>
 @php
     if (!isset($canBillUser)) {
-        $user = Auth::user();
-        $canBillUser = false;
-        if ($user) {
-            $billingRoles = ['SUPERADMIN', 'SUPER-ADMIN', 'ADMIN', 'ACCOUNTS', 'ACCOUNTANT', 'BILLER', 'BILLING'];
-            $userRoles = $user->roles ? $user->roles->pluck('name')->map(fn($r) => strtoupper(trim($r)))->toArray() : [];
-            $canBillUser = !empty(array_intersect($billingRoles, $userRoles))
-                || $user->hasAnyRole([
-                    'SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER', 'super-admin',
-                    'superadmin', 'admin', 'accounts', 'biller', 'billing', 'accountant',
-                    'Biller', 'Billing', 'Accounts', 'Accountant', 'Admin'
-                ])
-                || $user->can('see-accounts');
-        }
+        $canBillUser = \App\Http\Controllers\ReceptionWorkbenchController::userCanBill(Auth::user());
     }
 @endphp
 <script>

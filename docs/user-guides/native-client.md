@@ -30,17 +30,52 @@ Items marked **Web** aren't native yet: they open the same page on the web (you 
 ![Front desk on a computer](/images/workbenches/native-desktop-front-desk.png)
 
 - **Search patients** by name, file number or phone, then tap a patient to open their record.
-- **Today:** new registrations, patients queued, consultations done, pending services.
-- **Queue now:** waiting, vitals pending, in consultation, emergency, admitted, and HMO requests waiting for validation.
-- **Patient record:** details and HMO, today's queue entries, upcoming appointments and recent visits. **Book consultation** sends the patient to a clinic queue: choose the clinic, optionally a doctor, and the consultation service (the price shown comes from the hospital tariff).
+- **Shortcuts:** **New patient**, **Register walk-in** (`EX-` file numbers), **Emergency intake** (shown only when Hospital Config allows it at reception), **Open queue**, **Today's appointments**, **Referrals**, **HMO validation**, **My transactions**, **Contacts** and **Price list**.
+- **Today** and **Queue now** show the same numbers as the web workbench.
 
 ![Front desk on a phone](/images/workbenches/native-phone-front-desk.png)
+
+### Patient record
+
+Tap a patient to open their record. The header shows the file number, age, gender, HMO, account balance, allergies and **clinical alerts** (tap the alert strip to add, edit or remove an alert and choose who sees it). The tabs match the web workbench:
+
+| Tab | What you can do |
+|---|---|
+| **Profile** | Demographics, next of kin, medical details, insurance, family members, registration details and old records. **Edit** (pencil) opens the full patient form. |
+| **Visits** | Every previous visit with doctor and service. |
+| **Service requests** | All lab, imaging, pharmacy, procedure and custom requests with date, type, billing, delivery and department filters, totals (HMO covers / patient pays), details, and **Discard** with a reason. |
+| **Appointments** | Appointments with **Check in, Reschedule, Change doctor, Cancel, No-show** and **History** (only the actions the hospital allows for that appointment), plus **New appointment** with clinic time slots. |
+| **Admissions** | Admissions with ward, bed, length of stay and the admission bill. |
+
+![Service requests on a computer](/images/workbenches/native-desktop-patient-requests.png)
+
+### Book a service
+
+**Book service** (button on the record): choose **Walk-in (now)** or **Schedule future** (date, time slot or custom time, priority, notes). Each family member can be ticked and booked at the same time with their own service, clinic and doctor. The price the patient pays (and what the HMO covers) appears as soon as a service is chosen. **Force re-bill** charges again inside the free follow-up window. Staff who can take payments go straight to **checkout** for new bills.
+
+![Book service](/images/workbenches/native-desktop-book-service.png)
+
+### Walk-in sales and checkout
+
+**Walk-in sale** (button on the record): search **Laboratory, Imaging, Pharmacy** (out-of-stock items can't be added) or **Procedures**, or add a **Custom item** (description, price, quantity, department, billable or not). The cart shows what the patient pays after HMO cover. **Checkout & pay** creates the requests and opens checkout; **Recent** lists today's requests to pay or discard.
+
+**Checkout** takes **Cash, POS, Transfer, Mobile money, Split payment** (several methods adding up to the total), **Bill to staff, Bill to organization** or **Account balance** (warns when the balance would go into debit). Quantity and discount can be adjusted per item. The receipt appears after payment.
+
+![Walk-in sales on a phone](/images/workbenches/native-phone-walkin.png)
+
+### Desk panels
+
+- **HMO validation:** pending HMO items; validate one or tick several and validate together, with notes.
+- **Referrals:** pending (and booked, referred-out, declined, cancelled, completed) referrals; **View**, **Book into clinic**, **Refer out**, **Decline** (reason required) or **Cancel**.
+- **Today's appointments:** all appointments for a day with the same actions as the Appointments tab.
+- **My transactions:** your collections for a date range, totals by payment method, and each payment's items.
+- **Emergency intake:** existing, new or unidentified patient, arrival, ESI triage level, vitals, Glasgow Coma Scale, pain score, allergies, then **queue for consultation, admit to emergency, direct lab/imaging service** or **morgue (brought in dead)**.
 
 ---
 
 ## 3. Register a new patient
 
-**Where:** **Health Records** → **New Patient**.
+**Where:** **Health Records** → **New Patient** (or **New patient** / **Register walk-in** on the doctor queue).
 
 ![New patient on a phone](/images/workbenches/native-phone-new-patient.png)
 
@@ -48,29 +83,59 @@ Items marked **Web** aren't native yet: they open the same page on the web (you 
 |---|---|---|
 | Surname, First name | Yes | At least 2 letters each |
 | Gender | Yes | Male, Female or Others |
-| Date of birth | Yes | Pick from the calendar |
-| File number | No | The next number is filled in; change it only if needed |
-| Phone, email, address, other name | No | |
-| HMO / scheme and HMO number | No | Leave empty for private (cash) patients |
-| Next of kin and phone | No | |
+| Date of birth, age or age group | Yes | Enter the date, an age in years/months/days, or an age group |
+| File number | No | The next number is filled in; tap refresh for the latest |
+| Phone, email, address, referred from | No | Quick chips: Self, Family/Friend, Doctor, Hospital/Clinic, Outreach, Corporate |
+| Photo and old records | No | Take or upload a photo (2 MB); attach old records (PDF, Word or image, 5 MB) |
+| Blood group, genotype, disability, nationality, ethnicity, allergies, history, notes | No | Allergies become red alerts everywhere |
+| Next of kin name, phone, address | No | |
+| Coverage and HMO number | No | Private or an HMO |
+| Family principal / link to principal | No | Links the household |
+| Registration fee | No | Bills the chosen registration service |
 
-Before saving, the app checks for **possible existing patients** with the same name, phone or date of birth. Open one of them instead of creating a duplicate folder, or choose **Register anyway**. After saving, the new record opens so you can book a consultation straight away.
+The app checks for **possible existing patients** first, then shows a **summary** to confirm before saving.
 
 ---
 
 ## 4. Intake queue
 
-**Where:** **Health Records** → **Queue**. Filter by **Waiting, Vitals, In consultation, Completed, Emergency** or **Admitted** (each shows its count). Tap a patient to open their record. Pull down to refresh.
+**Where:** **Health Records** → **Queue**. Filter by **Waiting, Vitals, Ready, In consultation, Completed, Emergency** or **Admitted**, or open **Today's appointments, Pending referrals** and **HMO validation**. Tap a patient to open their record. Pull down to refresh.
 
 ---
 
 ## 5. Doctors
 
-**Where:** workspace **Doctors**.
+**Where:** workspace **Doctors** → **My Queues**.
 
-- **Dashboard:** today's queue numbers and your recent lab and imaging orders.
-- **My Queues:** your patient queue. Open a patient to start or continue the consultation: notes and diagnosis, labs, imaging, prescriptions, procedures, referrals, admission and conclude.
-- **Investigations:** all your lab and imaging orders.
+![My Queues](/images/workbenches/native-desktop-my-queues.png)
+
+- **Ribbon:** New patient, Register walk-in (`DOC-` numbers), Emergency intake (when enabled for doctors), Contacts, Price list.
+- **Today's Queue:** counts, date range and status filters; **Check in, Reschedule, Reassign, No-show, Cancel**; start or resume the consultation.
+- **Calendar:** your week of appointments and queue entries.
+- **History:** previous encounters (tap one to open it), my/other admissions, my and all referrals.
+
+### The consultation
+
+The header shows the patient, clinic and admission status, the **consultation timer** (tap to pause or resume; it is kept on the server like the web), **Admit** or **Discharge**, and the **⋮ menu**: Edit patient, Clinical alerts, Refer, **Order sets & bundles**, **AI Scribe Studio**, **Medical report**, Patient profiles.
+
+Tabs follow the web: **Treatment Plans** (when switched on in Hospital Config), **Clinical Story**, Vitals (with trend chart), Nurse Charts (fluid and solid intake/output: start, record, end), Inj/Imm, **Notes** (diagnoses with status and course, **favourites**, templates, dictation, **AI polish**; autosaves every 10 seconds), Labs and Imaging (**Perform / Enter / Edit result** when the hospital allows; unviewed results counted on the tab), Meds (**Simple** or **Structured** dosing, starting with the hospital's default), **Care Plan**, Procedures, Admissions, Referrals, Med Chart (tap a drug to schedule, give, edit, discontinue or resume), History and Summary.
+
+![Clinical story](/images/workbenches/native-desktop-clinical-story.png)
+
+![Care plan](/images/workbenches/native-desktop-care-plan.png)
+
+- **Order sets & bundles:** apply a treatment-plan template (pick its items), a service bundle, or re-order items from a past encounter; save this encounter's orders as a template.
+- **AI Scribe Studio:** read the AI patient briefing, dictate or type the consultation, **Structure note** in Clerking, SOAP or POMR, review the catalog-matched orders, then **Sign & commit**. The note is saved to the encounter and the ticked orders are sent.
+
+![AI Scribe Studio](/images/workbenches/native-desktop-ai-scribe.png)
+
+- **Medical report:** sections like the web report, one-tap patient data, save as draft or **Finalize**. Print from the web.
+
+![Medical report](/images/workbenches/native-desktop-report-builder.png)
+
+- **Conclude:** review the seven summary cards, choose the **outcome** (death outcomes ask for date, time and cause), optionally schedule a **follow-up** (date, slot, priority, notes, pre-paid), then **Complete encounter**.
+
+![Conclude](/images/workbenches/native-desktop-conclude.png)
 
 ---
 

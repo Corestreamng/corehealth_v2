@@ -56,6 +56,52 @@ class ReceptionWorkbenchController extends Controller
     }
 
     /**
+     * Whether a user may take payments from the reception workbench (web checkout and the
+     * native client's payment wrapper both use this rule).
+     */
+    public static function userCanBill($user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+        $billingRoles = ['SUPERADMIN', 'SUPER-ADMIN', 'ADMIN', 'ACCOUNTS', 'ACCOUNTANT', 'BILLER', 'BILLING'];
+        $userRoles = $user->roles ? $user->roles->pluck('name')->map(fn ($r) => strtoupper(trim($r)))->toArray() : [];
+
+        return !empty(array_intersect($billingRoles, $userRoles))
+            || $user->hasAnyRole([
+                'SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER', 'super-admin',
+                'superadmin', 'admin', 'accounts', 'biller', 'billing', 'accountant',
+                'Biller', 'Billing', 'Accounts', 'Accountant', 'Admin',
+            ])
+            || $user->can('see-accounts');
+    }
+
+    /**
+     * Departments offered for free-form walk-in items and the service-request filter.
+     */
+    public static function activeDepartmentsQuery()
+    {
+        return \App\Models\Department::where('is_active', true)->orderBy('name')->get();
+    }
+
+    /**
+     * Services offered as the optional registration fee (Hospital Config: registration category).
+     */
+    public static function registrationServicesQuery()
+    {
+        $registrationCategoryId = appsettings('registration_category_id');
+        if (!$registrationCategoryId) {
+            return collect();
+        }
+
+        return Service::with('price')
+            ->where('category_id', $registrationCategoryId)
+            ->where('status', 1)
+            ->orderBy('service_name')
+            ->get();
+    }
+
+    /**
      * Display the reception workbench
      */
     public function index()
@@ -64,31 +110,11 @@ class ReceptionWorkbenchController extends Controller
         $hmos = Hmo::with('scheme')->where('status', 1)->orderBy('name')->get();
 
         // Get registration services for optional registration fee
-        $registrationCategoryId = appsettings('registration_category_id');
-        $registrationServices = collect();
-        if ($registrationCategoryId) {
-            $registrationServices = Service::with('price')
-                ->where('category_id', $registrationCategoryId)
-                ->where('status', 1)
-                ->orderBy('service_name')
-                ->get();
-        }
+        $registrationServices = self::registrationServicesQuery();
 
-        $user = auth()->user();
-        $canBillUser = false;
-        if ($user) {
-            $billingRoles = ['SUPERADMIN', 'SUPER-ADMIN', 'ADMIN', 'ACCOUNTS', 'ACCOUNTANT', 'BILLER', 'BILLING'];
-            $userRoles = $user->roles ? $user->roles->pluck('name')->map(fn ($r) => strtoupper(trim($r)))->toArray() : [];
-            $canBillUser = !empty(array_intersect($billingRoles, $userRoles))
-                || $user->hasAnyRole([
-                    'SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER', 'super-admin',
-                    'superadmin', 'admin', 'accounts', 'biller', 'billing', 'accountant',
-                    'Biller', 'Billing', 'Accounts', 'Accountant', 'Admin',
-                ])
-                || $user->can('see-accounts');
-        }
+        $canBillUser = self::userCanBill(auth()->user());
 
-        $departments = \App\Models\Department::where('is_active', true)->orderBy('name')->get();
+        $departments = self::activeDepartmentsQuery();
 
         return view('admin.reception.workbench', compact('clinics', 'hmos', 'registrationServices', 'canBillUser', 'departments'));
     }

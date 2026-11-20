@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ApplicationStatu;
 use App\Models\Patient;
 use App\Models\User;
+use App\Support\ClientSettings;
 use App\Support\Navigation\WorkspaceRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -115,6 +116,7 @@ class MobileAuthController extends Controller
                         'photo' => $staff->photo,
                     ] : null,
                     'workspaces' => WorkspaceRegistry::visibleFor($user),
+                    'settings' => ClientSettings::workbench(),
                 ],
             ]);
         } catch (\Exception $e) {
@@ -131,6 +133,19 @@ class MobileAuthController extends Controller
      * Workspaces (web sidebar sections and items) the signed-in staff member may use, in
      * sidebar order. The native client builds its navigation from this list.
      */
+    /**
+     * GET /api/mobile/staff/settings
+     * Hospital Config values that change workbench behaviour (same values the web pages render with).
+     */
+    public function staffSettings(Request $request)
+    {
+        if (!self::isActiveStaff($request->user())) {
+            return response()->json(['status' => false, 'message' => 'Staff access only.'], 403);
+        }
+
+        return response()->json(['status' => true, 'data' => ClientSettings::workbench()]);
+    }
+
     public function staffWorkspaces(Request $request)
     {
         $user = $request->user();
@@ -143,6 +158,7 @@ class MobileAuthController extends Controller
             'data' => [
                 'roles' => $user->getRoleNames(),
                 'workspaces' => WorkspaceRegistry::visibleFor($user),
+                'settings' => ClientSettings::workbench(),
             ],
         ]);
     }
