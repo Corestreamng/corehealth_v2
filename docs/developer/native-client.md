@@ -18,6 +18,8 @@ Two Flutter apps live in `native_clients/`:
 | Prefix | Guard | Controllers (same as web) |
 |---|---|---|
 | `api/mobile/staff/*` | active staff | `MobileAuthController` (login, `workspaces`, `settings`) |
+| `api/mobile/nursing/*` | `native.workspace:nursing` | `NursingWorkbenchController`, `ShiftController`, adapter `API\MobileNursingController` (`context`: resolved ward store and candidate stores) |
+| `api/mobile/doctor/{vitals,nursing-notes,medication-chart,intake-output}` | `native.workspace:doctor\|nursing\|maternity` | `VitalSignController`, `MedicationChartController`, `IntakeOutputChartController`: charting shared by the three workbenches |
 | `api/mobile/billing/*` | `native.workspace:billing` (shared lookups also open to reception, doctor, nursing, maternity) | `BillingWorkbenchController` (all billing desk actions), `BankController`, `SalesApi` shared with reception |
 | `api/mobile/reception/*` | `native.workspace:reception` | `ReceptionWorkbenchController` (queue, search, registration, booking, walk-in, service requests, HMO validation), `SpecialistReferralController` (pending desk), `BillingWorkbenchController` (my transactions, staff/org lists, account summary), `BankController`, adapter `API\MobileReceptionController` (`context`, `process-payment`) |
 | `api/mobile/shared/*` | `native.workspace:reception\|doctor` | Registration and lookup, `HospitalContactController`, `WorkbenchPriceListController`, `ClinicalAlertController`, `DoctorAppointmentController`, `EmergencyIntakeController`, `MorgueController@getServices`, `WardController`, `AdmissionRequestController@store`, `AdmissionModuleController` |
@@ -50,7 +52,7 @@ Two Flutter apps live in `native_clients/`:
 | 4 | Billing | `billing` | Native: cashier shift, payment queue, patient bill (select, qty/discount, pay: cash/POS/transfer/mobile/split/account/bill-to-staff/org, invoice), walk-in sales, receipts, admissions bill, patient account (deposit/withdraw/adjust/statement), my and manage transactions (void, adjust). Web-only: printing layouts, reports | All |
 | 5 | Pharmacy | `pharmacy` | — | All |
 | 6 | Store / Inventory | `store` | — | All |
-| 7 | Nursing | `nursing` | — | All |
+| 7 | Nursing | `nursing` | Nursing Desk: shift start/end with pending handovers, patient search, queues (admitted, vitals due, medication due, bed requests, discharge, deceased), ward dashboard (occupancy, assign bed, bed maintenance), handovers, outreach tallies, new patient and walk-in, emergency intake, contacts. Patient: overview, vitals (record, edit), medications and MAR, notes and intake/output, injections (ward stock, dispensed, patient's own), immunization schedule (generate, give, skip) and unscheduled entry, requests and bills, admission (assign/transfer bed, checklists, discharge) | Surgery Workbench, Manage Beds, printable reports and exports, last-office form (list only) |
 | 8 | Morgue | `morgue` | — | All |
 | 9 | Maternity | `maternity` | — | All |
 | 10 | Medical Laboratory | `lab` | — | All |

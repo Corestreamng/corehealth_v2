@@ -152,6 +152,11 @@ flowchart LR
 ## Billing desk
 Open **Billing → Billing Desk**. Start your shift, search a patient or pick one from the payment queue (Emergency, All unpaid, HMO items, Credit accounts). A patient's bill has tabs: **Billing** (select items, adjust quantity and discount, **Pay** by cash, POS, transfer, mobile, split, account balance, staff or organisation, or print an **Invoice**), **Walk-in**, **Receipts**, **Admissions** (bill by category) and **Account** (deposit, withdraw, adjust, statement). Receipts show as readable text; printing stays on the web.
 
+## Nursing desk
+Open **Nursing → Nursing Desk**. Start your shift (choose the ward and acknowledge waiting handovers), then search a patient or pick one from a queue: **Admitted**, **Vitals due**, **Medication due**, **Bed requests**, **Discharge** or **Deceased**. The **Ward dashboard** shows beds by ward, who is waiting for a bed (assign one) and bed maintenance.
+
+A patient has tabs: **Vitals** (record and edit your own within the edit window), **Medications** (tap a drug to chart doses), **Charts** (notes and intake/output), **Injections** (from ward stock, a dispensed prescription or the patient's own drug), **Immunizations** (generate the schedule, give or skip each dose), **Requests** (labs, imaging, procedures, prescriptions, service and consumable bills) and, for admitted patients, **Admission** (bed, checklists, discharge). End your shift to create the handover for the next nurse. Surgery and bed setup open on the web.
+
 Everything the app saves goes through the same hospital system as the web, so billing, queues and records update for every department immediately.
 
 ---

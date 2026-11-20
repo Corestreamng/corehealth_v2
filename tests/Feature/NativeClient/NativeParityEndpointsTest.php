@@ -252,4 +252,51 @@ class NativeParityEndpointsTest extends TestCase
         $this->getJson('/api/mobile/billing/queue-counts')->assertStatus(403);
         $this->postJson('/api/mobile/billing/process-payment', [])->assertStatus(403);
     }
+
+    /** @test */
+    public function test_nursing_desk_endpoints_return_json_for_nurses()
+    {
+        Sanctum::actingAs($this->staff('NURSE'));
+        $pid = $this->anyPatientId();
+        foreach (['context', 'queue-counts', 'queue/vitals', 'queue/medication-due', 'queue/bed-requests', 'queue/discharge-requests',
+            'admitted-patients', 'deceased-queue', 'wards', 'note-types', 'shift/check', 'shift/wards', 'shift/pending-handovers',
+            'handovers?format=cards', 'schedule-templates', 'ward-dashboard/stats', 'ward-dashboard/wards', 'ward-dashboard/available-beds',
+            'ward-dashboard/admission-queue', 'outreach-tallies', "patient/{$pid}/details", "patient/{$pid}/vitals", "patient/{$pid}/schedule",
+            "patient/{$pid}/immunization-history", "patient/{$pid}/pending-bills", "patient/{$pid}/service-requests-stats"] as $path) {
+            $this->assertJsonOk('/api/mobile/nursing/' . $path);
+        }
+    }
+
+    /** @test */
+    public function test_shift_summary_uses_real_vital_columns()
+    {
+        Sanctum::actingAs($this->staff('NURSE'));
+        $resp = $this->getJson('/api/mobile/nursing/shift-summary');
+        $this->assertSame(200, $resp->status(), substr($resp->getContent(), 0, 300));
+        $this->assertArrayHasKey('vitals_abnormal', $resp->json());
+    }
+
+    /** @test */
+    public function test_charting_routes_are_shared_by_doctor_nursing_and_maternity_only()
+    {
+        $pid = $this->anyPatientId();
+        foreach (['DOCTOR', 'NURSE', 'MATERNITY'] as $role) {
+            Sanctum::actingAs($this->staff($role));
+            $this->assertJsonOk("/api/mobile/doctor/patient/{$pid}/vitals");
+            $this->assertJsonOk("/api/mobile/doctor/patient/{$pid}/intake-output");
+        }
+        Sanctum::actingAs($this->staff('BILLER'));
+        $this->getJson("/api/mobile/doctor/patient/{$pid}/vitals")->assertStatus(403);
+        // A nurse gets the charting routes but not the rest of the doctor workspace.
+        Sanctum::actingAs($this->staff('NURSE'));
+        $this->getJson('/api/mobile/doctor/queues')->assertStatus(403);
+    }
+
+    /** @test */
+    public function test_nursing_desk_refuses_roles_outside_nursing()
+    {
+        Sanctum::actingAs($this->staff('BILLER'));
+        $this->getJson('/api/mobile/nursing/queue-counts')->assertStatus(403);
+        $this->postJson('/api/mobile/nursing/shift/start', [])->assertStatus(403);
+    }
 }

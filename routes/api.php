@@ -30,6 +30,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReceptionWorkbenchController;
 use App\Http\Controllers\ResultViewController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\SpecialistReferralController;
 use App\Http\Controllers\TreatmentPlanController;
 use App\Http\Controllers\VitalSignController;
@@ -330,39 +331,16 @@ Route::prefix('mobile/doctor')->middleware(['auth:sanctum', 'native.workspace:do
     Route::get('search/products', [ProductController::class, 'liveSearchProducts']);
 
     // ── Vitals (reused, already JSON-aware) ─────────────────────
-    Route::post('vitals', [VitalSignController::class, 'store']);
-    Route::get('patient/{patientId}/vitals', [NursingWorkbenchController::class, 'getPatientVitals']);
 
     // ── Nursing Notes (mobile-friendly JSON) ────────────────────
-    Route::get('patient/{patientId}/nursing-notes', [MobileEncounterController::class, 'getNursingNotes']);
-    Route::get('nursing-note-types', [MobileEncounterController::class, 'getNoteTypes']);
 
     // ── Clinic Note Templates ───────────────────────────────────
     Route::get('clinic-note-templates', [MobileEncounterController::class, 'getClinicNoteTemplates']);
 
     // ── Medication Chart (reuse existing JSON controller) ────────
-    Route::get('patient/{patient}/medication-chart', [MedicationChartController::class, 'getPatientPrescribedDrugs']);
-    Route::get('patient/{patient}/medication-chart/overview', [MedicationChartController::class, 'overview']);
     // Medication administration record and intake/output actions (web: Nurse Charts tab)
-    Route::get('patient/{patient}/medication-chart/calendar/{medication}/{start_date?}', [MedicationChartController::class, 'calendar']);
-    Route::get('patient/{patient}/medication-chart/direct-calendar', [MedicationChartController::class, 'directCalendar']);
-    Route::post('patient/{patient}/medication-chart/administer-direct', [MedicationChartController::class, 'administerDirect']);
-    Route::post('patient/{patient}/dismiss-prescription', [MedicationChartController::class, 'nurseDismissPrescription']);
-    Route::post('medication-chart/schedule', [MedicationChartController::class, 'storeTiming']);
-    Route::post('medication-chart/administer', [MedicationChartController::class, 'administer']);
-    Route::post('medication-chart/edit', [MedicationChartController::class, 'editAdministration']);
-    Route::post('medication-chart/delete', [MedicationChartController::class, 'deleteAdministration']);
-    Route::post('medication-chart/remove-schedule', [MedicationChartController::class, 'removeSchedule']);
-    Route::post('medication-chart/discontinue', [MedicationChartController::class, 'discontinue']);
-    Route::post('medication-chart/resume', [MedicationChartController::class, 'resume']);
-    Route::get('patient/{patient}/intake-output/logs/{period}', [\App\Http\Controllers\IntakeOutputChartController::class, 'periodLogs']);
-    Route::post('intake-output/start', [\App\Http\Controllers\IntakeOutputChartController::class, 'startPeriod']);
-    Route::post('intake-output/record', [\App\Http\Controllers\IntakeOutputChartController::class, 'storeRecord']);
-    Route::post('intake-output/end', [\App\Http\Controllers\IntakeOutputChartController::class, 'endPeriod']);
-    Route::delete('intake-output/record/{record}', [\App\Http\Controllers\IntakeOutputChartController::class, 'deleteRecord']);
 
     // ── Intake/Output Charts (reuse existing JSON controller) ────
-    Route::get('patient/{patient}/intake-output', [\App\Http\Controllers\IntakeOutputChartController::class, 'index']);
 
     // ── Appointment Actions (reuse existing DoctorAppointmentController) ──
     Route::post('appointments/{appointment}/check-in', [\App\Http\Controllers\DoctorAppointmentController::class, 'checkIn']);
@@ -459,6 +437,40 @@ Route::prefix('mobile/doctor')->middleware(['auth:sanctum', 'native.workspace:do
 | method the web workbench uses (routes/reception_workbench.php). No logic lives here.
 | Guard = the web sidebar's Health Records guard (WorkspaceRegistry 'reception').
 */
+/*
+|--------------------------------------------------------------------------
+| Charting shared by the Doctor, Nursing and Maternity workspaces
+|--------------------------------------------------------------------------
+| Vitals, nursing notes, the medication administration record and intake/output are the same
+| controllers on every web workbench, so one native client path serves all three. The path keeps
+| the `mobile/doctor` prefix the app already calls.
+*/
+Route::prefix('mobile/doctor')->middleware(['auth:sanctum', 'native.workspace:doctor|nursing|maternity'])->group(function () {
+    Route::post('vitals', [VitalSignController::class, 'store']);
+    Route::get('patient/{patientId}/vitals', [NursingWorkbenchController::class, 'getPatientVitals']);
+    Route::get('patient/{patientId}/nursing-notes', [MobileEncounterController::class, 'getNursingNotes']);
+    Route::get('nursing-note-types', [MobileEncounterController::class, 'getNoteTypes']);
+    Route::get('patient/{patient}/medication-chart', [MedicationChartController::class, 'getPatientPrescribedDrugs']);
+    Route::get('patient/{patient}/medication-chart/overview', [MedicationChartController::class, 'overview']);
+    Route::get('patient/{patient}/medication-chart/calendar/{medication}/{start_date?}', [MedicationChartController::class, 'calendar']);
+    Route::get('patient/{patient}/medication-chart/direct-calendar', [MedicationChartController::class, 'directCalendar']);
+    Route::post('patient/{patient}/medication-chart/administer-direct', [MedicationChartController::class, 'administerDirect']);
+    Route::post('patient/{patient}/dismiss-prescription', [MedicationChartController::class, 'nurseDismissPrescription']);
+    Route::post('medication-chart/schedule', [MedicationChartController::class, 'storeTiming']);
+    Route::post('medication-chart/administer', [MedicationChartController::class, 'administer']);
+    Route::post('medication-chart/edit', [MedicationChartController::class, 'editAdministration']);
+    Route::post('medication-chart/delete', [MedicationChartController::class, 'deleteAdministration']);
+    Route::post('medication-chart/remove-schedule', [MedicationChartController::class, 'removeSchedule']);
+    Route::post('medication-chart/discontinue', [MedicationChartController::class, 'discontinue']);
+    Route::post('medication-chart/resume', [MedicationChartController::class, 'resume']);
+    Route::get('patient/{patient}/intake-output/logs/{period}', [\App\Http\Controllers\IntakeOutputChartController::class, 'periodLogs']);
+    Route::post('intake-output/start', [\App\Http\Controllers\IntakeOutputChartController::class, 'startPeriod']);
+    Route::post('intake-output/record', [\App\Http\Controllers\IntakeOutputChartController::class, 'storeRecord']);
+    Route::post('intake-output/end', [\App\Http\Controllers\IntakeOutputChartController::class, 'endPeriod']);
+    Route::delete('intake-output/record/{record}', [\App\Http\Controllers\IntakeOutputChartController::class, 'deleteRecord']);
+    Route::get('patient/{patient}/intake-output', [\App\Http\Controllers\IntakeOutputChartController::class, 'index']);
+});
+
 Route::prefix('mobile/reception')->middleware(['auth:sanctum', 'native.workspace:reception'])->group(function () {
     Route::get('today-stats', [ReceptionWorkbenchController::class, 'getTodayStats']);
     Route::get('queue-counts', [ReceptionWorkbenchController::class, 'getQueueCounts']);
@@ -578,6 +590,131 @@ Route::prefix('mobile/billing')->middleware(['auth:sanctum', 'native.workspace:b
     Route::get('patient/{id}/recent-requests', [ReceptionWorkbenchController::class, 'getRecentRequests']);
     Route::delete('request/{type}/{id}/discard', [ReceptionWorkbenchController::class, 'discardServiceRequest']);
     Route::get('request/{type}/{id}/details', [ReceptionWorkbenchController::class, 'getRequestDetails']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Mobile Nursing Routes — wraps the web Nursing workbench
+|--------------------------------------------------------------------------
+| Every route points at the controller method the web nursing workbench calls (queues, ward
+| dashboard, patient workspace, notes, injections, immunizations, clinical requests, bills,
+| admission and discharge checklists, beds, shifts and handovers). Printable reports and
+| exports stay on the web.
+*/
+Route::prefix('mobile/nursing')->middleware(['auth:sanctum', 'native.workspace:nursing'])->group(function () {
+    Route::get('context', [\App\Http\Controllers\API\MobileNursingController::class, 'context']);
+    Route::post('administer-from-schedule', [NursingWorkbenchController::class, 'administerFromScheduleNew']);
+    Route::post('administer-immunization', [NursingWorkbenchController::class, 'administerImmunization']);
+    Route::post('administer-injection', [NursingWorkbenchController::class, 'administerInjection']);
+    Route::post('admission-checklist/item/{itemId}/complete', [NursingWorkbenchController::class, 'completeAdmissionChecklistItem'])->whereNumber('itemId');
+    Route::post('admission-checklist/item/{itemId}/waive', [NursingWorkbenchController::class, 'waiveAdmissionChecklistItem'])->whereNumber('itemId');
+    Route::post('admission/{admissionId}/assign-bed', [NursingWorkbenchController::class, 'assignBed'])->whereNumber('admissionId');
+    Route::get('admission/{admissionId}/checklist', [NursingWorkbenchController::class, 'getAdmissionChecklist'])->whereNumber('admissionId');
+    Route::post('admission/{admissionId}/complete-discharge', [NursingWorkbenchController::class, 'completeDischarge'])->whereNumber('admissionId');
+    Route::get('admission/{admissionId}/details', [NursingWorkbenchController::class, 'getAdmissionDetails'])->whereNumber('admissionId');
+    Route::get('admission/{admissionId}/discharge-checklist', [NursingWorkbenchController::class, 'getDischargeChecklist'])->whereNumber('admissionId');
+    Route::post('admission/{admissionId}/transfer-ward', [NursingWorkbenchController::class, 'transferWard'])->whereNumber('admissionId');
+    Route::get('admitted-patients', [NursingWorkbenchController::class, 'getAdmittedPatients']);
+    Route::get('batch-fulfillment', [NursingWorkbenchController::class, 'getBatchFulfillmentSuggestion']);
+    Route::post('bed/{bedId}/available', [NursingWorkbenchController::class, 'setBedAvailable'])->whereNumber('bedId');
+    Route::get('bed/{bedId}/details', [NursingWorkbenchController::class, 'getBedDetails'])->whereNumber('bedId');
+    Route::post('bed/{bedId}/maintenance', [NursingWorkbenchController::class, 'setBedMaintenance'])->whereNumber('bedId');
+    Route::post('billing/add-consumable-bill', [NursingWorkbenchController::class, 'addConsumableBill']);
+    Route::post('billing/add-imaging-bill', [NursingWorkbenchController::class, 'addImagingBill']);
+    Route::post('billing/add-lab-bill', [NursingWorkbenchController::class, 'addLabBill']);
+    Route::post('billing/add-service', [NursingWorkbenchController::class, 'addServiceBill']);
+    Route::delete('billing/remove-bill/{id}', [NursingWorkbenchController::class, 'removeBillItem'])->whereNumber('id');
+    Route::post('clinical-requests/add-imaging', [NursingWorkbenchController::class, 'nurseAddSingleImaging']);
+    Route::post('clinical-requests/add-lab', [NursingWorkbenchController::class, 'nurseAddSingleLab']);
+    Route::post('clinical-requests/add-prescription', [NursingWorkbenchController::class, 'nurseAddSinglePrescription']);
+    Route::post('clinical-requests/add-procedure', [NursingWorkbenchController::class, 'nurseAddSingleProcedure']);
+    Route::post('clinical-requests/apply-combo', [NursingWorkbenchController::class, 'nursingApplyCombo']);
+    Route::post('clinical-requests/apply-treatment-plan', [TreatmentPlanController::class, 'applyForNurse']);
+    Route::get('clinical-requests/encounter-items/{encounterId}', [NursingWorkbenchController::class, 'nurseEncounterItems'])->whereNumber('encounterId');
+    Route::post('clinical-requests/imaging', [NursingWorkbenchController::class, 'saveNurseImaging']);
+    Route::delete('clinical-requests/imaging/{imaging}', [NursingWorkbenchController::class, 'nurseRemoveSingleImaging']);
+    Route::put('clinical-requests/imaging/{imaging}/note', [NursingWorkbenchController::class, 'nurseUpdateImagingNote']);
+    Route::post('clinical-requests/labs', [NursingWorkbenchController::class, 'saveNurseLabs']);
+    Route::delete('clinical-requests/labs/{lab}', [NursingWorkbenchController::class, 'nurseRemoveSingleLab']);
+    Route::put('clinical-requests/labs/{lab}/note', [NursingWorkbenchController::class, 'nurseUpdateLabNote']);
+    Route::post('clinical-requests/prescriptions', [NursingWorkbenchController::class, 'saveNursePrescriptions']);
+    Route::delete('clinical-requests/prescriptions/{prescription}', [NursingWorkbenchController::class, 'nurseRemoveSinglePrescription']);
+    Route::put('clinical-requests/prescriptions/{prescription}/dose', [NursingWorkbenchController::class, 'nurseUpdatePrescriptionDose']);
+    Route::post('clinical-requests/procedures', [NursingWorkbenchController::class, 'saveNurseProcedures']);
+    Route::delete('clinical-requests/procedures/{procedure}', [NursingWorkbenchController::class, 'nurseRemoveSingleProcedure']);
+    Route::post('clinical-requests/re-prescribe', [NursingWorkbenchController::class, 'nurseRePrescribe']);
+    Route::get('clinical-requests/recent-encounters', [NursingWorkbenchController::class, 'nurseRecentEncounters']);
+    Route::post('clinical-requests/remove-bundle', [NursingWorkbenchController::class, 'removeBundle']);
+    Route::post('clinical-requests/remove-bundle-item', [NursingWorkbenchController::class, 'removeBundleItem']);
+    Route::get('clinics', [NursingWorkbenchController::class, 'getClinics']);
+    Route::get('deceased-queue', [NursingWorkbenchController::class, 'getDeceasedQueue']);
+    Route::post('deceased/{recordId}/last-office', [NursingWorkbenchController::class, 'completeLastOffice'])->whereNumber('recordId');
+    Route::post('discharge-checklist/item/{itemId}/complete', [NursingWorkbenchController::class, 'completeDischargeChecklistItem'])->whereNumber('itemId');
+    Route::post('discharge-checklist/item/{itemId}/waive', [NursingWorkbenchController::class, 'waiveDischargeChecklistItem'])->whereNumber('itemId');
+    Route::get('handover-summary', [NursingWorkbenchController::class, 'generateHandoverReport']);
+    Route::get('handover/{id}', [ShiftController::class, 'getHandoverDetails'])->whereNumber('id');
+    Route::post('handover/{id}/acknowledge', [ShiftController::class, 'acknowledgeHandover'])->whereNumber('id');
+    Route::get('handovers', [ShiftController::class, 'getHandovers']);
+    Route::post('handovers/acknowledge-multiple', [ShiftController::class, 'acknowledgeMultiple']);
+    Route::get('note-types', [NursingWorkbenchController::class, 'getNoteTypes']);
+    Route::post('nursing-note', [NursingWorkbenchController::class, 'saveNursingNote']);
+    Route::get('nursing-note/{noteId}', [NursingWorkbenchController::class, 'getNoteDetails'])->whereNumber('noteId');
+    Route::put('nursing-note/{noteId}', [NursingWorkbenchController::class, 'updateNursingNote'])->whereNumber('noteId');
+    Route::get('outreach-session/{sessionId}', [NursingWorkbenchController::class, 'getOutreachSessionDetails'])->whereNumber('sessionId');
+    Route::get('outreach-store-inventory', [NursingWorkbenchController::class, 'getOutreachStoreInventory']);
+    Route::get('outreach-tallies', [NursingWorkbenchController::class, 'getOutreachTallies']);
+    Route::post('outreach-tally', [NursingWorkbenchController::class, 'saveOutreachTally']);
+    Route::get('patient/{patientId}/details', [NursingWorkbenchController::class, 'getPatientDetails'])->whereNumber('patientId');
+    Route::post('patient/{patientId}/generate-schedule', [NursingWorkbenchController::class, 'generatePatientSchedule'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/immunization-history', [NursingWorkbenchController::class, 'getImmunizationHistory'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/immunization-schedule', [NursingWorkbenchController::class, 'getImmunizationSchedule'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/immunizations', [NursingWorkbenchController::class, 'getImmunizations'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/injections', [NursingWorkbenchController::class, 'getInjections'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/nursing-notes', [NursingWorkbenchController::class, 'getNursingNotes'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/orders', [NursingWorkbenchController::class, 'getPatientOrders'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/pending-bills', [NursingWorkbenchController::class, 'getPendingBills'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/schedule', [NursingWorkbenchController::class, 'getPatientSchedule'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/service-requests', [NursingWorkbenchController::class, 'getServiceRequests'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/service-requests-stats', [NursingWorkbenchController::class, 'getServiceRequestsStats'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/vitals', [NursingWorkbenchController::class, 'getPatientVitals'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/vitals-history-dt', [NursingWorkbenchController::class, 'getPatientVitalsDt'])->whereNumber('patientId');
+    Route::get('product-batches', [NursingWorkbenchController::class, 'getProductBatches']);
+    Route::get('product-categories', [NursingWorkbenchController::class, 'getProductCategories']);
+    Route::get('product-stock/{productId}/store/{storeId}', [NursingWorkbenchController::class, 'getProductStockByStore'])->whereNumber('productId')->whereNumber('storeId');
+    Route::get('queue-counts', [NursingWorkbenchController::class, 'getQueueCounts']);
+    Route::get('queue/bed-requests', [NursingWorkbenchController::class, 'getBedRequestsQueue']);
+    Route::get('queue/consulting', [NursingWorkbenchController::class, 'getConsultingQueue']);
+    Route::get('queue/discharge-requests', [NursingWorkbenchController::class, 'getDischargeQueue']);
+    Route::get('queue/medication-due', [NursingWorkbenchController::class, 'getMedicationDueQueue']);
+    Route::get('queue/vitals', [NursingWorkbenchController::class, 'getVitalsQueue']);
+    Route::get('schedule-templates', [NursingWorkbenchController::class, 'getScheduleTemplates']);
+    Route::post('schedule/{scheduleId}/administer', [NursingWorkbenchController::class, 'administerFromSchedule'])->whereNumber('scheduleId');
+    Route::put('schedule/{scheduleId}/status', [NursingWorkbenchController::class, 'updateScheduleStatus'])->whereNumber('scheduleId');
+    Route::get('search-injectables', [NursingWorkbenchController::class, 'searchInjectables']);
+    Route::get('search-patients', [NursingWorkbenchController::class, 'searchPatients']);
+    Route::get('search-products', [NursingWorkbenchController::class, 'searchProducts']);
+    Route::get('search-services', [NursingWorkbenchController::class, 'searchServices']);
+    Route::get('search-vaccines', [NursingWorkbenchController::class, 'getVaccines']);
+    Route::get('service-categories', [NursingWorkbenchController::class, 'getServiceCategories']);
+    Route::get('shift-summary', [NursingWorkbenchController::class, 'getShiftSummary']);
+    Route::get('shift/actions', [ShiftController::class, 'getShiftActions']);
+    Route::get('shift/calendar', [ShiftController::class, 'getCalendar']);
+    Route::get('shift/check', [ShiftController::class, 'checkActiveShift']);
+    Route::post('shift/end', [ShiftController::class, 'endShift']);
+    Route::get('shift/pending-handovers', [ShiftController::class, 'getPendingHandovers']);
+    Route::get('shift/preview', [ShiftController::class, 'getShiftPreview']);
+    Route::post('shift/start', [ShiftController::class, 'startShift']);
+    Route::get('shift/statistics', [ShiftController::class, 'getStatistics']);
+    Route::get('shift/wards', [ShiftController::class, 'getWards']);
+    Route::get('vaccine-products/{vaccineName}', [NursingWorkbenchController::class, 'getVaccineProducts']);
+    Route::put('vitals/{vitalId}', [NursingWorkbenchController::class, 'updateVital'])->whereNumber('vitalId');
+    Route::get('ward-dashboard/admission-queue', [NursingWorkbenchController::class, 'getAdmissionQueue']);
+    Route::get('ward-dashboard/available-beds', [NursingWorkbenchController::class, 'getAvailableBeds']);
+    Route::get('ward-dashboard/discharge-queue', [NursingWorkbenchController::class, 'getDischargeQueue']);
+    Route::get('ward-dashboard/stats', [NursingWorkbenchController::class, 'getWardDashboardStats']);
+    Route::get('ward-dashboard/wards', [NursingWorkbenchController::class, 'getWardDashboardWards']);
+    Route::get('wards', [NursingWorkbenchController::class, 'getWards']);
+
 });
 
 /*

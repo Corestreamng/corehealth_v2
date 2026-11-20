@@ -3229,14 +3229,14 @@ class NursingWorkbenchController extends Controller
         // Vitals with abnormal values (basic check - could be enhanced with proper ranges)
         $vitalsAbnormal = VitalSign::whereBetween('created_at', [$shiftStart, $shiftEnd])
             ->where(function ($q) {
-                $q->where('systolic', '>', 140)
-                    ->orWhere('systolic', '<', 90)
-                    ->orWhere('diastolic', '>', 90)
-                    ->orWhere('diastolic', '<', 60)
-                    ->orWhere('temperature', '>', 38)
-                    ->orWhere('temperature', '<', 36)
-                    ->orWhere('pulse', '>', 100)
-                    ->orWhere('pulse', '<', 60)
+                // blood_pressure is stored as "120/80"; temp and heart_rate are the real column names
+                $sys = "CAST(SUBSTRING_INDEX(blood_pressure, '/', 1) AS UNSIGNED)";
+                $dia = "CAST(SUBSTRING_INDEX(blood_pressure, '/', -1) AS UNSIGNED)";
+                $q->whereRaw("blood_pressure LIKE '%/%' AND ({$sys} > 140 OR {$sys} < 90 OR {$dia} > 90 OR {$dia} < 60)")
+                    ->orWhere('temp', '>', 38)
+                    ->orWhere('temp', '<', 36)
+                    ->orWhere('heart_rate', '>', 100)
+                    ->orWhere('heart_rate', '<', 60)
                     ->orWhere('spo2', '<', 95);
             })
             ->count();
@@ -3244,12 +3244,12 @@ class NursingWorkbenchController extends Controller
         // Critical vitals
         $vitalsCritical = VitalSign::whereBetween('created_at', [$shiftStart, $shiftEnd])
             ->where(function ($q) {
-                $q->where('systolic', '>', 180)
-                    ->orWhere('systolic', '<', 70)
-                    ->orWhere('temperature', '>', 40)
-                    ->orWhere('temperature', '<', 35)
-                    ->orWhere('pulse', '>', 120)
-                    ->orWhere('pulse', '<', 40)
+                $sys = "CAST(SUBSTRING_INDEX(blood_pressure, '/', 1) AS UNSIGNED)";
+                $q->whereRaw("blood_pressure LIKE '%/%' AND ({$sys} > 180 OR {$sys} < 70)")
+                    ->orWhere('temp', '>', 40)
+                    ->orWhere('temp', '<', 35)
+                    ->orWhere('heart_rate', '>', 120)
+                    ->orWhere('heart_rate', '<', 40)
                     ->orWhere('spo2', '<', 90);
             })
             ->count();
