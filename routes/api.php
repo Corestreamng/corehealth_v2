@@ -449,6 +449,10 @@ Route::prefix('mobile/doctor')->middleware(['auth:sanctum', 'native.workspace:do
     // Treatment plan templates the nurse and maternity order sets pick from
     Route::get('treatment-plans', [TreatmentPlanController::class, 'index']);
     Route::get('treatment-plans/{treatmentPlan}', [TreatmentPlanController::class, 'show']);
+    // Service combos (bundles): what was applied, and removing a bundle or one of its items
+    Route::get('service-combo/bundles', [\App\Http\Controllers\API\MobileBundleController::class, 'forPatient']);
+    Route::post('service-combo/remove-bundle', [EncounterController::class, 'removeBundleGeneric']);
+    Route::post('service-combo/remove-item', [EncounterController::class, 'removeBundleItemGeneric']);
     // Clinical story by patient (the web nursing and maternity pages include the same partial)
     Route::get('patients/{patient}/clinical-story', [EncounterController::class, 'getPatientClinicalStoryFallback'])->whereNumber('patient');
     Route::get('patients/{patient}/clinical-story/timeline', [EncounterController::class, 'getPatientClinicalStoryTimeline'])->whereNumber('patient');
