@@ -299,4 +299,40 @@ class NativeParityEndpointsTest extends TestCase
         $this->getJson('/api/mobile/nursing/queue-counts')->assertStatus(403);
         $this->postJson('/api/mobile/nursing/shift/start', [])->assertStatus(403);
     }
+
+    /** @test */
+    public function test_maternity_desk_endpoints_return_json_for_maternity_staff()
+    {
+        Sanctum::actingAs($this->staff('MATERNITY'));
+        $pid = $this->anyPatientId();
+        foreach (['context', 'queue/counts', 'queue/active-anc', 'queue/due-visits', 'queue/high-risk', 'queue/upcoming-edd', 'queue/postnatal',
+            'queue/overdue-immunization', 'queue/admitted-patients', 'queue/bed-requests', 'queue/discharge-requests', 'schedule-templates',
+            'search-patients?term=an', "patient/{$pid}/details", "patient/{$pid}/vitals"] as $path) {
+            $this->assertJsonOk('/api/mobile/maternity/' . $path);
+        }
+    }
+
+    /** @test */
+    public function test_maternity_enrolment_reads_return_json()
+    {
+        Sanctum::actingAs($this->staff('MATERNITY'));
+        $id = \DB::table('maternity_enrollments')->whereNull('deleted_at')->value('id');
+        if (!$id) {
+            $this->markTestSkipped('No maternity enrolment in the test database.');
+        }
+        foreach (["enrollment/{$id}", "enrollment/{$id}/anc-visits", "enrollment/{$id}/timeline", "enrollment/{$id}/notes", "enrollment/{$id}/postnatal",
+            "enrollment/{$id}/maternity-partograph", "enrollment/{$id}/mother-schedule", "enrollment/{$id}/audit-trail", "enrollment/{$id}/recent-encounters"] as $path) {
+            $this->assertJsonOk('/api/mobile/maternity/' . $path);
+        }
+    }
+
+    /** @test */
+    public function test_maternity_desk_refuses_roles_outside_maternity()
+    {
+        Sanctum::actingAs($this->staff('BILLER'));
+        $this->getJson('/api/mobile/maternity/queue/counts')->assertStatus(403);
+        $this->postJson('/api/mobile/maternity/enroll', [])->assertStatus(403);
+        Sanctum::actingAs($this->staff('NURSE'));
+        $this->getJson('/api/mobile/maternity/queue/counts')->assertStatus(403);
+    }
 }

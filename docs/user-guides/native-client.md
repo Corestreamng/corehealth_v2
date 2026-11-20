@@ -157,6 +157,11 @@ Open **Nursing → Nursing Desk**. Start your shift (choose the ward and acknowl
 
 A patient has tabs: **Vitals** (record and edit your own within the edit window), **Medications** (tap a drug to chart doses), **Charts** (notes and intake/output), **Injections** (from ward stock, a dispensed prescription or the patient's own drug), **Immunizations** (generate the schedule, give or skip each dose), **Requests** (labs, imaging, procedures, prescriptions, service and consumable bills) and, for admitted patients, **Admission** (bed, checklists, discharge). End your shift to create the handover for the next nurse. Surgery and bed setup open on the web.
 
+## Maternity desk
+Open **Maternity → Maternity Desk**. Search for a mother (patients who are not enrolled show **Enrol**), or choose from the queues: **Active ANC**, **Due visits**, **High risk**, **Upcoming EDD**, **Postnatal**, **Overdue immunization**, **Admitted**, **Bed requests** and **Discharge**.
+
+An enrolment has tabs: **Overview** (booking details, edit, discharge), **ANC** (visits), **History** (medical history and previous pregnancies), **Orders** (labs, imaging, procedures, prescriptions), **Delivery**, **Partograph**, **Babies** (tap a baby for details, growth and immunization), **Postnatal**, **Immunization** (the mother's schedule), **Vitals**, **Notes** and **Audit**. Printed ANC and road-to-health cards, reports and outreach tallies open on the web.
+
 Everything the app saves goes through the same hospital system as the web, so billing, queues and records update for every department immediately.
 
 ---

@@ -19,6 +19,7 @@ use App\Http\Controllers\HospitalContactController;
 use App\Http\Controllers\ImagingWorkbenchController;
 use App\Http\Controllers\LabWorkbenchController;
 use App\Http\Controllers\LlmController;
+use App\Http\Controllers\MaternityWorkbenchController;
 use App\Http\Controllers\MedicalReportController;
 use App\Http\Controllers\MedicationChartController;
 use App\Http\Controllers\MorgueController;
@@ -590,6 +591,120 @@ Route::prefix('mobile/billing')->middleware(['auth:sanctum', 'native.workspace:b
     Route::get('patient/{id}/recent-requests', [ReceptionWorkbenchController::class, 'getRecentRequests']);
     Route::delete('request/{type}/{id}/discard', [ReceptionWorkbenchController::class, 'discardServiceRequest']);
     Route::get('request/{type}/{id}/details', [ReceptionWorkbenchController::class, 'getRequestDetails']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Mobile Maternity Routes — wraps the web Maternity workbench
+|--------------------------------------------------------------------------
+| Every route points at the MaternityWorkbenchController method the web workbench calls
+| (queues, enrolment, ANC, delivery, partograph, babies, postnatal, immunization, orders).
+| Printable cards, reports and outreach reports stay on the web.
+*/
+Route::prefix('mobile/maternity')->middleware(['auth:sanctum', 'native.workspace:maternity'])->group(function () {
+    Route::get('context', [\App\Http\Controllers\API\MobileNursingController::class, 'context']);
+    // Same product search the web maternity workbench uses for prescriptions
+    Route::get('search-products', [ProductController::class, 'liveSearchProducts']);
+    Route::post('administer-from-schedule', [MaternityWorkbenchController::class, 'administerFromScheduleMaternity']);
+    Route::put('anc-visit/{id}', [MaternityWorkbenchController::class, 'updateAncVisit'])->whereNumber('id');
+    Route::get('anc-visit/{id}', [MaternityWorkbenchController::class, 'getAncVisitDetail'])->whereNumber('id');
+    Route::delete('anc-visit/{id}', [MaternityWorkbenchController::class, 'deleteAncVisit'])->whereNumber('id');
+    Route::get('baby/{id}', [MaternityWorkbenchController::class, 'getBabyDetails'])->whereNumber('id');
+    Route::put('baby/{id}', [MaternityWorkbenchController::class, 'updateBaby'])->whereNumber('id');
+    Route::delete('baby/{id}', [MaternityWorkbenchController::class, 'deleteBaby'])->whereNumber('id');
+    Route::post('baby/{id}/generate-schedule', [MaternityWorkbenchController::class, 'generateBabySchedule'])->whereNumber('id');
+    Route::post('baby/{id}/growth', [MaternityWorkbenchController::class, 'saveGrowthRecord'])->whereNumber('id');
+    Route::get('baby/{id}/growth-chart', [MaternityWorkbenchController::class, 'getGrowthChartData'])->whereNumber('id');
+    Route::post('baby/{id}/immunization', [MaternityWorkbenchController::class, 'administerImmunization'])->whereNumber('id');
+    Route::post('baby/{id}/immunization-from-schedule', [MaternityWorkbenchController::class, 'administerFromSchedule'])->whereNumber('id');
+    Route::get('baby/{id}/immunization-history', [MaternityWorkbenchController::class, 'getBabyImmunizationHistory'])->whereNumber('id');
+    Route::get('baby/{id}/immunization-schedule', [MaternityWorkbenchController::class, 'getImmunizationSchedule'])->whereNumber('id');
+    Route::post('baby/{id}/mark-deceased', [MaternityWorkbenchController::class, 'markBabyDeceased'])->whereNumber('id');
+    Route::get('baby/{id}/schedule', [MaternityWorkbenchController::class, 'getBabySchedule'])->whereNumber('id');
+    Route::put('delivery/{id}', [MaternityWorkbenchController::class, 'updateDeliveryRecord'])->whereNumber('id');
+    Route::get('delivery/{id}', [MaternityWorkbenchController::class, 'getDeliveryRecord'])->whereNumber('id');
+    Route::delete('delivery/{id}', [MaternityWorkbenchController::class, 'deleteDeliveryRecord'])->whereNumber('id');
+    Route::post('delivery/{id}/partograph', [MaternityWorkbenchController::class, 'savePartographEntry'])->whereNumber('id');
+    Route::get('delivery/{id}/partograph', [MaternityWorkbenchController::class, 'getPartographEntries'])->whereNumber('id');
+    Route::post('enroll', [MaternityWorkbenchController::class, 'enrollPatient']);
+    Route::get('enrollment/{id}', [MaternityWorkbenchController::class, 'getEnrollment'])->whereNumber('id');
+    Route::put('enrollment/{id}', [MaternityWorkbenchController::class, 'updateEnrollment'])->whereNumber('id');
+    Route::post('enrollment/{id}/add-imaging', [MaternityWorkbenchController::class, 'maternityAddSingleImaging'])->whereNumber('id');
+    Route::post('enrollment/{id}/add-lab', [MaternityWorkbenchController::class, 'maternityAddSingleLab'])->whereNumber('id');
+    Route::post('enrollment/{id}/add-prescription', [MaternityWorkbenchController::class, 'maternityAddSinglePrescription'])->whereNumber('id');
+    Route::post('enrollment/{id}/add-procedure', [MaternityWorkbenchController::class, 'maternityAddSingleProcedure'])->whereNumber('id');
+    Route::post('enrollment/{id}/anc-visit', [MaternityWorkbenchController::class, 'saveAncVisit'])->whereNumber('id');
+    Route::get('enrollment/{id}/anc-visits', [MaternityWorkbenchController::class, 'getAncVisits'])->whereNumber('id');
+    Route::post('enrollment/{id}/apply-combo', [MaternityWorkbenchController::class, 'maternityApplyCombo'])->whereNumber('id');
+    Route::post('enrollment/{id}/apply-treatment-plan', [MaternityWorkbenchController::class, 'applyMaternityTreatmentPlan'])->whereNumber('id');
+    Route::get('enrollment/{id}/audit-trail', [MaternityWorkbenchController::class, 'getAuditTrail'])->whereNumber('id');
+    Route::post('enrollment/{id}/baby', [MaternityWorkbenchController::class, 'registerBaby'])->whereNumber('id');
+    Route::post('enrollment/{id}/delivery', [MaternityWorkbenchController::class, 'saveDeliveryRecord'])->whereNumber('id');
+    Route::post('enrollment/{id}/discharge', [MaternityWorkbenchController::class, 'dischargeEnrollment'])->whereNumber('id');
+    Route::get('enrollment/{id}/encounter-items/{encounterId}', [MaternityWorkbenchController::class, 'maternityEncounterItems'])->whereNumber('id')->whereNumber('encounterId');
+    Route::post('enrollment/{id}/generate-mother-schedule', [MaternityWorkbenchController::class, 'generateMotherSchedule'])->whereNumber('id');
+    Route::post('enrollment/{id}/imaging', [MaternityWorkbenchController::class, 'saveMaternityImaging'])->whereNumber('id');
+    Route::delete('enrollment/{id}/imaging/{imaging}', [MaternityWorkbenchController::class, 'maternityRemoveSingleImaging'])->whereNumber('id');
+    Route::put('enrollment/{id}/imaging/{imaging}/note', [MaternityWorkbenchController::class, 'maternityUpdateImagingNote'])->whereNumber('id');
+    Route::post('enrollment/{id}/investigation', [MaternityWorkbenchController::class, 'orderInvestigation'])->whereNumber('id');
+    Route::get('enrollment/{id}/investigations', [MaternityWorkbenchController::class, 'getInvestigations'])->whereNumber('id');
+    Route::post('enrollment/{id}/labs', [MaternityWorkbenchController::class, 'saveMaternityLabs'])->whereNumber('id');
+    Route::delete('enrollment/{id}/labs/{lab}', [MaternityWorkbenchController::class, 'maternityRemoveSingleLab'])->whereNumber('id');
+    Route::put('enrollment/{id}/labs/{lab}/note', [MaternityWorkbenchController::class, 'maternityUpdateLabNote'])->whereNumber('id');
+    Route::get('enrollment/{id}/maternity-partograph', [MaternityWorkbenchController::class, 'getMaternityPartographEntries'])->whereNumber('id');
+    Route::post('enrollment/{id}/maternity-partograph', [MaternityWorkbenchController::class, 'saveMaternityPartographEntry'])->whereNumber('id');
+    Route::put('enrollment/{id}/maternity-partograph/{entryId}', [MaternityWorkbenchController::class, 'updateMaternityPartographEntry'])->whereNumber('id')->whereNumber('entryId');
+    Route::delete('enrollment/{id}/maternity-partograph/{entryId}', [MaternityWorkbenchController::class, 'deleteMaternityPartographEntry'])->whereNumber('id')->whereNumber('entryId');
+    Route::post('enrollment/{id}/medical-history', [MaternityWorkbenchController::class, 'saveMedicalHistory'])->whereNumber('id');
+    Route::get('enrollment/{id}/mother-immunization-history', [MaternityWorkbenchController::class, 'getMotherImmunizationHistory'])->whereNumber('id');
+    Route::get('enrollment/{id}/mother-schedule', [MaternityWorkbenchController::class, 'getMotherSchedule'])->whereNumber('id');
+    Route::post('enrollment/{id}/note', [MaternityWorkbenchController::class, 'saveNote'])->whereNumber('id');
+    Route::get('enrollment/{id}/notes', [MaternityWorkbenchController::class, 'getNotes'])->whereNumber('id');
+    Route::get('enrollment/{id}/postnatal', [MaternityWorkbenchController::class, 'getPostnatalVisits'])->whereNumber('id');
+    Route::post('enrollment/{id}/postnatal', [MaternityWorkbenchController::class, 'savePostnatalVisit'])->whereNumber('id');
+    Route::post('enrollment/{id}/prescriptions', [MaternityWorkbenchController::class, 'saveMaternityPrescriptions'])->whereNumber('id');
+    Route::delete('enrollment/{id}/prescriptions/{prescription}', [MaternityWorkbenchController::class, 'maternityRemoveSinglePrescription'])->whereNumber('id');
+    Route::put('enrollment/{id}/prescriptions/{prescription}/dose', [MaternityWorkbenchController::class, 'maternityUpdatePrescriptionDose'])->whereNumber('id');
+    Route::post('enrollment/{id}/prev-pregnancy', [MaternityWorkbenchController::class, 'savePreviousPregnancy'])->whereNumber('id');
+    Route::post('enrollment/{id}/procedures', [MaternityWorkbenchController::class, 'saveMaternityProcedures'])->whereNumber('id');
+    Route::delete('enrollment/{id}/procedures/{procedure}', [MaternityWorkbenchController::class, 'maternityRemoveSingleProcedure'])->whereNumber('id');
+    Route::post('enrollment/{id}/re-prescribe', [MaternityWorkbenchController::class, 'maternityRePrescribe'])->whereNumber('id');
+    Route::get('enrollment/{id}/recent-encounters', [MaternityWorkbenchController::class, 'maternityRecentEncounters'])->whereNumber('id');
+    Route::post('enrollment/{id}/remove-bundle', [MaternityWorkbenchController::class, 'removeBundle'])->whereNumber('id');
+    Route::post('enrollment/{id}/remove-bundle-item', [MaternityWorkbenchController::class, 'removeBundleItem'])->whereNumber('id');
+    Route::get('enrollment/{id}/timeline', [MaternityWorkbenchController::class, 'getTimeline'])->whereNumber('id');
+    Route::put('medical-history/{id}', [MaternityWorkbenchController::class, 'updateMedicalHistory'])->whereNumber('id');
+    Route::delete('medical-history/{id}', [MaternityWorkbenchController::class, 'deleteMedicalHistory'])->whereNumber('id');
+    Route::put('note/{id}', [MaternityWorkbenchController::class, 'updateNote'])->whereNumber('id');
+    Route::delete('note/{id}', [MaternityWorkbenchController::class, 'deleteNote'])->whereNumber('id');
+    Route::put('partograph/{id}', [MaternityWorkbenchController::class, 'updatePartographEntry'])->whereNumber('id');
+    Route::delete('partograph/{id}', [MaternityWorkbenchController::class, 'deletePartographEntry'])->whereNumber('id');
+    Route::get('patient/{id}/details', [MaternityWorkbenchController::class, 'getPatientDetails'])->whereNumber('id');
+    Route::post('patient/{id}/vital', [MaternityWorkbenchController::class, 'saveVital'])->whereNumber('id');
+    Route::get('patient/{id}/vitals', [MaternityWorkbenchController::class, 'getPatientVitals'])->whereNumber('id');
+    Route::post('patient/{patientId}/generate-schedule', [MaternityWorkbenchController::class, 'generatePatientScheduleMaternity'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/immunization-history', [MaternityWorkbenchController::class, 'getImmunizationHistoryByPatient'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/schedule', [MaternityWorkbenchController::class, 'getPatientScheduleMaternity'])->whereNumber('patientId');
+    Route::put('postnatal/{id}', [MaternityWorkbenchController::class, 'updatePostnatalVisit'])->whereNumber('id');
+    Route::delete('postnatal/{id}', [MaternityWorkbenchController::class, 'deletePostnatalVisit'])->whereNumber('id');
+    Route::put('prev-pregnancy/{id}', [MaternityWorkbenchController::class, 'updatePreviousPregnancy'])->whereNumber('id');
+    Route::delete('prev-pregnancy/{id}', [MaternityWorkbenchController::class, 'deletePreviousPregnancy'])->whereNumber('id');
+    Route::get('product-batches', [MaternityWorkbenchController::class, 'getProductBatchesMaternity']);
+    Route::get('queue/active-anc', [MaternityWorkbenchController::class, 'getActiveAncQueue']);
+    Route::get('queue/admitted-patients', [MaternityWorkbenchController::class, 'getAdmittedPatientsQueue']);
+    Route::get('queue/bed-requests', [MaternityWorkbenchController::class, 'getBedRequestsQueue']);
+    Route::get('queue/counts', [MaternityWorkbenchController::class, 'getQueueCounts']);
+    Route::get('queue/discharge-requests', [MaternityWorkbenchController::class, 'getDischargeRequestsQueue']);
+    Route::get('queue/due-visits', [MaternityWorkbenchController::class, 'getDueVisitsQueue']);
+    Route::get('queue/high-risk', [MaternityWorkbenchController::class, 'getHighRiskQueue']);
+    Route::get('queue/overdue-immunization', [MaternityWorkbenchController::class, 'getOverdueImmunizationQueue']);
+    Route::get('queue/postnatal', [MaternityWorkbenchController::class, 'getPostnatalQueue']);
+    Route::get('queue/upcoming-edd', [MaternityWorkbenchController::class, 'getUpcomingEddQueue']);
+    Route::get('schedule-templates', [MaternityWorkbenchController::class, 'getScheduleTemplatesMaternity']);
+    Route::put('schedule/{scheduleId}/status', [MaternityWorkbenchController::class, 'updateScheduleStatusMaternity'])->whereNumber('scheduleId');
+    Route::get('search-patients', [MaternityWorkbenchController::class, 'searchPatients']);
+    Route::get('search-services', [MaternityWorkbenchController::class, 'searchServices']);
+    Route::get('vaccine-products/{vaccineName}', [MaternityWorkbenchController::class, 'getVaccineProductsMaternity']);
 });
 
 /*
