@@ -29,6 +29,7 @@ use App\Models\Patient;
 use App\Models\PatientImmunizationSchedule;
 use App\Models\PostnatalVisit;
 use App\Models\Procedure;
+use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;
 use App\Models\Service;
 use App\Models\Store;

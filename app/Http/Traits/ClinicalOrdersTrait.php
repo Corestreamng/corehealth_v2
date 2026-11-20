@@ -733,10 +733,16 @@ trait ClinicalOrdersTrait
     /**
      * Apply a treatment plan — creates orders from the plan's items and stamps
      * each created record with the plan's ID for traceability.
+     *
+     * @param \App\Models\TreatmentPlan|int $plan The plan (or its id)
+     * @param array<int> $selectedItemIds When given, only these plan items are applied
      */
-    protected function applyTreatmentPlan(int $planId, int $patientId, ?int $encounterId): \Illuminate\Support\Collection
+    protected function applyTreatmentPlan($plan, int $patientId, ?int $encounterId, array $selectedItemIds = []): \Illuminate\Support\Collection
     {
-        return DB::transaction(function () use ($planId, $patientId, $encounterId) {
+        $planId = $plan instanceof \App\Models\TreatmentPlan ? $plan->id : (int) $plan;
+        $selected = array_map('intval', $selectedItemIds);
+
+        return DB::transaction(function () use ($planId, $patientId, $encounterId, $selected) {
             $plan = \App\Models\TreatmentPlan::with('items')->findOrFail($planId);
             $planExtra = [
                 'treatment_plan_id' => $plan->id,
@@ -754,6 +760,10 @@ trait ClinicalOrdersTrait
             ];
 
             foreach ($plan->items as $item) {
+                if (!empty($selected) && !in_array((int) $item->id, $selected, true)) {
+                    continue;
+                }
+
                 switch ($item->item_type) {
                     case 'lab':
                         $results['labs'][] = $this->addSingleLab(
@@ -879,6 +889,56 @@ trait ClinicalOrdersTrait
                 ];
             })->toArray(),
         ];
+    }
+
+    /**
+     * Re-order items of an earlier encounter for the given patient (and encounter, when there is one).
+     * Shared by the doctor, nursing and maternity "re-prescribe" actions.
+     *
+     * @param string $sourceType labs | imaging | prescriptions | procedures
+     * @param array<int> $sourceIds Ids of the earlier requests
+     * @param array<int|string,string> $adjustDoses Prescription id => dose to use instead of the original
+     * @return \Illuminate\Support\Collection The newly created requests
+     */
+    protected function rePrescribeItems(string $sourceType, array $sourceIds, int $patientId, ?int $encounterId, array $adjustDoses = []): \Illuminate\Support\Collection
+    {
+        $created = collect();
+
+        DB::transaction(function () use ($sourceType, $sourceIds, $patientId, $encounterId, $adjustDoses, &$created) {
+            switch ($sourceType) {
+                case 'labs':
+                    foreach (LabServiceRequest::whereIn('id', $sourceIds)->get() as $src) {
+                        $created->push($this->addSingleLab($src->service_id, $src->note, $patientId, $encounterId));
+                    }
+
+                    break;
+                case 'imaging':
+                    foreach (ImagingServiceRequest::whereIn('id', $sourceIds)->get() as $src) {
+                        $created->push($this->addSingleImaging($src->service_id, $src->note, $patientId, $encounterId));
+                    }
+
+                    break;
+                case 'prescriptions':
+                    foreach (ProductRequest::whereIn('id', $sourceIds)->get() as $src) {
+                        $dose = $adjustDoses[$src->id] ?? $src->dose;
+                        $created->push($this->addSinglePrescription($src->product_id, $dose, $patientId, $encounterId));
+                    }
+
+                    break;
+                case 'procedures':
+                    foreach (Procedure::whereIn('id', $sourceIds)->get() as $src) {
+                        $created->push($this->addSingleProcedure([
+                            'service_id' => $src->service_id,
+                            'priority' => $src->priority ?? 'routine',
+                            'pre_notes' => $src->pre_notes,
+                        ], $patientId, $encounterId));
+                    }
+
+                    break;
+            }
+        });
+
+        return $created;
     }
 
     /**

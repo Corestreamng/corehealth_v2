@@ -378,10 +378,8 @@ Route::prefix('mobile/doctor')->middleware(['auth:sanctum', 'native.workspace:do
     Route::get('patient/{patient}/treatment-plans', [TreatmentPlanController::class, 'forPatient']);
     Route::post('encounters/{encounter}/apply-treatment-plan', [TreatmentPlanController::class, 'applyToEncounter']);
     Route::post('treatment-plans/from-current', [TreatmentPlanController::class, 'fromCurrent']);
-    Route::get('treatment-plans', [TreatmentPlanController::class, 'index']);
     Route::post('encounters/{encounter}/apply-combo', [EncounterController::class, 'applyCombo']);
     Route::post('patient/{patient}/treatment-plans', [TreatmentPlanController::class, 'storeForPatient']);
-    Route::get('treatment-plans/{treatmentPlan}', [TreatmentPlanController::class, 'show']);
     Route::put('treatment-plans/{treatmentPlan}', [TreatmentPlanController::class, 'update']);
     Route::put('treatment-plans/{treatmentPlan}/progress', [TreatmentPlanController::class, 'updateProgress']);
     Route::put('treatment-plans/{treatmentPlan}/retire', [TreatmentPlanController::class, 'retire']);
@@ -448,6 +446,9 @@ Route::prefix('mobile/doctor')->middleware(['auth:sanctum', 'native.workspace:do
     Route::post('llm/clinical-scribe/process', [LlmController::class, 'processScribeSession']);
     Route::post('llm/clinical-scribe/convert-format', [LlmController::class, 'convertFormat']);
     Route::post('llm/clinical-scribe/sign', [LlmController::class, 'signScribeSession']);
+    // Treatment plan templates the nurse and maternity order sets pick from
+    Route::get('treatment-plans', [TreatmentPlanController::class, 'index']);
+    Route::get('treatment-plans/{treatmentPlan}', [TreatmentPlanController::class, 'show']);
     // Clinical story by patient (the web nursing and maternity pages include the same partial)
     Route::get('patients/{patient}/clinical-story', [EncounterController::class, 'getPatientClinicalStoryFallback'])->whereNumber('patient');
     Route::get('patients/{patient}/clinical-story/timeline', [EncounterController::class, 'getPatientClinicalStoryTimeline'])->whereNumber('patient');
@@ -607,8 +608,35 @@ Route::prefix('mobile/billing')->middleware(['auth:sanctum', 'native.workspace:b
 */
 Route::prefix('mobile/maternity')->middleware(['auth:sanctum', 'native.workspace:maternity'])->group(function () {
     Route::get('context', [\App\Http\Controllers\API\MobileNursingController::class, 'context']);
+    // Reports, outreach and the printable cards (shown in the app as documents)
+    Route::get('enrollment/{id}/print-anc-card', [MaternityWorkbenchController::class, 'printAncCard'])->whereNumber('id');
+    Route::get('enrollment/{id}/print-road-health-card', [MaternityWorkbenchController::class, 'printRoadHealthCard'])->whereNumber('id');
+    Route::get('outreach-reports', [MaternityWorkbenchController::class, 'getOutreachSessionsReportMaternity']);
+    Route::get('outreach-session-details/{sessionId}', [MaternityWorkbenchController::class, 'getOutreachSessionDetailsMaternity'])->whereNumber('sessionId');
+    Route::get('outreach-session/{sessionId}', [MaternityWorkbenchController::class, 'getOutreachSessionDetailsMaternity'])->whereNumber('sessionId');
+    Route::get('outreach-sessions-report', [MaternityWorkbenchController::class, 'getOutreachSessionsReportMaternity']);
+    Route::get('outreach-store-inventory', [MaternityWorkbenchController::class, 'getOutreachStoreInventoryMaternity']);
+    Route::get('reports/admissions-stats', [MaternityWorkbenchController::class, 'getAdmissionsReportStats']);
+    Route::get('reports/anc-defaulters', [MaternityWorkbenchController::class, 'getAncDefaulters']);
+    Route::get('reports/delivery-stats', [MaternityWorkbenchController::class, 'getDeliveryStats']);
+    Route::get('reports/high-risk-register', [MaternityWorkbenchController::class, 'getHighRiskRegister']);
+    Route::get('reports/immunization-coverage', [MaternityWorkbenchController::class, 'getImmunizationCoverage']);
+    Route::get('reports/summary', [MaternityWorkbenchController::class, 'getReportsSummary']);
+    Route::post('outreach-tally', [MaternityWorkbenchController::class, 'saveOutreachTallyMaternity']);
+    Route::post('save-outreach-tally', [MaternityWorkbenchController::class, 'saveOutreachTallyMaternity']);
     // Same product search the web maternity workbench uses for prescriptions
     Route::get('search-products', [ProductController::class, 'liveSearchProducts']);
+
+    // Billing tab: the web maternity page shares billing-shared.js and calls the nursing billing routes
+    Route::get('patient/{patientId}/pending-bills', [NursingWorkbenchController::class, 'getPendingBills'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/service-requests', [NursingWorkbenchController::class, 'getServiceRequests'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/service-requests-stats', [NursingWorkbenchController::class, 'getServiceRequestsStats'])->whereNumber('patientId');
+    Route::post('billing/add-service', [NursingWorkbenchController::class, 'addServiceBill']);
+    Route::post('billing/add-lab-bill', [NursingWorkbenchController::class, 'addLabBill']);
+    Route::post('billing/add-imaging-bill', [NursingWorkbenchController::class, 'addImagingBill']);
+    Route::post('billing/add-consumable-bill', [NursingWorkbenchController::class, 'addConsumableBill']);
+    Route::delete('billing/remove-bill/{id}', [NursingWorkbenchController::class, 'removeBillItem'])->whereNumber('id');
+    Route::get('product-stock/{productId}/store/{storeId}', [NursingWorkbenchController::class, 'getProductStockByStore'])->whereNumber('productId')->whereNumber('storeId');
     Route::post('administer-from-schedule', [MaternityWorkbenchController::class, 'administerFromScheduleMaternity']);
     Route::put('anc-visit/{id}', [MaternityWorkbenchController::class, 'updateAncVisit'])->whereNumber('id');
     Route::get('anc-visit/{id}', [MaternityWorkbenchController::class, 'getAncVisitDetail'])->whereNumber('id');
@@ -713,6 +741,51 @@ Route::prefix('mobile/maternity')->middleware(['auth:sanctum', 'native.workspace
 
 /*
 |--------------------------------------------------------------------------
+| Mobile Surgery Routes — wraps the web Surgery workbench
+|--------------------------------------------------------------------------
+*/
+Route::prefix('mobile/surgery')->middleware(['auth:sanctum', 'native.workspace:nursing|doctor'])->group(function () {
+    Route::get('queue', [\App\Http\Controllers\SurgeryWorkbenchController::class, 'getQueue']);
+    Route::get('queue-counts', [\App\Http\Controllers\SurgeryWorkbenchController::class, 'getQueueCounts']);
+    Route::get('search-patients', [\App\Http\Controllers\SurgeryWorkbenchController::class, 'searchPatients']);
+    Route::get('patient/{patientId}/procedures', [\App\Http\Controllers\SurgeryWorkbenchController::class, 'getPatientProcedures'])->whereNumber('patientId');
+    // JSON detail of a procedure (the page itself is a Blade view)
+    Route::get('procedure/{procedure}/details', [\App\Http\Controllers\EncounterController::class, 'getProcedureDetails'])->whereNumber('procedure');
+    Route::get('procedure/{procedure}/checklist', [\App\Http\Controllers\API\MobileSurgeryController::class, 'checklist'])->whereNumber('procedure');
+    // The procedure page itself (PatientProcedureController): scheduling, team, notes, checklist, consent, items, outcome
+    Route::get('procedure/{procedure}', [\App\Http\Controllers\PatientProcedureController::class, 'show'])->whereNumber('procedure');
+    Route::put('procedure/{procedure}', [\App\Http\Controllers\PatientProcedureController::class, 'update'])->whereNumber('procedure');
+    Route::post('procedure/{procedure}/bill-base-fee', [\App\Http\Controllers\PatientProcedureController::class, 'billBaseFee'])->whereNumber('procedure');
+    Route::post('procedure/{procedure}/cancel', [\App\Http\Controllers\PatientProcedureController::class, 'cancel'])->whereNumber('procedure');
+    Route::post('procedure/{procedure}/checklist-toggle', [\App\Http\Controllers\PatientProcedureController::class, 'toggleChecklistItem'])->whereNumber('procedure');
+    Route::post('procedure/{procedure}/complete', [\App\Http\Controllers\PatientProcedureController::class, 'complete'])->whereNumber('procedure');
+    Route::patch('procedure/{procedure}/consent', [\App\Http\Controllers\PatientProcedureController::class, 'updateConsent'])->whereNumber('procedure');
+    Route::post('procedure/{procedure}/consent/sign', [\App\Http\Controllers\PatientProcedureController::class, 'signConsent'])->whereNumber('procedure');
+    Route::get('procedure/{procedure}/imaging-history', [\App\Http\Controllers\PatientProcedureController::class, 'imagingHistoryList'])->whereNumber('procedure');
+    Route::get('procedure/{procedure}/items', [\App\Http\Controllers\PatientProcedureController::class, 'getItems'])->whereNumber('procedure');
+    Route::post('procedure/{procedure}/items/imaging', [\App\Http\Controllers\PatientProcedureController::class, 'addImagingRequest'])->whereNumber('procedure');
+    Route::post('procedure/{procedure}/items/lab', [\App\Http\Controllers\PatientProcedureController::class, 'addLabRequest'])->whereNumber('procedure');
+    Route::post('procedure/{procedure}/items/medication', [\App\Http\Controllers\PatientProcedureController::class, 'addMedication'])->whereNumber('procedure');
+    Route::post('procedure/{procedure}/items/service', [\App\Http\Controllers\PatientProcedureController::class, 'addServiceBill'])->whereNumber('procedure');
+    Route::delete('procedure/{procedure}/items/{item}', [\App\Http\Controllers\PatientProcedureController::class, 'removeItem'])->whereNumber('procedure')->whereNumber('item');
+    Route::get('procedure/{procedure}/lab-history', [\App\Http\Controllers\PatientProcedureController::class, 'labHistoryList'])->whereNumber('procedure');
+    Route::get('procedure/{procedure}/medication-history', [\App\Http\Controllers\PatientProcedureController::class, 'medicationHistoryList'])->whereNumber('procedure');
+    Route::get('procedure/{procedure}/notes', [\App\Http\Controllers\PatientProcedureController::class, 'getNotes'])->whereNumber('procedure');
+    Route::post('procedure/{procedure}/notes', [\App\Http\Controllers\PatientProcedureController::class, 'addNote'])->whereNumber('procedure');
+    Route::put('procedure/{procedure}/notes/{note}', [\App\Http\Controllers\PatientProcedureController::class, 'updateNote'])->whereNumber('procedure')->whereNumber('note');
+    Route::delete('procedure/{procedure}/notes/{note}', [\App\Http\Controllers\PatientProcedureController::class, 'deleteNote'])->whereNumber('procedure')->whereNumber('note');
+    Route::get('procedure/{procedure}/notes/{note}/edit', [\App\Http\Controllers\PatientProcedureController::class, 'getNote'])->whereNumber('procedure')->whereNumber('note');
+    Route::put('procedure/{procedure}/outcome', [\App\Http\Controllers\PatientProcedureController::class, 'updateOutcome'])->whereNumber('procedure');
+    Route::get('procedure/{procedure}/tariff-guide', [\App\Http\Controllers\PatientProcedureController::class, 'getTariffGuide'])->whereNumber('procedure');
+    Route::get('procedure/{procedure}/team', [\App\Http\Controllers\PatientProcedureController::class, 'getTeam'])->whereNumber('procedure');
+    Route::post('procedure/{procedure}/team', [\App\Http\Controllers\PatientProcedureController::class, 'addTeamMember'])->whereNumber('procedure');
+    Route::put('procedure/{procedure}/team/{member}', [\App\Http\Controllers\PatientProcedureController::class, 'updateTeamMember'])->whereNumber('procedure')->whereNumber('member');
+    Route::delete('procedure/{procedure}/team/{member}', [\App\Http\Controllers\PatientProcedureController::class, 'removeTeamMember'])->whereNumber('procedure')->whereNumber('member');
+    Route::get('procedure/{procedure}/{patient}/pending-bills', [\App\Http\Controllers\PatientProcedureController::class, 'getItems'])->whereNumber('procedure')->whereNumber('patient');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Mobile Nursing Routes — wraps the web Nursing workbench
 |--------------------------------------------------------------------------
 | Every route points at the controller method the web nursing workbench calls (queues, ward
@@ -722,6 +795,20 @@ Route::prefix('mobile/maternity')->middleware(['auth:sanctum', 'native.workspace
 */
 Route::prefix('mobile/nursing')->middleware(['auth:sanctum', 'native.workspace:nursing'])->group(function () {
     Route::get('context', [\App\Http\Controllers\API\MobileNursingController::class, 'context']);
+    // Reports (printable layouts and exports stay on the web; these are the same data)
+    Route::get('reports/activity-summary', [NursingWorkbenchController::class, 'getReportsActivitySummary']);
+    Route::get('reports/immunizations', [NursingWorkbenchController::class, 'getReportsImmunizations']);
+    Route::get('reports/injections', [NursingWorkbenchController::class, 'getReportsInjections']);
+    Route::get('reports/io', [NursingWorkbenchController::class, 'getReportsIO']);
+    Route::get('reports/medications', [NursingWorkbenchController::class, 'getReportsMedications']);
+    Route::get('reports/notes', [NursingWorkbenchController::class, 'getReportsNotes']);
+    Route::get('reports/nurses', [NursingWorkbenchController::class, 'getReportsNurses']);
+    Route::get('reports/occupancy', [NursingWorkbenchController::class, 'getReportsOccupancy']);
+    Route::get('reports/shifts', [NursingWorkbenchController::class, 'getReportsShifts']);
+    Route::get('reports/vitals', [NursingWorkbenchController::class, 'getReportsVitals']);
+    Route::get('beds', [\App\Http\Controllers\API\MobileBedController::class, 'index']);
+    Route::post('beds', [\App\Http\Controllers\API\MobileBedController::class, 'store']);
+    Route::put('beds/{bed}', [\App\Http\Controllers\API\MobileBedController::class, 'update'])->whereNumber('bed');
     Route::post('administer-from-schedule', [NursingWorkbenchController::class, 'administerFromScheduleNew']);
     Route::post('administer-immunization', [NursingWorkbenchController::class, 'administerImmunization']);
     Route::post('administer-injection', [NursingWorkbenchController::class, 'administerInjection']);

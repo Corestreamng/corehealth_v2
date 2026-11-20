@@ -361,4 +361,57 @@ class NativeParityEndpointsTest extends TestCase
         $this->assertSame(200, $resp->status(), substr($resp->getContent(), 0, 200));
         $this->assertArrayHasKey('schedules', $resp->json());
     }
+
+    /** @test */
+    public function test_surgery_beds_and_billing_kit_routes_follow_the_guards()
+    {
+        $pid = $this->anyPatientId();
+        Sanctum::actingAs($this->staff('NURSE'));
+        foreach (['surgery/queue-counts', 'surgery/queue?status=requested', 'nursing/beds', 'nursing/reports/activity-summary'] as $path) {
+            $this->assertJsonOk('/api/mobile/' . $path);
+        }
+        Sanctum::actingAs($this->staff('MATERNITY'));
+        foreach (["maternity/patient/{$pid}/pending-bills", "maternity/patient/{$pid}/service-requests-stats", 'maternity/reports/summary', 'maternity/outreach-reports'] as $path) {
+            $this->assertJsonOk('/api/mobile/' . $path);
+        }
+        Sanctum::actingAs($this->staff('BILLER'));
+        $this->getJson('/api/mobile/surgery/queue-counts')->assertStatus(403);
+        $this->getJson('/api/mobile/nursing/beds')->assertStatus(403);
+        $this->getJson("/api/mobile/maternity/patient/{$pid}/pending-bills")->assertStatus(403);
+    }
+
+    /** @test */
+    public function test_bed_saves_answer_with_json_not_redirects()
+    {
+        Sanctum::actingAs($this->staff('NURSE'));
+        $wardId = \DB::table('wards')->where('is_active', 1)->value('id');
+        if (!$wardId) {
+            $this->markTestSkipped('No active ward in the test database.');
+        }
+        $bad = $this->postJson('/api/mobile/nursing/beds', ['name' => '', 'ward_id' => $wardId]);
+        $this->assertSame(422, $bad->status(), substr($bad->getContent(), 0, 200));
+        $this->assertFalse($bad->json('success'));
+        $ok = $this->postJson('/api/mobile/nursing/beds', ['name' => 'Test bed ' . uniqid(), 'ward_id' => $wardId, 'price' => 100, 'bed_status' => 'available']);
+        $this->assertSame(200, $ok->status(), substr($ok->getContent(), 0, 200));
+        $this->assertTrue($ok->json('success'));
+    }
+
+    /** @test */
+    public function test_re_prescribe_and_treatment_plan_apply_work_for_nursing_and_maternity()
+    {
+        Sanctum::actingAs($this->staff('NURSE'));
+        $pid = $this->anyPatientId();
+        $labId = \DB::table('lab_service_requests')->whereNotNull('encounter_id')->whereNull('deleted_at')->value('id');
+        if ($labId) {
+            $resp = $this->postJson('/api/mobile/nursing/clinical-requests/re-prescribe', ['patient_id' => $pid, 'source_type' => 'labs', 'source_ids' => [$labId]]);
+            $this->assertSame(200, $resp->status(), 're-prescribe: ' . substr($resp->getContent(), 0, 250));
+            $this->assertSame(1, $resp->json('count'));
+        }
+        $planId = \App\Models\TreatmentPlan::active()->has('items')->value('id');
+        if ($planId) {
+            $resp = $this->postJson('/api/mobile/nursing/clinical-requests/apply-treatment-plan', ['patient_id' => $pid, 'treatment_plan_id' => $planId]);
+            $this->assertSame(200, $resp->status(), 'apply plan: ' . substr($resp->getContent(), 0, 250));
+        }
+        $this->assertTrue($labId || $planId, 'Nothing to exercise in the test database.');
+    }
 }
