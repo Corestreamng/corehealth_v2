@@ -40,12 +40,23 @@ Two Flutter apps live in `native_clients/`:
   - `WorkspaceController` (Provider): cached, then refreshed workspaces, and the active one.
   - `NativeScreens`: registry of item key → native screen, plus workspace extras.
 - **`features/shell/AppShell`:** adaptive navigation.
-  - Phone (<600): bottom bar with up to 4 destinations + More.
-  - Tablet (<1200): navigation rail.
-  - Desktop: full sidebar.
-  - Destinations are kept alive in an `IndexedStack` and built lazily.
+  - Desktop (≥1200): collapsible sidebar (272 px ↔ 76 px icons), top bar (breadcrumb, patient search, Messenger, account menu with Appearance).
+  - Tablet (600–1199): the same with the sidebar collapsed to icons.
+  - Phone (<600): compact top bar (workspace switcher, search) and a bottom bar with up to 4 destinations + More.
+  - Destinations are kept alive in an `IndexedStack` and built lazily. On desktop/tablet each destination has **its own `Navigator`**, so screens pushed with `Navigator.of(context).push` open in the content area and the sidebar stays. Re-selecting the current sidebar item pops back to its first screen.
+- **`features/shell/patient_palette.dart`:** `PatientLookup.forWorkspace(key)` maps a workspace to its existing search endpoint and patient screen (nursing, billing, reception, maternity). `showPatientPalette` is the Ctrl/⌘ K search.
 - **`WebFallbackScreen`:** "Open on web" for items that aren't native yet.
 - **`core/api/AuthedApi`:** shared authenticated HTTP. Each workspace service only declares endpoints.
+
+### Design system (`lib/core/design/`)
+| File | What it gives screens |
+|---|---|
+| `tokens.dart` | `Space`, `Radii`, `PageWidth`, `StatusTone`, and `AppColors` (light/dark semantic palette as a `ThemeExtension`, read with `context.colors`). The hospital colour (`ThemeProvider.primaryColor`) becomes `accent`, adjusted to 4.5:1 contrast for each mode. |
+| `app_theme.dart` | `AppTheme.light/dark(brand)`: every Material component themed (Inter type scale, neutral surfaces, bordered cards, filled inputs). `MaterialApp(theme, darkTheme, themeMode)`; the mode is stored in `LocalStorage.themeMode`. |
+| `components.dart` | `AppPage`, `SectionCard`, `KeyValueRow`, `AppBadge`, `MetricTile`/`MetricRow`, `FilterBar`, `ActionBar`/`PageAction`, `EntityList`/`ListRow`, `Avatar`, `StateMessage`, `SkeletonList`. The older `InfoCard`, `KV`, `Tag`, `AsyncView`, `EmptyState`, `StatusBadge` and `SheetScaffold` delegate to these. |
+| `record_workspace.dart` | `RecordWorkspace` + `PatientBanner` + `RecordSection` (key, label, icon, group, badge, builder): grouped section list on wide screens, pills on phones. Used by every patient record (nursing, consultation, maternity enrolment and baby, billing, reception, surgery procedure). |
+
+`test/design_guard_test.dart` fails if a feature file uses a raw Material hue, uses the raw `primaryColor` outside the brand screens (splash, onboarding, sign-in), or if a patient record stops using `RecordWorkspace`.
 
 ## 3. Workspace parity (update with every change)
 | # | Workspace (sidebar order) | Registry key | Native in app | Still on web |

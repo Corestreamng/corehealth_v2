@@ -12,12 +12,23 @@ The **CoreHealth Staff App** is one app for every staff member, on a phone, tabl
 
 **Where:** open the app → enter the hospital server address (first time only) → sign in with your staff email and password.
 
+![Sign in on a computer](/images/workbenches/native-desktop-sign-in.png)
+
 - Patient accounts and deactivated staff cannot sign in to this app.
-- **Phone:** the current workspace name is at the top; tap it to switch workspace. The bottom bar shows its main screens; **More** lists the rest.
-- **Tablet:** the same, with a navigation rail on the left.
-- **Computer:** a full sidebar, exactly like the web, with every workspace and item.
+- **Computer:** a sidebar on the left lists every workspace and item in the web's order. **Collapse** at the bottom shrinks it to icons. The bar along the top shows where you are (*Workspace › Screen*), **Search patients**, **Messenger** and your account.
+- **Tablet:** the sidebar shows as icons only; hover or long-press an icon to see its name.
+- **Phone:** the current screen and workspace are at the top; tap them to switch workspace. The bottom bar shows the workspace's main screens and **More** lists the rest. The magnifier opens patient search.
+- On a computer or tablet, records open **beside the sidebar**, so you never lose your place. Use the back arrow on the record, or tap the sidebar item again to go back to the list.
 
 ![Workspace switcher on a tablet](/images/workbenches/native-tablet-workspace-switcher.png)
+
+### Search for a patient from anywhere
+Press **Ctrl K** (**⌘K** on a Mac), or click **Search patients** in the top bar. Type at least two letters of the name, the file number or the phone number. Use the arrow keys and **Enter**, or click, to open the patient. The patient opens in the current workspace's own record: the nursing record in Nursing, the bill in Billing, the patient hub in Health Records, and the enrolment in Maternity.
+
+![Patient search](/images/workbenches/native-desktop-patient-search.png)
+
+### Light or dark
+Open your account (your initials, top right) → **Appearance** → **System**, **Light** or **Dark**. *System* follows your device. The hospital's colour is kept in both modes.
 
 Items marked **Web** aren't native yet: they open the same page on the web (you may need to sign in there too).
 
@@ -37,7 +48,14 @@ Items marked **Web** aren't native yet: they open the same page on the web (you 
 
 ### Patient record
 
-Tap a patient to open their record. The header shows the file number, age, gender, HMO, account balance, allergies and **clinical alerts** (tap the alert strip to add, edit or remove an alert and choose who sees it). The tabs match the web workbench:
+Tap a patient to open their record. Every patient record in the app has the same layout:
+- **Banner** (top): the patient's name, file number, age and gender, plus badges for HMO, account balance and allergies. The record's main actions sit on the right; **⋮** holds the rest.
+- **Clinical alerts strip** under the banner: tap it to add, edit or remove an alert and choose who sees it.
+- **Sections:** on a computer they are listed on the left, grouped (e.g. *Activity*); on a phone they are a row of pills under the banner.
+
+![Patient record on a computer](/images/workbenches/native-desktop-patient-record.png)
+
+The sections match the web workbench:
 
 | Tab | What you can do |
 |---|---|
@@ -150,17 +168,27 @@ flowchart LR
 ```
 
 ## Billing desk
-Open **Billing → Billing Desk**. Start your shift, search a patient or pick one from the payment queue (Emergency, All unpaid, HMO items, Credit accounts). A patient's bill has tabs: **Billing** (select items, adjust quantity and discount, **Pay** by cash, POS, transfer, mobile, split, account balance, staff or organisation, or print an **Invoice**), **Walk-in**, **Receipts**, **Admissions** (bill by category) and **Account** (deposit, withdraw, adjust, statement). Receipts show as readable text; printing stays on the web.
+Open **Billing → Billing Desk** (*Payments*). Start your shift from the top right; the shift badge shows what you have collected. Tap a tile to list a payment queue (Emergency, All unpaid, HMO items, Credit accounts), or use **Search patients** (Ctrl K). A patient's bill has sections: **Billing** (select items, adjust quantity and discount, **Pay** by cash, POS, transfer, mobile, split, account balance, staff or organisation, or print an **Invoice**), **Walk-in**, **Receipts**, **Admissions** (bill by category) and **Account** (deposit, withdraw, adjust, statement). Receipts show as readable text; printing stays on the web.
 
 ## Nursing desk
-Open **Nursing → Nursing Desk**. Start your shift (choose the ward and acknowledge waiting handovers), then search a patient or pick one from a queue: **Admitted**, **Vitals due**, **Medication due**, **Bed requests**, **Discharge** or **Deceased**. The **Ward dashboard** shows beds by ward, who is waiting for a bed (assign one) and bed maintenance.
+Open **Nursing → Nursing Desk** (*Ward care*). Your shift status is at the top right: **Start shift** (choose the ward and acknowledge waiting handovers) or **End shift**. The tiles show each queue's count; tap one to list it: **Admitted**, **Vitals due**, **Medication due**, **Bed requests**, **Discharge** or **Deceased**. Use **Search patients** (Ctrl K) to find anyone else. **Ward dashboard** is the main action; **Handovers**, **Emergency intake** and **Register walk-in** are beside it, and **More** has New patient, Reports, Outreach tallies and Contacts. The **Ward dashboard** shows beds by ward, who is waiting for a bed (assign one) and bed maintenance.
 
-A patient has tabs: **Vitals** (record and edit your own within the edit window), **Medications** (tap a drug to chart doses), **Charts** (notes and intake/output), **Injections** (from ward stock, a dispensed prescription or the patient's own drug), **Immunizations** (generate the schedule, give or skip each dose), **Requests** (labs, imaging, procedures, prescriptions, service and consumable bills) and, for admitted patients, **Admission** (bed, checklists, discharge). On a patient, **Clinical story** shows the same timeline the doctor sees, and the sparkle button opens the **AI Scribe Studio**: dictate, pick Focus DAR, SBAR or SOAPIE, review the note and the orders it found (check each drug and test is the right one, use *Match catalog* if not), then **Sign & commit**. The note is filed under the note type shown (default *Others*). On **Medications**, **Add drug** charts a ward-stock or patient's-own drug that has no prescription: set a schedule or give a dose now; ward stock is taken from the chosen store and billed unless you switch billing off. **Requests** has the order sets (re-order from an earlier encounter, shared treatment plan templates, bundles). Picking a bundle shows its price and every item before you apply it; the **Bundles** list then lets you remove a single item (with a reason) or the whole bundle. **Billing** raises service, lab, imaging and consumable bills and shows the billing history. **Surgery Workbench** and **Manage Beds** are in the Nursing menu, and **Reports** is on the desk. End your shift to create the handover for the next nurse. Surgery and bed setup open on the web.
+![Nursing desk](/images/workbenches/native-desktop-nursing-desk.png)
+
+A patient record has sections grouped as *Clinical*, *Care*, *Orders & billing* and *Admission*:
+
+![Nursing patient record](/images/workbenches/native-desktop-nursing-record.png)
+
+ **Vitals** (record and edit your own within the edit window), **Medications** (tap a drug to chart doses), **Charts** (notes and intake/output), **Injections** (from ward stock, a dispensed prescription or the patient's own drug), **Immunizations** (generate the schedule, give or skip each dose), **Requests** (labs, imaging, procedures, prescriptions, service and consumable bills) and, for admitted patients, **Admission** (bed, checklists, discharge). On a patient, **Clinical story** shows the same timeline the doctor sees, and the sparkle button opens the **AI Scribe Studio**: dictate, pick Focus DAR, SBAR or SOAPIE, review the note and the orders it found (check each drug and test is the right one, use *Match catalog* if not), then **Sign & commit**. The note is filed under the note type shown (default *Others*). On **Medications**, **Add drug** charts a ward-stock or patient's-own drug that has no prescription: set a schedule or give a dose now; ward stock is taken from the chosen store and billed unless you switch billing off. **Requests** has the order sets (re-order from an earlier encounter, shared treatment plan templates, bundles). Picking a bundle shows its price and every item before you apply it; the **Bundles** list then lets you remove a single item (with a reason) or the whole bundle. **Billing** raises service, lab, imaging and consumable bills and shows the billing history. **Surgery Workbench** and **Manage Beds** are in the Nursing menu, and **Reports** is on the desk. End your shift to create the handover for the next nurse. Surgery and bed setup open on the web.
 
 ## Maternity desk
 Open **Maternity → Maternity Desk**. Search for a mother (patients who are not enrolled show **Enrol**), or choose from the queues: **Active ANC**, **Due visits**, **High risk**, **Upcoming EDD**, **Postnatal**, **Overdue immunization**, **Admitted**, **Bed requests** and **Discharge**.
 
-An enrolment has tabs: **Overview** (booking details, edit, discharge), **ANC** (visits), **History** (medical history and previous pregnancies), **Orders** (labs, imaging, procedures, prescriptions), **Delivery**, **Partograph**, **Babies** (tap a baby for details, growth and immunization), **Postnatal**, **Immunization** (the mother's schedule), **Vitals**, **Notes** and **Audit**. **Billing**, **Investigations**, the order sets and bundles work as in Nursing. **Clinical story** and the **AI Scribe Studio** (Antenatal, Labour & delivery, Postnatal, Neonatal) are on the enrolment too. The **ANC card** and **Road-to-health card** open in the app as text (printing the layout stays on the web); **Outreach** and **Reports** are on the desk.
+An enrolment opens with the **Overview**: gestation today, days to EDD, ANC visits and risk at a glance, then the booking details and the timeline. **Edit enrolment**, the **ANC card**, the **Road-to-health card** and **Discharge from care** are under **⋮** in the banner. The sections are grouped as *Pregnancy*, *Birth*, *Care*, *Orders & billing* and *Records*:
+
+![Maternity enrolment in dark mode](/images/workbenches/native-desktop-maternity-dark.png)
+
+Sections: **Overview**, **ANC** (visits), **History** (medical history and previous pregnancies), **Orders** (labs, imaging, procedures, prescriptions), **Delivery**, **Partograph**, **Babies** (tap a baby for details, growth and immunization), **Postnatal**, **Immunization** (the mother's schedule), **Vitals**, **Notes** and **Audit**. **Billing**, **Investigations**, the order sets and bundles work as in Nursing. **Clinical story** and the **AI Scribe Studio** (Antenatal, Labour & delivery, Postnatal, Neonatal) are on the enrolment too. The **ANC card** and **Road-to-health card** open in the app as text (printing the layout stays on the web); **Outreach** and **Reports** are on the desk.
 
 Everything the app saves goes through the same hospital system as the web, so billing, queues and records update for every department immediately.
 
