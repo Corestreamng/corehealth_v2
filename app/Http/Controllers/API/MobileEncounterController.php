@@ -413,6 +413,7 @@ class MobileEncounterController extends Controller
             }
 
             $encounter = $encounterQuery->first();
+            $doctorQueue = $request->queue_id ? \App\Models\DoctorQueue::find($request->queue_id) : null;
 
             if (!$encounter) {
                 $encounter = new Encounter();
@@ -420,13 +421,24 @@ class MobileEncounterController extends Controller
                 $encounter->service_request_id = $reqEntry ? $reqEntry->id : null;
                 $encounter->service_id = $reqEntry ? $reqEntry->service_id : null;
                 $encounter->patient_id = $patient->id;
+                $encounter->queue_id = $doctorQueue ? $doctorQueue->id : null;
+                $encounter->started_at = now();
                 $encounter->save();
+
+                // Same as the web: opening the encounter puts the queue entry in consultation
+                app(\App\Services\ConsultationStartService::class)->begin($doctorQueue);
             } else {
                 $encounter->doctor_id = $doctor->id;
                 $encounter->service_request_id = $reqEntry ? $reqEntry->id : null;
                 $encounter->service_id = $reqEntry ? $reqEntry->service_id : null;
                 $encounter->patient_id = $patient->id;
+                if (!$encounter->queue_id && $doctorQueue) {
+                    $encounter->queue_id = $doctorQueue->id;
+                }
                 $encounter->update();
+
+                // Resuming: make sure the queue entry shows "In consultation" (idempotent)
+                app(\App\Services\ConsultationStartService::class)->begin($doctorQueue);
             }
 
             // Load existing diagnosis if any — handle both legacy comma-separated and JSON formats
@@ -545,7 +557,7 @@ class MobileEncounterController extends Controller
                     ];
                 });
 
-            $labs = LabServiceRequest::with(['service', 'doctor', 'biller', 'resultBy', 'sampleTakenBy', 'approvedBy'])
+            $labs = LabServiceRequest::with(['service', 'doctor', 'biller', 'resultBy', 'sampler', 'approver'])
                 ->where('encounter_id', $encounter->id)
                 ->where('status', '>', 0)
                 ->orderBy('created_at', 'DESC')
@@ -566,19 +578,19 @@ class MobileEncounterController extends Controller
                         'result_by_name' => $lab->resultBy?->name,
                         'sample_taken' => (bool) $lab->sample_taken,
                         'sample_date' => $lab->sample_date,
-                        'sample_taken_by' => $lab->sampleTakenBy?->name,
+                        'sample_taken_by' => $lab->sampler?->name,
                         'lab_number' => $lab->lab_number,
                         'billed_date' => $lab->billed_date,
                         'billed_by_name' => $lab->biller?->name,
                         'approved_at' => $lab->approved_at?->toIso8601String(),
-                        'approved_by_name' => $lab->approvedBy?->name,
+                        'approved_by_name' => $lab->approver?->name,
                         'rejection_reason' => $lab->rejection_reason,
                         'doctor_name' => $lab->doctor?->name,
                         'created_at' => $lab->created_at->toIso8601String(),
                     ];
                 });
 
-            $imaging = ImagingServiceRequest::with(['service', 'doctor', 'biller', 'resultBy', 'approvedBy'])
+            $imaging = ImagingServiceRequest::with(['service', 'doctor', 'biller', 'resultBy', 'approver'])
                 ->where('encounter_id', $encounter->id)
                 ->where('status', '>', 0)
                 ->orderBy('created_at', 'DESC')
@@ -600,7 +612,7 @@ class MobileEncounterController extends Controller
                         'billed_date' => $img->billed_date,
                         'billed_by_name' => $img->biller?->name,
                         'approved_at' => $img->approved_at?->toIso8601String(),
-                        'approved_by_name' => $img->approvedBy?->name,
+                        'approved_by_name' => $img->approver?->name,
                         'rejection_reason' => $img->rejection_reason,
                         'doctor_name' => $img->doctor?->name,
                         'created_at' => $img->created_at->toIso8601String(),

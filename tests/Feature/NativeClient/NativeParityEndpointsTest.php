@@ -186,4 +186,46 @@ class NativeParityEndpointsTest extends TestCase
             $this->assertArrayHasKey($k, $resp->json('items'));
         }
     }
+
+    /** @test */
+    public function test_encounter_detail_loads_when_the_encounter_has_labs_and_imaging()
+    {
+        $lab = \App\Models\LabServiceRequest::whereNotNull('encounter_id')->where('status', '>', 0)->latest('id')->first();
+        if (!$lab) {
+            $this->markTestSkipped('No encounter with labs in the test database.');
+        }
+        Sanctum::actingAs($this->staff('DOCTOR'));
+        $resp = $this->getJson("/api/mobile/doctor/encounters/{$lab->encounter_id}");
+        $this->assertEquals(200, $resp->status(), substr($resp->getContent(), 0, 300));
+        $this->assertNotEmpty($resp->json('data.labs'));
+    }
+
+    /** @test */
+    public function test_datatables_searches_work_with_the_columns_the_app_sends()
+    {
+        Sanctum::actingAs($this->staff('DOCTOR'));
+        $cols = [
+            'columns[0][data]' => 'name', 'columns[0][name]' => 'name', 'columns[0][searchable]' => 'true', 'columns[0][orderable]' => 'true',
+            'columns[1][data]' => 'action', 'columns[1][name]' => 'action', 'columns[1][searchable]' => 'false', 'columns[1][orderable]' => 'false',
+        ];
+        $resp = $this->getJson('/api/mobile/shared/hospital-contacts?' . http_build_query(['draw' => 1, 'start' => 0, 'length' => 5, 'search' => ['value' => 'a']] + $cols), ['X-Requested-With' => 'XMLHttpRequest']);
+        $this->assertEquals(200, $resp->status(), substr($resp->getContent(), 0, 300));
+        $this->assertArrayHasKey('data', $resp->json());
+    }
+
+    /** @test */
+    public function test_starting_an_encounter_links_the_queue_and_puts_it_in_consultation()
+    {
+        $queue = \App\Models\DoctorQueue::where('status', \App\Enums\QueueStatus::WAITING)->latest('id')->first();
+        if (!$queue) {
+            $this->markTestSkipped('No waiting queue entry in the test database.');
+        }
+        $doctor = $this->staff('DOCTOR');
+        Sanctum::actingAs($doctor);
+        $resp = $this->postJson('/api/mobile/doctor/encounters/start', ['patient_id' => $queue->patient_id, 'queue_id' => $queue->id, 'req_entry_id' => $queue->request_entry_id]);
+        $this->assertEquals(200, $resp->status(), substr($resp->getContent(), 0, 300));
+        $encId = $resp->json('data.encounter.id');
+        $this->assertEquals($queue->id, \App\Models\Encounter::find($encId)->queue_id);
+        $this->assertEquals(\App\Enums\QueueStatus::IN_CONSULTATION, $queue->fresh()->status);
+    }
 }

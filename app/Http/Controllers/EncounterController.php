@@ -3026,19 +3026,8 @@ class EncounterController extends Controller
                 $encounter->started_at = now();
                 $encounter->save();
 
-                // Transition queue to IN_CONSULTATION
-                if ($doctorQueue && $doctorQueue->status !== QueueStatus::IN_CONSULTATION) {
-                    try {
-                        $queueService = app(QueueStatusService::class);
-                        $queueService->transition($doctorQueue, QueueStatus::IN_CONSULTATION);
-                    } catch (\Exception $transitionEx) {
-                        // Fallback: direct update
-                        $doctorQueue->update([
-                            'status' => QueueStatus::IN_CONSULTATION,
-                            'consultation_started_at' => $doctorQueue->consultation_started_at ?? now(),
-                        ]);
-                    }
-                }
+                // Transition queue to IN_CONSULTATION (shared with the native client)
+                app(\App\Services\ConsultationStartService::class)->begin($doctorQueue);
             } else {
                 // Update existing encounter (in case doctor or service changed)
                 $encounter->doctor_id = $doctor->id;
