@@ -113,6 +113,19 @@ The form matches the web registration form. The patient's **Occupation** sits wi
 
 ![New patient on a computer](/images/workbenches/native-desktop-new-patient.png)
 
+**File number** works as on the web in every registration (new patient, **Register walk-in**, **Emergency intake** for a new or unidentified patient, and the department registrations):
+
+- **Auto / Manual:** Auto shows the next number (read only); Manual lets you type one.
+- **Series prefix:** the department's series is fixed in front of the number (`EX-` for walk-in and emergency, `DOC-`, `NUR-`, `ANC-`…). Maternity offers a switch between `ANC-` and `PANC-`.
+- **Next number and recent numbers:** "Next number: 000006 + 1 = 000007" and the last few numbers of that series. Tap one to copy it into the field (this switches to Manual).
+- **Duplicate check:** as you type, the app tells you if the number is already in use and by whom. It warns and never blocks, as on the web.
+- **Refresh** returns to Auto with a fresh number.
+
+![Walk-in registration with the EX- series](/images/workbenches/native-desktop-walkin-registration.png)
+
+![Emergency intake, new patient](/images/workbenches/native-desktop-emergency-intake.png)
+
+
 ![New patient on a phone](/images/workbenches/native-phone-new-patient.png)
 
 | Field | Required | Notes |
@@ -141,16 +154,20 @@ The app checks for **possible existing patients** first, then shows a **summary*
 
 ## 5. Doctors
 
-**Where:** workspace **Doctors** → **My Queues**.
+**Where:** workspace **Doctors** → **All Encounters** (the doctor's queue).
 
 ![My Queues](/images/workbenches/native-desktop-my-queues.png)
 
 - **Ribbon:** New patient, Register walk-in (`DOC-` numbers), Emergency intake (when enabled for doctors), Contacts, Price list.
-- **Today's Queue:** counts, date range and status filters; **Check in, Reschedule, Reassign, No-show, Cancel**; start or resume the consultation.
+- **Today's Queue:** counts, date range and status filters (the counts at the top use the same dates as the list below, so In Consult never counts rows the list hides); **Check in, Reschedule, Reassign, No-show, Cancel**; start or resume the consultation.
 - **Calendar:** your week of appointments and queue entries.
 - **History:** previous encounters (tap one to open it), my/other admissions, my and all referrals.
 
 ### The consultation
+
+**Open Encounter** on a patient in the queue starts the consultation (the queue entry then shows **Continuing** with a running timer, and **Open Encounter** resumes it). The patient's sections are on the left: *Patient, Clinical Story, Assessment (Vitals, Nurse Charts, Inj / Imm, Notes), Orders (Labs, Imaging, Meds, Care Plan, Procedures), Disposition (Admissions, Referrals)*. **Conclude** finishes the encounter.
+
+![A new encounter](/images/workbenches/native-desktop-new-encounter.png)
 
 The header shows the patient, clinic and admission status, the **consultation timer** (tap to pause or resume; it is kept on the server like the web), **Admit** or **Discharge**, and the **⋮ menu**: Edit patient, Clinical alerts, Refer, **Order sets & bundles**, **AI Scribe Studio**, **Medical report**, Patient profiles.
 
@@ -186,6 +203,8 @@ flowchart LR
 ```
 
 ## Billing desk
+![Billing desk](/images/workbenches/native-desktop-billing-desk.png)
+
 Open **Billing → Billing Desk** (*Payments*). Start your shift from the top right; the shift badge shows what you have collected. Tap a tile to list a payment queue (Emergency, All unpaid, HMO items, Credit accounts), or use **Search patients** (Ctrl K). A patient's bill has sections: **Billing** (select items, adjust quantity and discount, **Pay** by cash, POS, transfer, mobile, split, account balance, staff or organisation, or print an **Invoice**), **Walk-in**, **Receipts**, **Admissions** (bill by category) and **Account** (deposit, withdraw, adjust, statement). Receipts show as readable text; printing stays on the web.
 
 ## Nursing desk
@@ -197,9 +216,23 @@ A patient record has sections grouped as *Clinical*, *Care*, *Orders & billing* 
 
 ![Nursing patient record](/images/workbenches/native-desktop-nursing-record.png)
 
- **Vitals** (record and edit your own within the edit window), **Medications** (tap a drug to chart doses), **Charts** (notes and intake/output), **Injections** (from ward stock, a dispensed prescription or the patient's own drug), **Immunizations** (generate the schedule, give or skip each dose), **Requests** (labs, imaging, procedures, prescriptions, service and consumable bills) and, for admitted patients, **Admission** (bed, checklists, discharge). On a patient, **Clinical story** shows the same timeline the doctor sees, and the sparkle button opens the **AI Scribe Studio**: dictate, pick Focus DAR, SBAR or SOAPIE, review the note and the orders it found (check each drug and test is the right one, use *Match catalog* if not), then **Sign & commit**. The note is filed under the note type shown (default *Others*). On **Medications**, **Add drug** charts a ward-stock or patient's-own drug that has no prescription: set a schedule or give a dose now; ward stock is taken from the chosen store and billed unless you switch billing off. **Requests** has the order sets (re-order from an earlier encounter, shared treatment plan templates, bundles). Picking a bundle shows its price and every item before you apply it; the **Bundles** list then lets you remove a single item (with a reason) or the whole bundle. **Billing** raises service, lab, imaging and consumable bills and shows the billing history. **Surgery Workbench** and **Manage Beds** are in the Nursing menu, and **Reports** is on the desk. End your shift to create the handover for the next nurse. Surgery and bed setup open on the web.
+ **Vitals** (record and edit your own within the edit window), **Medications** (tap a drug to chart doses), **Charts** (notes and intake/output), **Injections** (from ward stock, a dispensed prescription or the patient's own drug), **Immunizations** (generate the schedule, give or skip each dose), **Requests** (labs, imaging, procedures, prescriptions, service and consumable bills) and, for admitted patients, **Admission** (bed, checklists, discharge). On a patient, **Clinical story** shows the same timeline the doctor sees, and the sparkle button opens the **AI Scribe Studio**: dictate, pick Focus DAR, SBAR or SOAPIE, review the note and the orders it found (check each drug and test is the right one, use *Match catalog* if not), then **Sign & commit**. The note is filed under the note type shown (default *Others*). **Medication Chart** shows every drug on the left (search it by name, code or prescriber) and the chosen drug's calendar on the right, as on the web. On a phone the list opens the calendar full screen.
+
+![Medication chart with the calendar](/images/workbenches/native-desktop-drug-chart.png)
+
+- **Calendar:** the month in a Sunday-to-Saturday grid, with a dot for each dose (administered, scheduled, missed, discontinued). The left and right arrows move the month; **Today** returns. Tap a day to see its doses and **Give** one, edit or delete a given dose, or remove it from the schedule.
+- **Next and previous drug:** the up and down arrows in the header (with "3 of 244") step through the list without going back, and keep the month you are looking at. The calendar's left and right arrows only move months, so the two never mix. Drugs that cannot be charted yet (awaiting billing or dispensing) are skipped.
+- **Set schedule** picks the dose, route, start date, days and times (OD, BD, TDS, QID…), every day, selected days or once.
+
+![Set schedule](/images/workbenches/native-desktop-drug-schedule.png)
+
+![Stepping through the medication list](/images/workbenches/native-desktop-drug-chart-list.png)
+
+On **Medications**, **Add drug** charts a ward-stock or patient's-own drug that has no prescription: set a schedule or give a dose now; ward stock is taken from the chosen store and billed unless you switch billing off. **Requests** has the order sets (re-order from an earlier encounter, shared treatment plan templates, bundles). Picking a bundle shows its price and every item before you apply it; the **Bundles** list then lets you remove a single item (with a reason) or the whole bundle. **Billing** raises service, lab, imaging and consumable bills and shows the billing history. **Surgery Workbench** and **Manage Beds** are in the Nursing menu, and **Reports** is on the desk. End your shift to create the handover for the next nurse. Surgery and bed setup open on the web.
 
 ## Maternity desk
+![Maternity desk](/images/workbenches/native-desktop-maternity-desk.png)
+
 Open **Maternity → Maternity Desk**. Search for a mother (patients who are not enrolled show **Enrol**), or choose from the queues: **Active ANC**, **Due visits**, **High risk**, **Upcoming EDD**, **Postnatal**, **Overdue immunization**, **Admitted**, **Bed requests** and **Discharge**.
 
 An enrolment opens with the **Overview**: gestation today, days to EDD, ANC visits and risk at a glance, then the booking details and the timeline. **Edit enrolment**, the **ANC card**, the **Road-to-health card** and **Discharge from care** are under **⋮** in the banner. The sections are grouped as *Pregnancy*, *Birth*, *Care*, *Orders & billing* and *Records*:

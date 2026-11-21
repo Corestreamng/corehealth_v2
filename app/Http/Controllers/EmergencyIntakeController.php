@@ -161,6 +161,10 @@ class EmergencyIntakeController extends Controller
                 $patient->phone_no = $request->phone_no;
                 $patient->hmo_id = 1; // Default to Private
 
+                // A number chosen by hand (the staff app's Manual mode) keeps the EX- series; otherwise the
+                // next EX- number is assigned here. The web form never sends file_no_manual.
+                $manualFileNo = $request->boolean('file_no_manual') ? trim((string) $request->file_no) : '';
+
                 // Generate EX- prefixed file number
                 $lastExPatient = Patient::where('file_no', 'like', 'EX-%')
                     ->orderBy('id', 'desc')
@@ -174,6 +178,13 @@ class EmergencyIntakeController extends Controller
                     }
                 } else {
                     $patient->file_no = 'EX-001';
+                }
+
+                if ($manualFileNo !== '') {
+                    // Same rule as the web form: keep an EX- number, otherwise put the number in the EX- series.
+                    $patient->file_no = str_starts_with(strtoupper($manualFileNo), 'EX-')
+                        ? $manualFileNo
+                        : 'EX-' . preg_replace('/^[A-Za-z]+[-_]?/', '', $manualFileNo);
                 }
 
                 // Store brought-by info as next of kin on the patient record (varchar columns)

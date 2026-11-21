@@ -483,34 +483,56 @@
         <!-- ENTRY TAB -->
         <div class="tab-pane fade show active" id="med-entry-content" role="tabpanel" aria-labelledby="med-entry-tab">
 
-    <!-- Drug Selection and Controls -->
-    <div class="mb-4">
-        <div class="card-modern shadow-sm">
+    <link rel="stylesheet" href="{{ versioned_asset('css/medication-drug-list.css') }}">
+    <script defer src="{{ versioned_asset('js/medication-drug-list.js') }}"></script>
+
+    <div class="med-chart-layout">
+        <!-- Left: every medication of the patient, searchable. Choosing one shows its calendar. -->
+        <aside class="card-modern shadow-sm med-drug-panel">
             <div class="card-body">
-                <div class="row g-3 align-items-end">
-                    <div class="col-12">
-                        <label for="drug-select" class="form-label fw-bold">
-                            <i class="mdi mdi-pill text-primary me-1"></i> Select Drug/Medication
-                        </label>
-                        <select class="form-select" id="drug-select" style="width: 100%;">
-                            <option value="">-- Select a medication --</option>
-                            <!-- Will be populated via AJAX -->
-                        </select>
-                        {{-- §6.2: Drug source at medication entry level --}}
-                        <div class="d-flex gap-2 mt-2">
-                            <button type="button" class="btn btn-sm btn-outline-primary" id="btn-add-ward-stock">
-                                <i class="mdi mdi-hospital-building me-1"></i> Administer from Ward Stock
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-add-patient-own">
-                                <i class="mdi mdi-account-heart me-1"></i> Administer Patient's Own Drug
-                            </button>
-                        </div>
-                    </div>
+                <label for="med-drug-search" class="form-label fw-bold mb-1">
+                    <i class="mdi mdi-pill text-primary me-1"></i> Medications
+                    <span class="badge bg-secondary ms-1" id="med-drug-count">0</span>
+                </label>
+                <input type="search" class="form-control form-control-sm" id="med-drug-search" placeholder="Search medications..." autocomplete="off">
+                {{-- §6.2: Drug source at medication entry level --}}
+                <div class="med-drug-tools">
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="btn-add-ward-stock">
+                        <i class="mdi mdi-hospital-building me-1"></i> Ward stock
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-add-patient-own">
+                        <i class="mdi mdi-account-heart me-1"></i> Patient's own
+                    </button>
                 </div>
-                <hr class="my-3">
+                {{-- Data store for the list and the calendar code (not shown) --}}
+                <select class="d-none" id="drug-select" aria-hidden="true" tabindex="-1">
+                    <option value=""></option>
+                </select>
+                <div id="med-drug-list" role="listbox" aria-label="Medications"></div>
+            </div>
+        </aside>
+
+        <!-- Right: the chosen medication's controls and calendar -->
+        <section>
+            <div id="med-calendar-placeholder" class="med-calendar-placeholder mb-3">
+                <i class="mdi mdi-calendar-month-outline" style="font-size:2.5rem;"></i>
+                <div class="fw-bold mt-2">Select a medication</div>
+                <div class="small">Its calendar, doses and actions appear here.</div>
+            </div>
+            <div class="card-modern shadow-sm mb-3" id="med-controls-card" style="display:none;">
+                <div class="card-body">
                 <div class="row">
                     <div class="col-12">
                         <div class="d-flex flex-wrap gap-2 medication-controls">
+                            <div class="btn-group" role="group" aria-label="Previous or next medication">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="med-prev-drug" title="Previous medication" aria-label="Previous medication">
+                                    <i class="mdi mdi-chevron-up"></i>
+                                </button>
+                                <span class="btn btn-outline-secondary btn-sm disabled" id="med-drug-pos" style="min-width:64px;">1 of 1</span>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="med-next-drug" title="Next medication" aria-label="Next medication">
+                                    <i class="mdi mdi-chevron-down"></i>
+                                </button>
+                            </div>
                             <button type="button" class="btn btn-primary btn-sm" id="set-schedule-btn" disabled>
                                 <i class="mdi mdi-calendar-plus"></i>
                                 <span class="d-none d-sm-inline">Set Schedule</span>
@@ -524,16 +546,16 @@
                                 <span class="d-none d-sm-inline">Resume</span>
                             </button>
                             <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-secondary btn-sm" id="prev-month-btn">
+                                <button type="button" class="btn btn-secondary btn-sm" id="prev-month-btn" title="Previous month">
                                     <i class="mdi mdi-chevron-left"></i>
-                                    <span class="d-none d-sm-inline">Previous</span>
+                                    <span class="d-none d-sm-inline">Prev month</span>
                                 </button>
                                 <button type="button" class="btn btn-secondary btn-sm" id="today-btn">
                                     <i class="mdi mdi-calendar-today d-inline d-sm-none"></i>
                                     <span class="d-none d-sm-inline">Today</span>
                                 </button>
-                                <button type="button" class="btn btn-secondary btn-sm" id="next-month-btn">
-                                    <span class="d-none d-sm-inline">Next</span>
+                                <button type="button" class="btn btn-secondary btn-sm" id="next-month-btn" title="Next month">
+                                    <span class="d-none d-sm-inline">Next month</span>
                                     <i class="mdi mdi-chevron-right"></i>
                                 </button>
                             </div>
@@ -544,10 +566,9 @@
                         </div>
                     </div>
                 </div>
-                <div id="medication-status" class="mt-3 border-top pt-2"></div>
+                    <div id="medication-status" class="mt-3 border-top pt-2"></div>
+                </div>
             </div>
-        </div>
-    </div>
 
     <!-- Loading indicator -->
     <div class="text-center my-4" id="medication-loading" style="display:none;">
@@ -575,6 +596,8 @@
                 </div>
             </div>
         </div>
+    </div>
+        </section>
     </div>
 
         </div>

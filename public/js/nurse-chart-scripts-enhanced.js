@@ -67,6 +67,7 @@
 
                 if (prescriptions.length === 0) {
                     toastr.warning('No medications found for this patient.');
+                    if (window.MedDrugList) { MedDrugList.render(); }
                 } else {
                     console.log(`Found ${prescriptions.length} prescriptions`);
 
@@ -164,17 +165,8 @@
                         console.log(`Added ${directEntries.length} direct administration entries to dropdown`);
                     }
 
-                    // §6.1: Initialize Select2 with rich formatting
-                    if (select.hasClass('select2-hidden-accessible')) {
-                        select.select2('destroy');
-                    }
-                    select.select2({
-                        width: '100%',
-                        placeholder: '-- Select a medication --',
-                        allowClear: true,
-                        templateResult: formatRxOption,
-                        templateSelection: formatRxSelection,
-                    });
+                    // The searchable list on the left renders the options above (replaces the select2 dropdown).
+                    if (window.MedDrugList) { MedDrugList.render(); }
                 }
 
                 // Update Prescription Dashboard badge

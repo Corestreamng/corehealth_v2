@@ -1,0 +1,25 @@
+/* Medication chart: searchable drug list (left) + calendar (right). Uses the hospital theme tokens. */
+.med-chart-layout { display: grid; grid-template-columns: minmax(280px, 340px) 1fr; gap: 16px; align-items: start; }
+.med-drug-panel { position: sticky; top: 8px; display: flex; flex-direction: column; max-height: calc(100vh - 220px); min-height: 320px; }
+.med-drug-panel .card-body { display: flex; flex-direction: column; min-height: 0; padding: 12px; }
+.med-drug-tools { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+#med-drug-list { position: relative; overflow-y: auto; margin-top: 10px; display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+.med-drug-group { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #6c757d; padding: 6px 2px 0; }
+.med-drug-item { display: flex; gap: 8px; width: 100%; text-align: left; padding: 8px 10px; border: 1px solid rgba(0, 0, 0, .12); border-radius: 10px; background: transparent; color: inherit; cursor: pointer; transition: background .15s, border-color .15s; }
+.med-drug-item:hover { background: rgba(var(--hospital-primary-rgb, 1, 27, 51), .06); }
+.med-drug-item.is-selected { border-color: var(--hospital-primary, #011b33); background: rgba(var(--hospital-primary-rgb, 1, 27, 51), .1); box-shadow: inset 3px 0 0 var(--hospital-primary, #011b33); }
+.med-drug-item.is-locked { opacity: .6; cursor: not-allowed; }
+.med-drug-icon { font-size: 1.1em; line-height: 1.4; }
+.med-drug-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.med-drug-name { font-size: 14px; font-weight: 600; line-height: 1.3; word-break: break-word; }
+.med-drug-name small { font-size: 12px; font-weight: 400; }
+.med-drug-meta .badge { font-size: 10px; }
+.med-drug-meta { font-size: 12px; color: #6c757d; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.med-drug-lock { font-size: 12px; color: #dc3545; }
+.bg-purple { background-color: #6f42c1; color: #fff; }
+.med-calendar-placeholder { border: 1px dashed rgba(0, 0, 0, .2); border-radius: 12px; padding: 48px 16px; text-align: center; color: #6c757d; }
+@media (max-width: 991.98px) {
+    .med-chart-layout { grid-template-columns: 1fr; }
+    .med-drug-panel { position: static; max-height: 340px; }
+}
+[data-bs-theme="dark"] .med-drug-item { border-color: rgba(255, 255, 255, .15); }

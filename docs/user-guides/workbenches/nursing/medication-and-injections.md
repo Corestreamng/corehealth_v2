@@ -47,6 +47,11 @@ Eliminate medication administration errors, verify patient identity, confirm dru
 ### 2. Exact UI Location / Where to Click
 - Load inpatient file (e.g. *Oladipo Amina - Bed 4*).
 - Click the **Medication Chart** tab (`#medication-tab`).
+- On the **Entry** sub-tab, every medication of the patient is listed on the left. Type in **Search medications** to narrow it (name, code or prescriber). Click a drug and its calendar opens on the right, with **Set Schedule**, **Discontinue**, **Resume** and **View Logs**. **Ward stock** and **Patient's own** add a drug that has no prescription.
+- The up and down arrows (with "2 of 242") move to the previous or next drug without going back to the list; **Prev month**, **Today** and **Next month** move the calendar. Drugs that cannot be charted yet (awaiting billing) are greyed in the list and skipped by the arrows.
+
+![Medication chart: drug list and calendar](/images/workbenches/nursing-medication-list-calendar.png)
+
 - Click on the active due slot button (e.g. `14:00 Due`).
 
 ### 3. Bedside Verification Protocol

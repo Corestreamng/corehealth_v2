@@ -1809,6 +1809,12 @@ class ReceptionWorkbenchController extends Controller
             });
         }
 
+        // The series the department may use (e.g. maternity: ANC- and PANC-), so clients offer the same switch.
+        $prefixOptions = Patient::getPrefixOptionsForWorkbench($workbench);
+        if (!$prefixOptions && $prefix) {
+            $prefixOptions = [$prefix];
+        }
+
         $recentPatients = $query->orderBy('id', 'desc')
             ->limit(5)
             ->get(['id', 'file_no']);
@@ -1825,6 +1831,7 @@ class ReceptionWorkbenchController extends Controller
                 'format_pattern' => $prefix ? $prefix . 'NNNN' : null,
                 'format_example' => null,
                 'prefix' => $prefix,
+                'prefix_options' => $prefixOptions,
                 'workbench' => $workbench,
             ]);
         }
@@ -1846,6 +1853,7 @@ class ReceptionWorkbenchController extends Controller
             'format_pattern' => $formatInfo['pattern'],
             'format_example' => $formatInfo['example'],
             'prefix' => $prefix,
+            'prefix_options' => $prefixOptions,
             'workbench' => $workbench,
         ]);
     }

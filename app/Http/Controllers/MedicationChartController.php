@@ -214,7 +214,8 @@ class MedicationChartController extends Controller
         $scheduleId = $request->input('schedule_id');
         $schedule = MedicationSchedule::findOrFail($scheduleId);
         // Check for any administration for this schedule
-        $adminCount = MedicationAdministration::where('schedule_id', $scheduleId)->count();
+        // Deleted (soft) administrations still reference the schedule, so they count too.
+        $adminCount = MedicationAdministration::withTrashed()->where('schedule_id', $scheduleId)->count();
         if ($adminCount > 0) {
             return response()->json([
                 'success' => false,
@@ -247,7 +248,7 @@ class MedicationChartController extends Controller
 
         // 1. All schedules for this patient in the range (across all medications)
         $schedules = MedicationSchedule::where('patient_id', $patientId)
-            ->whereBetween('scheduled_time', [$startDate, $endDate])
+            ->whereBetween('scheduled_time', [$startDate, Carbon::parse($endDate)->endOfDay()])
             ->orderBy('scheduled_time')
             ->get();
 
@@ -394,7 +395,7 @@ class MedicationChartController extends Controller
         $prescriptionIds = $prescriptions->pluck('id')->toArray();
         $allSchedules = MedicationSchedule::whereIn('product_or_service_request_id', $prescriptionIds)
             ->where('patient_id', $patientId)
-            ->whereBetween('scheduled_time', [$startDate, $endDate])
+            ->whereBetween('scheduled_time', [$startDate, Carbon::parse($endDate)->endOfDay()])
             ->orderBy('scheduled_time')
             ->get()
             ->groupBy('product_or_service_request_id');
@@ -455,7 +456,7 @@ class MedicationChartController extends Controller
         return response()->json(['schedule' => $schedule]);
     }
 
-    public function calendar($patientId, $medicationId, $startDate = null, Request $request)
+    public function calendar($patientId, $medicationId, Request $request, $startDate = null)
     {
         $patient = Patient::findOrFail($patientId);
         $medication = ProductOrServiceRequest::with(['product.category', 'productRequest.doctor'])
@@ -494,7 +495,7 @@ class MedicationChartController extends Controller
         // Get all schedules for this medication in the date range
         $schedules = MedicationSchedule::where('patient_id', $patientId)
             ->where('product_or_service_request_id', $medicationId)
-            ->whereBetween('scheduled_time', [$startDate, $endDate])
+            ->whereBetween('scheduled_time', [$startDate, Carbon::parse($endDate)->endOfDay()])
             ->orderBy('scheduled_time')
             ->get();
 
@@ -704,7 +705,7 @@ class MedicationChartController extends Controller
         }
 
         $schedules = $scheduleQuery
-            ->whereBetween('scheduled_time', [$startDate, $endDate])
+            ->whereBetween('scheduled_time', [$startDate, Carbon::parse($endDate)->endOfDay()])
             ->orderBy('scheduled_time')
             ->get();
 
@@ -1248,7 +1249,7 @@ class MedicationChartController extends Controller
             $admin->administered_at = $data['administered_at'];
             $admin->dose = $data['dose'];
             $admin->route = $data['route'];
-            $admin->comment = $data['comment'];
+            $admin->comment = $data['comment'] ?? null;
             $admin->edited_at = $now;
             $userId = Auth::id();
             $admin->edited_by = $userId;
