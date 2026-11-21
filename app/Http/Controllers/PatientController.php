@@ -410,6 +410,25 @@ class PatientController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
+    /**
+     * Format checks shared by registration and edit (web, staff app and interop proxies). Every
+     * field stays optional: incomplete records are common and must still save; a value that is
+     * given must be valid.
+     */
+    public static function profileRules(): array
+    {
+        $phone = ['nullable', 'string', 'regex:/^\+?[0-9][0-9\s\-()]{6,19}$/'];
+
+        return [
+            'phone_no' => $phone,
+            'next_of_kin_phone' => $phone,
+            'dob' => 'nullable|date|before_or_equal:today|after:1900-01-01',
+            'occupation' => 'nullable|string|max:120',
+            'next_of_kin_name' => 'nullable|string|max:150',
+            'next_of_kin_relationship' => 'nullable|string|max:60',
+        ];
+    }
+
     public function store(Request $request)
     {
         try {
@@ -419,7 +438,7 @@ class PatientController extends Controller
                 'firstname' => 'required|min:3|max:150',
                 'othername' => 'nullable|min:3|max:150',
                 'email' => 'nullable|email|min:3|max:150|unique:users,email',
-            ];
+            ] + self::profileRules();
 
             if ($request->hasFile('filename')) {
 
@@ -657,6 +676,7 @@ class PatientController extends Controller
                 $patient->disability = $request->disability ?? null;
                 $patient->dob = $request->dob ?? null;
                 $patient->ethnicity = $request->ethnicity ?? null;
+                $patient->occupation = $request->occupation ?? null;
                 $patient->gender = $request->gender ?? null;
                 $patient->genotype = $request->genotype ?? null;
                 $patient->hmo_id = $request->hmo_id ?? 1; // Default to Private HMO (id=1)
@@ -666,6 +686,7 @@ class PatientController extends Controller
                 $patient->next_of_kin_name = $request->next_of_kin_name ?? null;
                 $patient->next_of_kin_phone = $request->next_of_kin_phone ?? null;
                 $patient->next_of_kin_address = $request->next_of_kin_address ?? null;
+                $patient->next_of_kin_relationship = $request->next_of_kin_relationship ?? null;
                 $patient->phone_no = $request->phone_no ?? null;
                 $patient->registration_workbench = $request->registration_workbench ?? 'reception';
                 $patient->registered_by = Auth::id();
@@ -885,7 +906,7 @@ class PatientController extends Controller
                 'firstname' => 'required|min:3|max:150',
                 'othername' => 'nullable|min:3|max:150',
                 'email' => 'nullable|email|min:3|max:150|unique:users,email,' . $patient->user_id,
-            ];
+            ] + self::profileRules();
 
             if ($request->hasFile('filename')) {
 
@@ -1014,6 +1035,7 @@ class PatientController extends Controller
                 $patient->disability = $request->disability ?? null;
                 $patient->dob = $request->dob ?? null;
                 $patient->ethnicity = $request->ethnicity ?? null;
+                $patient->occupation = $request->occupation ?? null;
                 $patient->gender = $request->gender ?? null;
                 $patient->genotype = $request->genotype ?? null;
                 $patient->hmo_id = $request->hmo_id ?? 1; // Default to Private HMO (id=1)
@@ -1023,6 +1045,7 @@ class PatientController extends Controller
                 $patient->next_of_kin_name = $request->next_of_kin_name ?? null;
                 $patient->next_of_kin_phone = $request->next_of_kin_phone ?? null;
                 $patient->next_of_kin_address = $request->next_of_kin_address ?? null;
+                $patient->next_of_kin_relationship = $request->next_of_kin_relationship ?? null;
                 $patient->phone_no = $request->phone_no ?? null;
                 $patient->referred_from = $request->referred_from ?? null;
 

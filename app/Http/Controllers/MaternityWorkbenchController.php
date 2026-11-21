@@ -301,6 +301,8 @@ class MaternityWorkbenchController extends Controller
             'next_of_kin_name' => $patient->next_of_kin_name ?? ($mother ? ($mother['name'] . ' (Mother)') : ''),
             'next_of_kin_phone' => $patient->next_of_kin_phone ?? '',
             'next_of_kin_address' => $patient->next_of_kin_address ?? '',
+            'next_of_kin_relationship' => $patient->next_of_kin_relationship ?? '',
+            'occupation' => $patient->occupation ?? '',
             'registration_workbench' => $patient->registration_workbench ?? 'reception',
             'registration_workbench_label' => $patient->registration_workbench_label,
             'registered_on' => $patient->registered_on,

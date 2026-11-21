@@ -676,9 +676,14 @@ if (typeof window.wbRoute !== 'function') {
                 value: patient.hmo_no
             },
             {
+                icon: 'mdi-briefcase-outline',
+                label: 'Occupation',
+                value: patient.occupation
+            },
+            {
                 icon: 'mdi-account-heart',
                 label: 'Next of Kin',
-                value: patient.next_of_kin_name
+                value: patient.next_of_kin_name ? patient.next_of_kin_name + (patient.next_of_kin_relationship ? ' (' + patient.next_of_kin_relationship + ')' : '') : ''
             },
             {
                 icon: 'mdi-phone-outline',

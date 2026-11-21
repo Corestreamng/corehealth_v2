@@ -103,6 +103,8 @@ The sections match the web workbench:
 
 ## 3. Register a new patient
 
+The form matches the web registration form. The patient's **Occupation** sits with their personal details. The **Next of kin** section records the next of kin's name, **Relationship to patient** (Spouse, Mother, Guardian… or any word), phone and address. While you type the name, phone or date of birth, **Possible existing patients** appears if the hospital already has a similar record: open it instead of creating a duplicate folder. Phone numbers, email and date of birth are checked as you save, with the same rules as the web, and any problem shows on its field.
+
 **Where:** **Health Records** → **New Patient** (or **New patient** / **Register walk-in** on the doctor queue).
 
 ![New patient on a phone](/images/workbenches/native-phone-new-patient.png)

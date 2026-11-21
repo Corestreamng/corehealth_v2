@@ -740,6 +740,8 @@ function populatePatientForm(data) {
     $('#pf-nok-name').val(data.next_of_kin_name || '');
     $('#pf-nok-phone').val(data.next_of_kin_phone || '');
     $('#pf-nok-address').val(data.next_of_kin_address || '');
+    $('#pf-nok-relationship').val(data.next_of_kin_relationship || '');
+    $('#pf-occupation').val(data.occupation || '');
 
     // Insurance
     if (data.hmo_id) {
@@ -966,6 +968,16 @@ function validatePatientFormStep(step) {
         }
     }
 
+    if (step === 3) {
+        // Next of kin is optional, but a phone that is given must be valid (same rule as the server).
+        const nokPhone = $('#pf-nok-phone').val().trim();
+        if (nokPhone && !isValidPhone(nokPhone)) {
+            $('#pf-nok-phone').addClass('is-invalid');
+            $('#pf-nok-phone').siblings('.invalid-feedback').text('Invalid phone number');
+            isValid = false;
+        }
+    }
+
     if (step === 4) {
         // Emergency mode: existing patients already have HMO on record — skip check.
         if (pfEmergencyMode && $('#pf-emergency-patient-id').val()) return true;
@@ -988,8 +1000,9 @@ function validatePatientFormStep(step) {
     return isValid;
 }
 
+// Same rule as PatientController::profileRules(): optional leading +, starts with a digit, 7-20 chars.
 function isValidPhone(phone) {
-    return /^[\d\s+\-()]{7,20}$/.test(phone);
+    return /^\+?[0-9][0-9\s\-()]{6,19}$/.test(phone);
 }
 
 function isValidEmail(email) {
@@ -1137,6 +1150,8 @@ function updatePatientFormSummary() {
     $('#summary-nok-name').text($('#pf-nok-name').val().trim() || '-');
     $('#summary-nok-phone').text($('#pf-nok-phone').val().trim() || '-');
     $('#summary-nok-address').text($('#pf-nok-address').val().trim() || '-');
+    $('#summary-nok-relationship').text(($('#pf-nok-relationship').val() || '').trim() || '-');
+    $('#summary-occupation').text(($('#pf-occupation').val() || '').trim() || '-');
 
     // HMO
     const hmoId = $('#pf-hmo').val();
@@ -1157,7 +1172,7 @@ function clearPatientFormSummary() {
     $('#summary-nationality, #summary-ethnicity').text('-');
     $('#summary-allergies').text('None');
     $('#summary-medical-history').text('-');
-    $('#summary-nok-name, #summary-nok-phone, #summary-nok-address').text('-');
+    $('#summary-nok-name, #summary-nok-phone, #summary-nok-address, #summary-nok-relationship, #summary-occupation').text('-');
     $('#summary-hmo').text('Private');
     $('#summary-hmo-no').text('-');
 }
@@ -1230,6 +1245,8 @@ function submitPatientForm() {
     formData.append('next_of_kin_name', $('#pf-nok-name').val().trim());
     formData.append('next_of_kin_phone', $('#pf-nok-phone').val().trim());
     formData.append('next_of_kin_address', $('#pf-nok-address').val().trim());
+    formData.append('next_of_kin_relationship', ($('#pf-nok-relationship').val() || '').trim());
+    formData.append('occupation', ($('#pf-occupation').val() || '').trim());
     formData.append('hmo_id', $('#pf-hmo').val() || 1);
     formData.append('hmo_no', $('#pf-hmo-no').val().trim());
     formData.append('is_family_principal', $('#pf-is-family-principal').is(':checked') ? 1 : 0);
@@ -2874,6 +2891,8 @@ function disableWalkInMode() {
             formData.append('next_of_kin_name', $('#pf-nok-name').val().trim());
             formData.append('next_of_kin_phone', $('#pf-nok-phone').val().trim());
             formData.append('next_of_kin_address', $('#pf-nok-address').val().trim());
+            formData.append('next_of_kin_relationship', ($('#pf-nok-relationship').val() || '').trim());
+            formData.append('occupation', ($('#pf-occupation').val() || '').trim());
             formData.append('hmo_id', $('#pf-hmo').val() || 1);
             formData.append('hmo_no', $('#pf-hmo-no').val().trim());
             formData.append('is_family_principal', $('#pf-is-family-principal').is(':checked') ? 1 : 0);

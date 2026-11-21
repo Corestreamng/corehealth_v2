@@ -3399,8 +3399,12 @@ function displayPatientInfo(patient) {
             <div class="patient-detail-value">${patient.hmo_no || 'N/A'}</div>
         </div>
         <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-briefcase-outline"></i> Occupation</div>
+            <div class="patient-detail-value">${patient.occupation || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
             <div class="patient-detail-label"><i class="mdi mdi-account-heart"></i> Next of Kin</div>
-            <div class="patient-detail-value">${patient.next_of_kin_name || 'N/A'}</div>
+            <div class="patient-detail-value">${patient.next_of_kin_name || 'N/A'}${patient.next_of_kin_relationship ? ' (' + patient.next_of_kin_relationship + ')' : ''}</div>
         </div>
         <div class="patient-detail-item">
             <div class="patient-detail-label"><i class="mdi mdi-phone-outline"></i> NOK Phone</div>

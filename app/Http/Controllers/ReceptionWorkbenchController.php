@@ -294,6 +294,8 @@ class ReceptionWorkbenchController extends Controller
                 'next_of_kin_name' => $patient->next_of_kin_name ?? '',
                 'next_of_kin_phone' => $patient->next_of_kin_phone ?? '',
                 'next_of_kin_address' => $patient->next_of_kin_address ?? '',
+                'next_of_kin_relationship' => $patient->next_of_kin_relationship ?? '',
+                'occupation' => $patient->occupation ?? '',
                 'hmo_name' => $patient->hmo->name ?? null,
                 'hmo_id' => $patient->hmo_id,
                 'hmo_no' => $patient->hmo_no ?? '',
@@ -1502,8 +1504,14 @@ class ReceptionWorkbenchController extends Controller
             'surname' => 'required|min:2|max:150',
             'firstname' => 'required|min:2|max:150',
             'gender' => 'required|in:Male,Female,Others',
-            'dob' => 'required|date',
+            'dob' => 'required|date|before_or_equal:today|after:1900-01-01',
             'hmo_id' => 'nullable|exists:hmos,id',
+            // Same format rules as PatientController (phone, next of kin, occupation)
+            'phone_no' => \App\Http\Controllers\PatientController::profileRules()['phone_no'],
+            'next_of_kin_phone' => \App\Http\Controllers\PatientController::profileRules()['next_of_kin_phone'],
+            'next_of_kin_name' => 'nullable|string|max:150',
+            'next_of_kin_relationship' => 'nullable|string|max:60',
+            'occupation' => 'nullable|string|max:120',
             'filename' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'old_records' => 'nullable|file|mimes:pdf,doc,docx,jpeg,png,jpg|max:5120',
         ]);
@@ -1545,12 +1553,14 @@ class ReceptionWorkbenchController extends Controller
             $patient->disability = $request->disability ?? 0;
             $patient->nationality = $request->nationality ?? 'Nigerian';
             $patient->ethnicity = $request->ethnicity;
+            $patient->occupation = $request->occupation;
             $patient->allergies = $request->allergies;
             $patient->medical_history = $request->medical_history;
             $patient->misc = $request->misc;
             $patient->next_of_kin_name = $request->next_of_kin_name;
             $patient->next_of_kin_phone = $request->next_of_kin_phone;
             $patient->next_of_kin_address = $request->next_of_kin_address;
+            $patient->next_of_kin_relationship = $request->next_of_kin_relationship;
             $patient->hmo_id = $request->hmo_id ?? 1; // Default to Private
             $patient->hmo_no = $request->hmo_no;
             $patient->registration_workbench = $request->registration_workbench ?? 'reception';
@@ -2062,7 +2072,13 @@ class ReceptionWorkbenchController extends Controller
             'surname' => 'required|min:2|max:150',
             'firstname' => 'required|min:2|max:150',
             'gender' => 'required|in:Male,Female,Others',
-            'dob' => 'required|date',
+            'dob' => 'required|date|before_or_equal:today|after:1900-01-01',
+            // Same format rules as PatientController (phone, next of kin, occupation)
+            'phone_no' => \App\Http\Controllers\PatientController::profileRules()['phone_no'],
+            'next_of_kin_phone' => \App\Http\Controllers\PatientController::profileRules()['next_of_kin_phone'],
+            'next_of_kin_name' => 'nullable|string|max:150',
+            'next_of_kin_relationship' => 'nullable|string|max:60',
+            'occupation' => 'nullable|string|max:120',
             'filename' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'old_records' => 'nullable|file|mimes:pdf,doc,docx,jpeg,png,jpg|max:5120',
         ]);
@@ -2101,12 +2117,14 @@ class ReceptionWorkbenchController extends Controller
             $patient->disability = $request->disability ?? 0;
             $patient->nationality = $request->nationality ?? 'Nigerian';
             $patient->ethnicity = $request->ethnicity;
+            $patient->occupation = $request->occupation;
             $patient->allergies = $request->allergies;
             $patient->medical_history = $request->medical_history;
             $patient->misc = $request->misc;
             $patient->next_of_kin_name = $request->next_of_kin_name;
             $patient->next_of_kin_phone = $request->next_of_kin_phone;
             $patient->next_of_kin_address = $request->next_of_kin_address;
+            $patient->next_of_kin_relationship = $request->next_of_kin_relationship;
             $patient->hmo_id = $request->hmo_id ?? 1;
             $patient->hmo_no = $request->hmo_no;
 

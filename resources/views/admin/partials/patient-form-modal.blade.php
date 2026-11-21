@@ -711,6 +711,14 @@
                                     </div>
                                 </div>
                                 <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Occupation</label>
+                                            <input type="text" class="form-control" id="pf-occupation" maxlength="120" placeholder="e.g. Teacher, Trader, Student">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
                                     <div class="col-12">
                                         <div class="form-group mb-3">
                                             <label class="form-label mb-1"><i class="mdi mdi-alert-circle text-warning"></i> Known Allergies</label>
@@ -759,6 +767,20 @@
                                         <div class="form-group mb-3">
                                             <label class="form-label mb-1">Next of Kin Phone</label>
                                             <input type="tel" class="form-control" id="pf-nok-phone" placeholder="Enter phone number">
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Relationship to Patient</label>
+                                            <input type="text" class="form-control" id="pf-nok-relationship" maxlength="60" list="pf-nok-relationship-options" placeholder="e.g. Spouse, Mother">
+                                            <datalist id="pf-nok-relationship-options">
+                                                @foreach (\App\Support\ClientSettings::NOK_RELATIONSHIPS as $rel)
+                                                    <option value="{{ $rel }}">
+                                                @endforeach
+                                            </datalist>
                                         </div>
                                     </div>
                                 </div>
@@ -1238,6 +1260,10 @@
                                                 <span class="summary-label">Ethnicity:</span>
                                                 <span class="summary-value" id="summary-ethnicity">-</span>
                                             </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">Occupation:</span>
+                                                <span class="summary-value" id="summary-occupation">-</span>
+                                            </div>
                                             <div class="summary-item full-width">
                                                 <span class="summary-label">Allergies:</span>
                                                 <span class="summary-value" id="summary-allergies">None</span>
@@ -1260,6 +1286,10 @@
                                             <div class="summary-item">
                                                 <span class="summary-label">Phone:</span>
                                                 <span class="summary-value" id="summary-nok-phone">-</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">Relationship:</span>
+                                                <span class="summary-value" id="summary-nok-relationship">-</span>
                                             </div>
                                             <div class="summary-item full-width">
                                                 <span class="summary-label">Address:</span>

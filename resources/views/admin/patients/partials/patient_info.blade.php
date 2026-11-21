@@ -64,12 +64,16 @@
             </tr>
             <tr>
                 <th>Next Of Kin: </th>
-                <td>{{ $patient->next_of_kin_name ?? 'N/A' }}</td>
+                <td>{{ $patient->next_of_kin_name ?? 'N/A' }}@if ($patient->next_of_kin_relationship) ({{ $patient->next_of_kin_relationship }})@endif</td>
                 <th>Other next of kin info:</th>
                 <td>
                     Phone : {{ $patient->next_of_kin_phone ?? 'N/A' }} <br>
                     Address : {{ $patient->next_of_kin_address ?? 'N/A' }}
                 </td>
+            </tr>
+            <tr>
+                <th>Occupation: </th>
+                <td colspan="3">{{ $patient->occupation ?: 'N/A' }}</td>
             </tr>
         </tbody>
     </table>

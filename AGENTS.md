@@ -62,7 +62,7 @@ Code follows PSR-12. Commits and PRs must pass the `lint` step in `.github/workf
 
 ## 7. Interoperability & privacy
 - **Proxy existing controllers.** Inbound `POST/PUT/PATCH` from HL7 FHIR R4, openEHR and OpenEMR must proxy `PatientController@store`, `VitalSignController@store`, `EncounterController@addSinglePrescriptionRequest`, `EncounterController@addSingleLabRequest` or `BillingWorkbenchController@processPayment`, so observers, GL entries and FIFO stock run. No raw DB writes on watched entities.
-- **Never alter existing production tables** (199 core models). Interop uses auxiliary tables: `interop_terminology_maps`, `interop_external_identifiers`, `patient_consents`.
+- **Never alter existing production tables** (199 core models) except by **additive, nullable columns** a feature needs (e.g. `patients.occupation`, `patients.next_of_kin_relationship`); never rename, drop or retype. Interop uses auxiliary tables: `interop_terminology_maps`, `interop_external_identifiers`, `patient_consents`.
 - **NDPA 2023:** affirmative consent for sensitive data (Section 30) via `CheckNdpaConsent` (`X-NDPA-Consent-Status`); PII sanitization and deterministic pseudonymization via `NdprSanitizerService` before any external handoff.
 - **Terminologies:** LOINC + UCUM (vitals/labs), WHO ATC (medications), ICD-10 (diagnoses).
 

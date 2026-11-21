@@ -65,6 +65,8 @@ class MobilePatientController extends Controller
                     'next_of_kin_name' => $patient->next_of_kin_name ?? '',
                     'next_of_kin_phone' => $patient->next_of_kin_phone ?? '',
                     'next_of_kin_address' => $patient->next_of_kin_address ?? '',
+                    'next_of_kin_relationship' => $patient->next_of_kin_relationship ?? '',
+                    'occupation' => $patient->occupation ?? '',
                 ],
             ]);
         } catch (\Exception $e) {
@@ -779,6 +781,8 @@ class MobilePatientController extends Controller
             'next_of_kin_name' => 'nullable|string|max:255',
             'next_of_kin_phone' => 'nullable|string|max:20',
             'next_of_kin_address' => 'nullable|string|max:500',
+            'next_of_kin_relationship' => 'nullable|string|max:60',
+            'occupation' => 'nullable|string|max:120',
         ]);
 
         if ($validator->fails()) {
@@ -791,7 +795,7 @@ class MobilePatientController extends Controller
                 return response()->json(['status' => false, 'message' => 'Patient not found.'], 404);
             }
 
-            $fields = ['phone_no', 'address', 'next_of_kin_name', 'next_of_kin_phone', 'next_of_kin_address'];
+            $fields = ['phone_no', 'address', 'occupation', 'next_of_kin_name', 'next_of_kin_relationship', 'next_of_kin_phone', 'next_of_kin_address'];
             foreach ($fields as $field) {
                 if ($request->has($field)) {
                     $patient->$field = $request->input($field);

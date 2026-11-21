@@ -491,6 +491,8 @@ class MobileEncounterController extends Controller
                         'next_of_kin_name' => $patient->next_of_kin_name ?? '',
                         'next_of_kin_phone' => $patient->next_of_kin_phone ?? '',
                         'next_of_kin_address' => $patient->next_of_kin_address ?? '',
+                        'next_of_kin_relationship' => $patient->next_of_kin_relationship ?? '',
+                        'occupation' => $patient->occupation ?? '',
                         'photo' => $patient->user->staff->photo ?? null,
                     ],
                     'clinic' => $clinic ? [
@@ -697,6 +699,8 @@ class MobileEncounterController extends Controller
                         'next_of_kin_name' => $patient->next_of_kin_name ?? '',
                         'next_of_kin_phone' => $patient->next_of_kin_phone ?? '',
                         'next_of_kin_address' => $patient->next_of_kin_address ?? '',
+                        'next_of_kin_relationship' => $patient->next_of_kin_relationship ?? '',
+                        'occupation' => $patient->occupation ?? '',
                         'photo' => $patient->user?->photo ?? null,
                     ],
                     'vitals' => $vitals,

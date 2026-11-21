@@ -14,11 +14,15 @@ use App\Services\LlmGatewayService;
  */
 class ClientSettings
 {
+    /** Next-of-kin relationships offered on every registration form (web and staff app). */
+    public const NOK_RELATIONSHIPS = ['Spouse', 'Father', 'Mother', 'Son', 'Daughter', 'Brother', 'Sister', 'Guardian', 'Grandparent', 'Grandchild', 'Uncle', 'Aunt', 'Cousin', 'Friend', 'Employer', 'Other'];
+
     public static function workbench(): array
     {
         $structured = (bool) (appsettings('enable_structured_dose') ?? 1);
 
         return [
+            'nok_relationships' => self::NOK_RELATIONSHIPS,
             // Branding
             'hos_color' => appsettings('hos_color') ?? '#0066cc',
             'site_name' => appsettings('site_name'),

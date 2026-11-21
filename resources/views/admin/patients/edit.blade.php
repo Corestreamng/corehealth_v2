@@ -399,6 +399,29 @@
                             </div>
                         </div>
                     </div>
+                    <div class="col-4">
+                        <div class="form-group">
+                            <label for="next_of_kin_relationship_input">Relationship to patient</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="mdi mdi-account-heart"></i></span>
+                                <input type="text" class="form-control" id="next_of_kin_relationship_input" name="next_of_kin_relationship" maxlength="60" list="nok-relationship-options" value="{{ !empty($patient->next_of_kin_relationship) ? $patient->next_of_kin_relationship : old('next_of_kin_relationship') }}">
+                                <datalist id="nok-relationship-options">
+                                    @foreach (\App\Support\ClientSettings::NOK_RELATIONSHIPS as $rel)
+                                        <option value="{{ $rel }}">
+                                    @endforeach
+                                </datalist>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="form-group">
+                            <label for="occupation_input">Occupation</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="mdi mdi-briefcase-outline"></i></span>
+                                <input type="text" class="form-control" id="occupation_input" name="occupation" maxlength="120" value="{{ !empty($patient->occupation) ? $patient->occupation : old('occupation') }}">
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <button type="button" onclick="switch_tab(event,'private_data_tab')" class="btn btn-secondary mr-2">
                     Prev
