@@ -78,6 +78,7 @@ Two Flutter apps, both following the same native standards (responsive, no dupli
   - **Record the outcome** in the commit message as `Native parity: <implemented | updated | web-only (reason)>`, and update the parity table in `docs/developer/native-client.md`.
   - Items that aren't native yet open their web page, so none is ever hidden.
 - **Verify:** `flutter analyze`, `flutter test`, `phpunit tests/Feature/NativeClient`, and check the app at phone, tablet and desktop widths.
+- **Shared building blocks:** staff app screens use the shared theme, `DataTableView` (all web DataTables features by default), `PatientSearchField`, Clinical Context, `openOnWeb` hand-off and web labels: see `native_clients/client_app/CLAUDE.md` §4a. Never rebuild them per screen.
 - **Patient app:** `/api/mobile/patient/*` only ever exposes the signed-in patient's own records. Staff login refuses patient accounts, and patient features reuse existing models and services, never staff endpoints.
 
 ## 9. Ecosystem: every change considers every component

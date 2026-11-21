@@ -86,3 +86,5 @@ When contributing to CoreHealth v2, strictly adhere to these core invariants acr
 - Reception & Records Story: `docs/user-guides/workbenches/reception.md`
 - Longitudinal Patient Pathway: `docs/user-guides/clinical-pathway.md`
 - Legacy Planning & Audits Archive: `docs_archive/README.md`
+
+- **Staff app shared building blocks:** theme, `DataTableView`, `PatientSearchField`, Clinical Context, `openOnWeb`, web labels: see `native_clients/client_app/CLAUDE.md` §4a.
