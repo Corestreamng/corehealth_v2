@@ -728,11 +728,14 @@ class MobileEncounterController extends Controller
     public function encounterHistory(Patient $patient)
     {
         try {
-            $encounters = Encounter::with(['doctor.staff_profile'])
+            // Same list as the web's Previous Encounters (EncounterController@EncounterHistoryList):
+            // every encounter with notes, newest first, without the one being consulted now.
+            $encounters = Encounter::with(['doctor.staff_profile.specialization'])
                 ->where('patient_id', $patient->id)
-                ->where('completed', true)
+                ->whereNotNull('notes')
+                ->when(request('exclude_encounter_id'), fn ($q, $id) => $q->where('id', '!=', $id))
                 ->orderBy('created_at', 'DESC')
-                ->paginate(20);
+                ->paginate(min(max((int) request('per_page', 20), 1), 200));
 
             $items = $encounters->getCollection()->map(function ($enc) {
                 return [
@@ -742,6 +745,8 @@ class MobileEncounterController extends Controller
                     'reasons_for_encounter' => $enc->reasons_for_encounter,
                     'comment_1' => $enc->reasons_for_encounter_comment_1,
                     'comment_2' => $enc->reasons_for_encounter_comment_2,
+                    'completed' => (bool) $enc->completed,
+                    'specialty' => $enc->doctor->staff_profile->specialization->name ?? 'General Practitioner',
                     'created_at' => $enc->created_at->toIso8601String(),
                 ];
             });
@@ -773,7 +778,7 @@ class MobileEncounterController extends Controller
                 ->where('patient_id', $patient->id)
                 ->where('status', '>', 0)
                 ->orderBy('created_at', 'DESC')
-                ->paginate(30);
+                ->paginate(min(max((int) request('per_page', 30), 1), 200));
 
             $items = $labs->getCollection()->map(function ($lab) {
                 return [
@@ -820,7 +825,7 @@ class MobileEncounterController extends Controller
                 ->where('patient_id', $patient->id)
                 ->where('status', '>', 0)
                 ->orderBy('created_at', 'DESC')
-                ->paginate(30);
+                ->paginate(min(max((int) request('per_page', 30), 1), 200));
 
             $items = $imaging->getCollection()->map(function ($img) {
                 return [
@@ -866,7 +871,7 @@ class MobileEncounterController extends Controller
             $prescriptions = ProductRequest::with(['product.price', 'product.category', 'doctor', 'encounter'])
                 ->where('patient_id', $patient->id)
                 ->orderBy('created_at', 'DESC')
-                ->paginate(30);
+                ->paginate(min(max((int) request('per_page', 30), 1), 200));
 
             $items = $prescriptions->getCollection()->map(function ($rx) {
                 return [
@@ -913,7 +918,7 @@ class MobileEncounterController extends Controller
             $procedures = Procedure::with(['service', 'requestedByUser', 'encounter'])
                 ->where('patient_id', $patient->id)
                 ->orderBy('requested_on', 'DESC')
-                ->paginate(30);
+                ->paginate(min(max((int) request('per_page', 30), 1), 200));
 
             $items = $procedures->getCollection()->map(function ($proc) {
                 return [
@@ -1040,7 +1045,7 @@ class MobileEncounterController extends Controller
                 });
             }
 
-            $admissions = $query->orderBy('created_at', 'DESC')->paginate(20);
+            $admissions = $query->orderBy('created_at', 'DESC')->paginate(min(max((int) request('per_page', 20), 1), 200));
 
             $items = $admissions->getCollection()->map(function ($adm) {
                 return [
@@ -1509,7 +1514,7 @@ class MobileEncounterController extends Controller
                 $query->where('nursing_note_type_id', $request->type_id);
             }
 
-            $notes = $query->paginate(20);
+            $notes = $query->paginate(min(max((int) request('per_page', 20), 1), 200));
 
             $editDuration = (int) (appsettings('note_edit_window') ?? appsettings('note_edit_duration') ?? 60);
 

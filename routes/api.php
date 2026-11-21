@@ -940,6 +940,10 @@ Route::prefix('mobile/nursing')->middleware(['auth:sanctum', 'native.workspace:n
 | Both web workbenches include these (contacts, price list, emergency intake, appointments,
 | clinical alerts, patient edit, admission request). Same controllers as the web.
 */
+// Shared patient search (web: admin/partials/patient_search_html + patient-search-widget.js → /patient-search)
+Route::get('mobile/patient-search', [\App\Http\Controllers\PatientSearchController::class, 'search'])
+    ->middleware(['auth:sanctum', 'native.workspace:reception|billing|pharmacy|nursing|maternity|lab|radiology|hmo|doctor']);
+
 /*
 | Shared Clinical Context (web: admin/partials/clinical_context_modal + public/js/clinical-context.js).
 | Same controller methods as the web modal, for every workbench that includes it.

@@ -163,4 +163,18 @@ class NativeStaffApiTest extends TestCase
         $this->assertEquals(200, $native->status());
         $this->assertEquals($web->json(), $native->json());
     }
+
+    public function test_patient_search_matches_the_web_workbench_widget_in_every_context()
+    {
+        $patient = \App\Models\Patient::query()->whereNotNull('file_no')->first();
+        $term = substr((string) $patient->file_no, 0, 6);
+        foreach (['NURSE' => 'nursing', 'RECEPTIONIST' => 'reception', 'MATERNITY' => 'maternity'] as $role => $context) {
+            $user = $this->userWithRole($role);
+            $web = $this->actingAs($user)->getJson('/patient-search?term=' . urlencode($term) . "&context={$context}");
+            Sanctum::actingAs($user);
+            $native = $this->getJson('/api/mobile/patient-search?term=' . urlencode($term) . "&context={$context}");
+            $this->assertEquals(200, $native->status(), $role);
+            $this->assertEquals($web->json(), $native->json(), "$role: the app must use the web search unchanged");
+        }
+    }
 }
