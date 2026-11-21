@@ -730,6 +730,8 @@ Route::prefix('mobile/maternity')->middleware(['auth:sanctum', 'native.workspace
     Route::put('prev-pregnancy/{id}', [MaternityWorkbenchController::class, 'updatePreviousPregnancy'])->whereNumber('id');
     Route::delete('prev-pregnancy/{id}', [MaternityWorkbenchController::class, 'deletePreviousPregnancy'])->whereNumber('id');
     Route::get('product-batches', [MaternityWorkbenchController::class, 'getProductBatchesMaternity']);
+    // Dispensing units of a product (web billing-shared.js: /products/{id}/packagings)
+    Route::get('products/{product}/packagings', [ProductController::class, 'getPackagings'])->whereNumber('product');
     Route::get('queue/active-anc', [MaternityWorkbenchController::class, 'getActiveAncQueue']);
     Route::get('queue/admitted-patients', [MaternityWorkbenchController::class, 'getAdmittedPatientsQueue']);
     Route::get('queue/bed-requests', [MaternityWorkbenchController::class, 'getBedRequestsQueue']);
@@ -895,6 +897,8 @@ Route::prefix('mobile/nursing')->middleware(['auth:sanctum', 'native.workspace:n
     Route::get('patient/{patientId}/vitals', [NursingWorkbenchController::class, 'getPatientVitals'])->whereNumber('patientId');
     Route::get('patient/{patientId}/vitals-history-dt', [NursingWorkbenchController::class, 'getPatientVitalsDt'])->whereNumber('patientId');
     Route::get('product-batches', [NursingWorkbenchController::class, 'getProductBatches']);
+    // Dispensing units of a product (web billing-shared.js: /products/{id}/packagings)
+    Route::get('products/{product}/packagings', [ProductController::class, 'getPackagings'])->whereNumber('product');
     Route::get('product-categories', [NursingWorkbenchController::class, 'getProductCategories']);
     Route::get('product-stock/{productId}/store/{storeId}', [NursingWorkbenchController::class, 'getProductStockByStore'])->whereNumber('productId')->whereNumber('storeId');
     Route::get('queue-counts', [NursingWorkbenchController::class, 'getQueueCounts']);
