@@ -222,6 +222,10 @@ Route::prefix('mobile')->middleware('auth:sanctum')->group(function () {
     // Native staff client navigation: web sidebar sections the user may use
     Route::get('staff/workspaces', [MobileAuthController::class, 'staffWorkspaces']);
     Route::get('staff/settings', [MobileAuthController::class, 'staffSettings']);
+    // Global search (the web top bar's Ctrl+K): same controller, same role/permission filtering
+    Route::get('staff/search', [\App\Http\Controllers\RouteSearchController::class, 'search'])->middleware('native.workspace:global');
+    // App → web hand-off: one-time code that opens a web page already signed in (WebHandoffService)
+    Route::post('staff/web-handoff', [\App\Http\Controllers\Auth\WebHandoffController::class, 'issue'])->middleware(['native.workspace:global', 'throttle:20,1']);
 });
 
 /*
@@ -798,6 +802,8 @@ Route::prefix('mobile/surgery')->middleware(['auth:sanctum', 'native.workspace:n
 | exports stay on the web.
 */
 Route::prefix('mobile/nursing')->middleware(['auth:sanctum', 'native.workspace:nursing'])->group(function () {
+    // Emergency Queue (web: nursing-core.js 'emergency' filter → emergency.queue)
+    Route::get('emergency-queue', [EmergencyIntakeController::class, 'getEmergencyQueue']);
     Route::get('context', [\App\Http\Controllers\API\MobileNursingController::class, 'context']);
     // Reports (printable layouts and exports stay on the web; these are the same data)
     Route::get('reports/activity-summary', [NursingWorkbenchController::class, 'getReportsActivitySummary']);
@@ -934,6 +940,24 @@ Route::prefix('mobile/nursing')->middleware(['auth:sanctum', 'native.workspace:n
 | Both web workbenches include these (contacts, price list, emergency intake, appointments,
 | clinical alerts, patient edit, admission request). Same controllers as the web.
 */
+/*
+| Shared Clinical Context (web: admin/partials/clinical_context_modal + public/js/clinical-context.js).
+| Same controller methods as the web modal, for every workbench that includes it.
+*/
+Route::prefix('mobile/clinical-context')->middleware(['auth:sanctum', 'native.workspace:nursing|maternity|doctor|lab|radiology|pharmacy|hmo'])->group(function () {
+    Route::get('patient/{patientId}/vitals', [\App\Http\Controllers\ClinicalContextController::class, 'getVitals'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/notes', [\App\Http\Controllers\ClinicalContextController::class, 'getNotes'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/medications', [\App\Http\Controllers\ClinicalContextController::class, 'getMedications'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/allergies', [\App\Http\Controllers\ClinicalContextController::class, 'getAllergies'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/labs', [\App\Http\Controllers\ClinicalContextController::class, 'getLabs'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/imaging', [\App\Http\Controllers\ClinicalContextController::class, 'getImaging'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/procedures', [\App\Http\Controllers\ClinicalContextController::class, 'getProcedures'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/injections', [NursingWorkbenchController::class, 'getInjections'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/immunization-history', [NursingWorkbenchController::class, 'getImmunizationHistory'])->whereNumber('patientId');
+    Route::get('result-views/unviewed-counts/{patient_id}', [ResultViewController::class, 'unviewedCounts'])->whereNumber('patient_id');
+    Route::post('result-views', [ResultViewController::class, 'store']);
+});
+
 Route::prefix('mobile/shared')->middleware(['auth:sanctum', 'native.workspace:reception|doctor|billing|nursing|maternity'])->group(function () {
     Route::get('hospital-contacts', [HospitalContactController::class, 'index']);
     Route::post('hospital-contacts', [HospitalContactController::class, 'store']);

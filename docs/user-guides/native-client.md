@@ -22,15 +22,25 @@ The **CoreHealth Staff App** is one app for every staff member, on a phone, tabl
 
 ![Workspace switcher on a tablet](/images/workbenches/native-tablet-workspace-switcher.png)
 
-### Search for a patient from anywhere
-Press **Ctrl K** (**⌘K** on a Mac), or click **Search patients** in the top bar. Type at least two letters of the name, the file number or the phone number. Use the arrow keys and **Enter**, or click, to open the patient. The patient opens in the current workspace's own record: the nursing record in Nursing, the bill in Billing, the patient hub in Health Records, and the enrolment in Maternity.
+### Search and the menu filter
+The search box in the top bar (**Ctrl K**, **⌘K** on a Mac) is the same search as the web's top bar. It finds pages, features and modules you may use, and marks those already in your menu with **In menu**. Press **Enter** to open a result; **Alt+Enter** (or the target button) shows where it sits in the menu. **Menu (/)** filters the sidebar with what you typed instead.
 
-![Patient search](/images/workbenches/native-desktop-patient-search.png)
+The **Filter menu** box at the top of the sidebar (press **/**) narrows the menu as you type: type a workspace name to see all of its pages, or part of a page name. **Enter** opens the only match, or searches everywhere when there are several. To find a **patient**, use the search box on the workbench itself (Health Records, Nursing, Billing, Maternity), as on the web.
+
+![Global search](/images/workbenches/native-desktop-patient-search.png)
+
+### Pages that are not in the app yet
+Items marked **Web** open their web page. Tap **Open on web**: the page opens in your browser **already signed in** as you, using a one-time link that works once, for one minute, on your device only.
+
+### Clinical Context
+On a Nursing or Maternity patient, **Clinical Context** opens the same summary as the web: Encounter Notes, Labs, Imaging, Vitals, Medications, Allergies, Inj/Imm History and Procedures. New lab and imaging results show a red count; opening one marks it as seen.
+
+![Clinical Context](/images/workbenches/native-desktop-clinical-context.png)
 
 ### Light or dark
 Open your account (your initials, top right) → **Appearance** → **System**, **Light** or **Dark**. *System* follows your device. The hospital's colour is kept in both modes.
 
-Items marked **Web** aren't native yet: they open the same page on the web (you may need to sign in there too).
+Items marked **Web** aren't native yet: they open the same page on the web, already signed in (see *Pages that are not in the app yet*).
 
 ---
 

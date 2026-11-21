@@ -48,6 +48,13 @@ Two Flutter apps live in `native_clients/`:
 - **`WebFallbackScreen`:** "Open on web" for items that aren't native yet.
 - **`core/api/AuthedApi`:** shared authenticated HTTP. Each workspace service only declares endpoints.
 
+### Search, Clinical Context and the web hand-off
+- **Global search (Ctrl/⌘ K)** = the web top bar: `GET /api/mobile/staff/search` → `RouteSearchController@search` (same role/permission filtering as `/search/api`). Results marked **In menu** open like their sidebar item (natively when the app has it); **Locate** (Alt+Enter) reveals the item in the sidebar; **Menu (/)** hands the query to the sidebar filter. The sidebar filter follows `sidebar.js` `filterSidebar` (section-title match shows the whole section; Enter opens a single match, otherwise hands off to the global search).
+- **Clinical Context** (`features/shared/clinical_context_sheet.dart`) = `admin/partials/clinical_context_modal`: tabs Encounter Notes, Labs, Imaging, Vitals, Medications, Allergies, Inj/Imm History, Procedures, with unviewed-result badges. Routes `api/mobile/clinical-context/*` (`native.workspace:nursing|maternity|doctor|lab|radiology|pharmacy|hmo`) point at `ClinicalContextController`, `NursingWorkbenchController@getInjections/getImmunizationHistory` and `ResultViewController`. Used by the Nursing and Maternity records; new workbenches reuse `showClinicalContext`.
+- **Web hand-off** (`core/web/open_on_web.dart`): every "Open on web" asks `POST /api/mobile/staff/web-handoff` (`WebHandoffController@issue`, throttled) for a one-time link; the browser redeems it at `GET /auth/handoff` and lands on the page signed in. `WebHandoffService`: 256-bit code stored only as a SHA-256 hash, 60 s TTL, single use under a lock, bound to the user, the issuing Sanctum token (app sign-out voids it) and the device IP (`WEB_HANDOFF_BIND_IP`), same-site paths only, `no-store`/`no-referrer`, audit log lines. Sign-in rules (deactivated, suspended, locum pass) live in `App\Support\Auth\StaffLoginPolicy`, shared with `LoginController`. Tests: `tests/Feature/NativeClient/WebHandoffTest.php`.
+- **Web links**: `tests/Feature/NativeClient/WebLinksTest.php` opens every sidebar item's `web_url` as sysadmin (126 items) and fails on a missing URL or a 404/405/500.
+- **Terminology**: sidebar items always show the server's (translated) sidebar labels; desks, queues and record sections use the web workbench wording (e.g. *Nursing Workbench*, *Admitted Patients*, *Medication Chart*, *Clinical Requests*).
+
 ### Design system (`lib/core/design/`)
 | File | What it gives screens |
 |---|---|

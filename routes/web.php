@@ -1184,6 +1184,9 @@ Route::group(['middleware' => ['auth']], function () {
 });
 
 Auth::routes();
+
+// Staff app → web hand-off (one-time code from POST /api/mobile/staff/web-handoff)
+Route::get('/auth/handoff', [\App\Http\Controllers\Auth\WebHandoffController::class, 'redeem'])->middleware('throttle:30,1')->name('auth.handoff');
 Route::post('/login/locum-pass', [\App\Http\Controllers\Auth\LocumPassAuthController::class, 'loginWithPass'])->name('login.locum-pass');
 
 // Global Navigation Search

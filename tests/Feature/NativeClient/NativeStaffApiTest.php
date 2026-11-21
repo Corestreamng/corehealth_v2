@@ -97,4 +97,70 @@ class NativeStaffApiTest extends TestCase
         $this->assertEquals(200, $native->status());
         $this->assertEquals($web->json(), $native->json(), 'Native wrapper must reuse the web controller unchanged');
     }
+
+    public function test_global_search_returns_exactly_what_the_web_top_bar_search_returns()
+    {
+        $nurse = $this->userWithRole('NURSE');
+
+        $web = $this->actingAs($nurse)->getJson('/search/api?q=ward');
+        Sanctum::actingAs($nurse);
+        $native = $this->getJson('/api/mobile/staff/search?q=ward');
+
+        $this->assertEquals(200, $native->status());
+        $this->assertNotEmpty($native->json(), 'a nurse should find ward pages');
+        $this->assertEquals($web->json(), $native->json(), 'The app must use the web top bar search unchanged');
+        $this->assertArrayHasKey('url', $native->json()[0]);
+        $this->assertArrayHasKey('section', $native->json()[0]);
+    }
+
+    public function test_global_search_is_for_active_staff_only()
+    {
+        Sanctum::actingAs($this->userWithRole('PATIENT'));
+        $this->getJson('/api/mobile/staff/search?q=ward')->assertStatus(403);
+    }
+
+    public function test_clinical_context_returns_exactly_what_the_web_modal_loads()
+    {
+        $patient = \App\Models\Patient::query()->first();
+        $this->assertNotNull($patient, 'test database needs a patient');
+
+        foreach (['NURSE', 'MATERNITY'] as $role) {
+            $user = $this->userWithRole($role);
+            foreach (['vitals', 'notes', 'medications', 'allergies', 'labs', 'imaging', 'procedures'] as $part) {
+                $web = $this->actingAs($user)->getJson("/clinical-context/patient/{$patient->id}/{$part}");
+                Sanctum::actingAs($user);
+                $native = $this->getJson("/api/mobile/clinical-context/patient/{$patient->id}/{$part}");
+                $this->assertEquals(200, $native->status(), "$role $part");
+                $this->assertEquals($web->json(), $native->json(), "$role $part must match the web modal");
+            }
+        }
+    }
+
+    public function test_clinical_context_is_closed_to_workspaces_without_the_modal()
+    {
+        $patient = \App\Models\Patient::query()->first();
+        Sanctum::actingAs($this->userWithRole('RECEPTIONIST'));
+        $this->getJson("/api/mobile/clinical-context/patient/{$patient->id}/vitals")->assertStatus(403);
+    }
+
+    public function test_nursing_emergency_queue_matches_the_web_queue()
+    {
+        $nurse = $this->userWithRole('NURSE');
+        $web = $this->actingAs($nurse)->getJson('/emergency/queue');
+        Sanctum::actingAs($nurse);
+        $native = $this->getJson('/api/mobile/nursing/emergency-queue');
+        $this->assertEquals(200, $native->status());
+        $this->assertEquals($web->json(), $native->json());
+    }
+
+    public function test_nursing_emergency_queue_matches_the_web_workbench()
+    {
+        $nurse = $this->userWithRole('NURSE');
+        $web = $this->actingAs($nurse)->getJson('/emergency/queue');
+        Sanctum::actingAs($nurse);
+        $native = $this->getJson('/api/mobile/nursing/emergency-queue');
+
+        $this->assertEquals(200, $native->status());
+        $this->assertEquals($web->json(), $native->json());
+    }
 }

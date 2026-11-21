@@ -108,4 +108,10 @@ return [
 
     'password_timeout' => 10800,
 
+    /*
+    | Staff app → web hand-off: the browser must redeem the code from the same IP address that
+    | requested it (WEB_HANDOFF_BIND_IP=false only for networks where they differ).
+    */
+    'web_handoff_bind_ip' => env('WEB_HANDOFF_BIND_IP', true),
+
 ];
