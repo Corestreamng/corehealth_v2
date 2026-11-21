@@ -23,6 +23,8 @@ class ClientSettings
 
         return [
             'nok_relationships' => self::NOK_RELATIONSHIPS,
+            // CoreHealth version, as the web sidebar shows it (_brand.blade.php)
+            'core_version' => (appsettings()->version ?? null) ?: env('APP_VER', '1.0'),
             // Branding
             'hos_color' => appsettings('hos_color') ?? '#0066cc',
             'site_name' => appsettings('site_name'),

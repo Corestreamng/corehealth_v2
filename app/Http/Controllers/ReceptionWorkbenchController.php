@@ -1360,7 +1360,7 @@ class ReceptionWorkbenchController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => count($createdRequests) . ' item(s) booked successfully. Awaiting billing.',
-                'requests' => $createdRequests,
+                'requests' => $this->withLineQuantities($createdRequests),
             ]);
 
         } catch (\Exception $e) {
@@ -1377,6 +1377,29 @@ class ReceptionWorkbenchController extends Controller
     /**
      * Helper to create ProductOrServiceRequest with HMO tariff
      */
+    /**
+     * Adds each line's name, quantity and per-unit payable (from its ProductOrServiceRequest) so a
+     * checkout can show the items and quantities booked; payable_amount stays the line total.
+     */
+    private function withLineQuantities(array $rows): array
+    {
+        $ids = array_values(array_filter(array_map(fn ($r) => $r['service_request_id'] ?? null, $rows)));
+        $lines = ProductOrServiceRequest::with(['service', 'product'])->whereIn('id', $ids)->get()->keyBy('id');
+
+        return array_map(function ($r) use ($lines) {
+            $line = $lines[$r['service_request_id'] ?? 0] ?? null;
+            if (!$line) {
+                return $r;
+            }
+            $qty = max(1, (float) ($line->qty ?? 1));
+            $r['name'] = ($r['name'] ?? null) ?: (optional($line->service)->service_name ?? optional($line->product)->product_name ?? 'Item');
+            $r['qty'] = $qty;
+            $r['unit_payable'] = round((float) ($line->payable_amount ?? 0) / $qty, 2);
+
+            return $r;
+        }, $rows);
+    }
+
     private function createServiceRequest($patient, $serviceId = null, $productId = null, $qty = 1, $departmentId = null)
     {
         $serviceRequest = new ProductOrServiceRequest();
@@ -2794,7 +2817,7 @@ class ReceptionWorkbenchController extends Controller
 
         return response()->json([
             'success' => true,
-            'requests' => $requests,
+            'requests' => $this->withLineQuantities($requests->all()),
         ]);
     }
 
