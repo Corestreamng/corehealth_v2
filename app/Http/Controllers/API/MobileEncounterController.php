@@ -981,12 +981,21 @@ class MobileEncounterController extends Controller
                 $q->orWhere('staff_id', $doc->id);
             });
 
+            // Same date scope as the list and as the web stats bar (getDoctorQueueCounts): counts cover
+            // the chosen start/end dates, so a badge never counts rows the list below hides.
+            if ($request->filled('start_date') && $request->filled('end_date')) {
+                $base->whereBetween('created_at', [
+                    Carbon::parse($request->input('start_date'))->startOfDay(),
+                    Carbon::parse($request->input('end_date'))->endOfDay(),
+                ]);
+            }
+
             $stats = [
                 'waiting' => (clone $base)->where('status', QueueStatus::WAITING)->count(),
                 'vitals' => (clone $base)->where('status', QueueStatus::VITALS_PENDING)->count(),
                 'ready' => (clone $base)->where('status', QueueStatus::READY)->count(),
                 'in_consult' => (clone $base)->where('status', QueueStatus::IN_CONSULTATION)->count(),
-                'completed' => (clone $base)->where('status', QueueStatus::COMPLETED)->whereDate('created_at', today())->count(),
+                'completed' => (clone $base)->where('status', QueueStatus::COMPLETED)->when(!$request->filled('start_date'), fn ($q) => $q->whereDate('created_at', today()))->count(),
                 'no_show' => (clone $base)->where('status', QueueStatus::NO_SHOW)->count(),
                 'cancelled' => (clone $base)->where('status', QueueStatus::CANCELLED)->count(),
             ];

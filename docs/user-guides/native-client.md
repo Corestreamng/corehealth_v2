@@ -54,6 +54,10 @@ Items marked **Web** aren't native yet: they open the same page on the web, alre
 - **Shortcuts:** **New patient**, **Register walk-in** (`EX-` file numbers), **Emergency intake** (shown only when Hospital Config allows it at reception), **Open queue**, **Today's appointments**, **Referrals**, **HMO validation**, **My transactions**, **Contacts** and **Price list**.
 - **Today** and **Queue now** show the same numbers as the web workbench.
 
+**Triage & Intake Queue** (sidebar, or **Open queue**) is a standard table like the web queue: pick **Waiting**, **Vitals**, **Ready**, **In consultation**, **Completed**, **Emergency** or **Admitted** (the chips show the counts), then search, sort, choose the page length, show or hide columns and export. Tap a row to open the patient.
+
+![Triage and intake queue on a computer](/images/workbenches/native-desktop-triage-queue.png)
+
 ![Front desk on a phone](/images/workbenches/native-phone-front-desk.png)
 
 ### Patient record
@@ -106,6 +110,8 @@ The sections match the web workbench:
 The form matches the web registration form. The patient's **Occupation** sits with their personal details. The **Next of kin** section records the next of kin's name, **Relationship to patient** (Spouse, Mother, Guardian… or any word), phone and address. While you type the name, phone or date of birth, **Possible existing patients** appears if the hospital already has a similar record: open it instead of creating a duplicate folder. Phone numbers, email and date of birth are checked as you save, with the same rules as the web, and any problem shows on its field.
 
 **Where:** **Health Records** → **New Patient** (or **New patient** / **Register walk-in** on the doctor queue).
+
+![New patient on a computer](/images/workbenches/native-desktop-new-patient.png)
 
 ![New patient on a phone](/images/workbenches/native-phone-new-patient.png)
 

@@ -107,6 +107,7 @@ Every change to these apps or their API considers the patient app, CoreHMS Super
 vendor/bin/phpunit tests/Feature/NativeClient          # registry ↔ sidebar parity, guards, login, wrapper parity
 (cd native_clients/client_app && flutter analyze && flutter test)
 ```
+- **`DoctorQueueStatsScopeTest`:** `GET /api/mobile/doctor/queues/stats` takes optional `start_date` and `end_date`. With them the badges count the same date range as the list and the web stats bar (`getDoctorQueueCounts`); without them every day is counted (older app builds).
 - **`WorkspaceRegistryParityTest`:**
   - Sections follow the sidebar's include order.
   - Every section's role guard equals its partial's.
