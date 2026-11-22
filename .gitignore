@@ -25,6 +25,7 @@ scratch.php
 
 # Isolated tooling vendor directories
 tools/vendor/
+tools/bin/
 .php-cs-fixer.cache
 *.zip
 

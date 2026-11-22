@@ -7,6 +7,7 @@ use App\Http\Controllers\API\MobileAuthController;
 use App\Http\Controllers\API\MobileChatController;
 use App\Http\Controllers\API\MobileEncounterController;
 use App\Http\Controllers\API\MobilePatientController;
+use App\Http\Controllers\API\MobilePharmacyController;
 use App\Http\Controllers\API\MobileReceptionController;
 use App\Http\Controllers\BankController;
 use App\Http\Controllers\BillingWorkbenchController;
@@ -27,6 +28,10 @@ use App\Http\Controllers\NhmisWorkbenchController;
 use App\Http\Controllers\NonPharmOrderController;
 use App\Http\Controllers\NursingWorkbenchController;
 use App\Http\Controllers\PatientProfileController;
+use App\Http\Controllers\PharmacyDamagesController;
+use App\Http\Controllers\PharmacyReportsController;
+use App\Http\Controllers\PharmacyReturnsController;
+use App\Http\Controllers\PharmacyWorkbenchController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReceptionWorkbenchController;
 use App\Http\Controllers\ResultViewController;
@@ -608,6 +613,97 @@ Route::prefix('mobile/billing')->middleware(['auth:sanctum', 'native.workspace:b
 
 /*
 |--------------------------------------------------------------------------
+| Native Staff Client — Pharmacy workspace
+|--------------------------------------------------------------------------
+| The same PharmacyWorkbench / Returns / Damages / Reports controller methods the web pharmacy
+| workbench calls. Guard = the web sidebar's Pharmacy guard (WorkspaceRegistry 'pharmacy').
+| `context` is the only adapter (it replaces the page-render data: active store and candidates).
+*/
+Route::prefix('mobile/pharmacy')->middleware(['auth:sanctum', 'native.workspace:pharmacy'])->group(function () {
+    // Desk: active store, queue, search
+    Route::get('context', [MobilePharmacyController::class, 'context']);
+    Route::get('stores', [PharmacyWorkbenchController::class, 'getStores']);
+    Route::get('queue-counts', [PharmacyWorkbenchController::class, 'getQueueCounts']);
+    Route::get('prescription-queue', [PharmacyWorkbenchController::class, 'getPrescriptionQueue']);
+    Route::get('search-patients', [PharmacyWorkbenchController::class, 'searchPatients']);
+    Route::get('search-products', [PharmacyWorkbenchController::class, 'searchProducts']);
+
+    // Patient: prescriptions in their stages, history
+    Route::get('patient/{id}/prescription-data', [PharmacyWorkbenchController::class, 'getPatientPrescriptionData']);
+    Route::get('patient/{id}/dispensing-history', [PharmacyWorkbenchController::class, 'getPatientDispensingHistory']);
+
+    // Billing stage (hands the charge to the cashier), dismiss, new request, bundles, slip
+    Route::post('bill', [PharmacyWorkbenchController::class, 'billPrescriptions']);
+    Route::post('dismiss', [PharmacyWorkbenchController::class, 'dismissPrescriptions']);
+    Route::post('create-request', [PharmacyWorkbenchController::class, 'createPrescriptionRequest']);
+    Route::post('apply-combo', [PharmacyWorkbenchController::class, 'pharmacyApplyCombo']);
+    Route::post('remove-bundle', [PharmacyWorkbenchController::class, 'removeBundle']);
+    Route::post('remove-bundle-item', [PharmacyWorkbenchController::class, 'removeBundleItem']);
+    Route::post('print-prescription-slip', [PharmacyWorkbenchController::class, 'printPrescriptionSlip']);
+    Route::post('prescription/{id}/adjust-price', [PharmacyWorkbenchController::class, 'adjustPrice']);
+    Route::post('prescription/{id}/adapt', [PharmacyWorkbenchController::class, 'adaptPrescription']);
+    Route::post('prescription/{id}/adjust-quantity', [PharmacyWorkbenchController::class, 'adjustBilledQuantity']);
+
+    // Dispensing: stock by store, batches (FIFO), cart validation, dispense
+    Route::get('product/{id}/stock', [PharmacyWorkbenchController::class, 'getProductStockByStore']);
+    Route::get('product-batches', [PharmacyWorkbenchController::class, 'getProductBatches']);
+    Route::get('batch-suggestion', [PharmacyWorkbenchController::class, 'getBatchFulfillmentSuggestion']);
+    Route::post('validate-cart-stock', [PharmacyWorkbenchController::class, 'validateCartStock']);
+    Route::post('dispense', [PharmacyWorkbenchController::class, 'dispenseMedication']);
+    Route::post('dispense-with-batch', [PharmacyWorkbenchController::class, 'dispenseMedicationWithBatch']);
+    Route::post('dispense-free-form', [PharmacyWorkbenchController::class, 'dispenseFreeFormMedication']);
+    Route::get('my-transactions', [PharmacyWorkbenchController::class, 'getMyTransactions']);
+
+    // Returns
+    Route::get('returns', [PharmacyReturnsController::class, 'datatables']);
+    Route::get('returns/search-dispensed', [PharmacyReturnsController::class, 'searchDispensedItems']);
+    Route::post('returns', [PharmacyReturnsController::class, 'store']);
+    Route::post('returns/bulk-store', [PharmacyReturnsController::class, 'bulkStore']);
+    Route::post('returns/bulk-approve', [PharmacyReturnsController::class, 'bulkApprove']);
+    Route::post('returns/bulk-reject', [PharmacyReturnsController::class, 'bulkReject']);
+    Route::get('returns/{id}', [PharmacyReturnsController::class, 'show']);
+    Route::post('returns/{id}/approve', [PharmacyReturnsController::class, 'approve']);
+    Route::post('returns/{id}/reject', [PharmacyReturnsController::class, 'reject']);
+    Route::post('returns/{id}/process-refund', [PharmacyReturnsController::class, 'processRefund']);
+
+    // Damages
+    Route::get('damages', [PharmacyDamagesController::class, 'datatables']);
+    Route::get('damages/search-products', [PharmacyDamagesController::class, 'searchProducts']);
+    Route::get('damages/batches', [PharmacyDamagesController::class, 'getBatches']);
+    Route::post('damages', [PharmacyDamagesController::class, 'store']);
+    Route::get('damages/{id}', [PharmacyDamagesController::class, 'show']);
+    Route::post('damages/{id}/approve', [PharmacyDamagesController::class, 'approve']);
+    Route::post('damages/{id}/reject', [PharmacyDamagesController::class, 'reject']);
+
+    // Stock reports
+    Route::get('stock/overview', [PharmacyReportsController::class, 'stockReport']);
+    Route::get('stock/by-store', [PharmacyReportsController::class, 'stockByStore']);
+    Route::get('stock/by-category', [PharmacyReportsController::class, 'stockByCategory']);
+    Route::get('stock/valuation', [PharmacyReportsController::class, 'valuationReport']);
+    Route::get('stock/expiring', [PharmacyReportsController::class, 'expiringStock']);
+    Route::get('stock/movement', [PharmacyReportsController::class, 'movementAnalysis']);
+    Route::get('stock/expiring-batches', [PharmacyWorkbenchController::class, 'getExpiringBatches']);
+    Route::get('stock/low-stock', [PharmacyWorkbenchController::class, 'getLowStockItems']);
+
+    // Summary reports and their filters
+    Route::get('filters/pharmacists', [PharmacyWorkbenchController::class, 'getPharmacists']);
+    Route::get('filters/hmos', [PharmacyWorkbenchController::class, 'getHmosForFilter']);
+    Route::get('filters/doctors', [PharmacyWorkbenchController::class, 'getDoctorsForFilter']);
+    Route::get('filters/categories', [PharmacyWorkbenchController::class, 'getProductCategories']);
+    Route::get('reports/statistics', [PharmacyWorkbenchController::class, 'getReportStatistics']);
+    Route::get('reports/dispensing', [PharmacyWorkbenchController::class, 'getDispensingReport']);
+    Route::get('reports/revenue', [PharmacyWorkbenchController::class, 'getRevenueReport']);
+    Route::get('reports/stock', [PharmacyWorkbenchController::class, 'getStockReport']);
+    Route::get('reports/performance', [PharmacyWorkbenchController::class, 'getPerformanceReport']);
+    Route::get('reports/hmo-claims', [PharmacyWorkbenchController::class, 'getHmoClaimsReport']);
+    Route::get('reports/top-products', [PharmacyWorkbenchController::class, 'getTopProducts']);
+    Route::get('reports/payment-methods', [PharmacyWorkbenchController::class, 'getPaymentMethodsBreakdown']);
+    Route::get('reports/executive-summary', [PharmacyWorkbenchController::class, 'getExecutiveSummary']);
+
+});
+
+/*
+|--------------------------------------------------------------------------
 | Mobile Maternity Routes — wraps the web Maternity workbench
 |--------------------------------------------------------------------------
 | Every route points at the MaternityWorkbenchController method the web workbench calls
@@ -966,7 +1062,7 @@ Route::prefix('mobile/clinical-context')->middleware(['auth:sanctum', 'native.wo
     Route::post('result-views', [ResultViewController::class, 'store']);
 });
 
-Route::prefix('mobile/shared')->middleware(['auth:sanctum', 'native.workspace:reception|doctor|billing|nursing|maternity'])->group(function () {
+Route::prefix('mobile/shared')->middleware(['auth:sanctum', 'native.workspace:reception|doctor|billing|nursing|maternity|pharmacy'])->group(function () {
     Route::get('hospital-contacts', [HospitalContactController::class, 'index']);
     Route::post('hospital-contacts', [HospitalContactController::class, 'store']);
     Route::put('hospital-contacts/{id}', [HospitalContactController::class, 'update']);
