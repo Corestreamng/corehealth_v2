@@ -256,6 +256,9 @@ A patient record has sections grouped as *Clinical*, *Care*, *Orders & billing* 
 
 On **Medications**, **Add drug** charts a ward-stock or patient's-own drug that has no prescription: set a schedule or give a dose now; ward stock is taken from the chosen store and billed unless you switch billing off. **Requests** has the order sets (re-order from an earlier encounter, shared treatment plan templates, bundles). Picking a bundle shows its price and every item before you apply it; the **Bundles** list then lets you remove a single item (with a reason) or the whole bundle. **Billing** raises service, lab, imaging and consumable bills and shows the billing history. **Surgery Workbench** and **Manage Beds** are in the Nursing menu, and **Reports** is on the desk. End your shift to create the handover for the next nurse. Surgery and bed setup open on the web.
 
+## Laboratory and Imaging
+See the [Laboratory and Imaging guide](/user-guides/native-client-lab-imaging): the lab and imaging desks, billing, samples, results, approvals and reports on a phone.
+
 ## Surgery
 **Surgery** is its own section (it used to be a link inside Nursing). It shows for administrators, surgeons (the SURGERY role), doctors and nurses, like the web sidebar. Open **Surgery → Surgery Workbench**.
 

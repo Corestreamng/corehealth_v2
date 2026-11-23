@@ -915,6 +915,58 @@ Route::prefix('mobile/lab')->middleware(['auth:sanctum', 'native.workspace:lab']
 
 /*
 |--------------------------------------------------------------------------
+| Mobile Imaging Routes — the web Imaging workbench's controller methods
+|--------------------------------------------------------------------------
+| Same ImagingWorkbenchController methods as routes/web.php (/imaging-workbench/*). Imaging has no sample step.
+| Who may enter or approve a result is decided inside the controller, as for the laboratory.
+*/
+Route::prefix('mobile/radiology')->middleware(['auth:sanctum', 'native.workspace:radiology'])->group(function () {
+    $c = \App\Http\Controllers\ImagingWorkbenchController::class;
+    Route::get('departments', [\App\Http\Controllers\API\MobileImagingController::class, 'departments']);
+    Route::get('meta', [\App\Http\Controllers\API\MobileImagingController::class, 'meta']);
+    Route::get('queue', [$c, 'getImagingQueue']);
+    Route::get('queue-counts', [$c, 'getQueueCounts']);
+    Route::get('patient/{id}/requests', [$c, 'getPatientRequests'])->whereNumber('id');
+    Route::get('patient/{patientId}/history', [$c, 'getImagingHistoryList'])->whereNumber('patientId');
+    Route::post('record-billing', [$c, 'recordBilling']);
+    Route::post('claim-self-perform', [$c, 'claimSelfPerform']);
+    Route::post('dismiss-requests', [$c, 'dismissRequests']);
+    Route::post('create-request', [$c, 'createRequest']);
+    Route::get('search-services', [$c, 'searchServices']);
+    Route::post('apply-combo', [$c, 'imagingApplyCombo']);
+    Route::post('remove-bundle', [$c, 'removeBundle']);
+    Route::post('remove-bundle-item', [$c, 'removeBundleItem']);
+    Route::get('requests/{id}', [$c, 'getImagingRequest'])->whereNumber('id');
+    Route::get('requests/{id}/attachments', [$c, 'getRequestAttachments'])->whereNumber('id');
+    Route::post('save-result', [$c, 'saveResult']);
+    Route::delete('requests/{id}', [$c, 'deleteRequest'])->whereNumber('id');
+    Route::post('requests/{id}/restore', [$c, 'restoreRequest'])->whereNumber('id');
+    Route::post('requests/{id}/dismiss', [$c, 'dismissRequest'])->whereNumber('id');
+    Route::post('requests/{id}/undismiss', [$c, 'undismissRequest'])->whereNumber('id');
+    Route::post('requests/{id}/dismiss-free-form', [$c, 'dismissFreeForm'])->whereNumber('id');
+    Route::get('deleted-requests/{patientId?}', [$c, 'getDeletedRequests'])->whereNumber('patientId');
+    Route::get('dismissed-requests/{patientId?}', [$c, 'getDismissedRequests'])->whereNumber('patientId');
+    Route::get('audit-logs', [$c, 'getAuditLog']);
+    Route::get('approval-queue', [$c, 'getApprovalQueue']);
+    Route::get('approval-count', [$c, 'getApprovalCount']);
+    Route::get('approval/{id}', [$c, 'getApprovalDetail'])->whereNumber('id');
+    Route::post('approval/{id}/approve', [$c, 'approveResult'])->whereNumber('id');
+    Route::post('approval/{id}/reject', [$c, 'rejectResult'])->whereNumber('id');
+    Route::post('approval/{id}/reverse', [$c, 'reverseApproval'])->whereNumber('id');
+    Route::post('self-approve/{id}', [$c, 'selfApproveResult'])->whereNumber('id');
+    Route::get('reports', [$c, 'getImagingReports']);
+    Route::get('statistics', [$c, 'getImagingStatistics']);
+    Route::get('filter-doctors', [$c, 'getRequestingDoctors']);
+    Route::get('filter-hmos', [$c, 'getHmosForFilter']);
+    Route::get('filter-services', [$c, 'getImagingServicesForFilter']);
+    Route::get('v1-result-templates', [\App\Http\Controllers\V1ResultTemplateController::class, 'getTemplates']);
+    Route::get('nhmis/service-mapping/{serviceId}', [NhmisWorkbenchController::class, 'getMappingForService']);
+    Route::post('result-views', [ResultViewController::class, 'store']);
+    Route::get('my-activity', [ProcessedTransactionsController::class, 'activity']); // what I did, by stage
+});
+
+/*
+|--------------------------------------------------------------------------
 | Mobile Surgery Routes — wraps the web Surgery workbench
 |--------------------------------------------------------------------------
 */

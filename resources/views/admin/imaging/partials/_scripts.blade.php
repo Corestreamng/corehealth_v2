@@ -24,11 +24,11 @@
             'imaging.dismissRequests': '{{ route("imaging.dismissRequests") }}',
             'imaging.saveResult': '{{ route("imaging.saveResult") }}',
             'imaging.applyCombo': '{{ route("imaging.applyCombo") }}',
-            'lab.filterDoctors': '{{ route("lab.filterDoctors") }}',
-            'lab.filterHmos': '{{ route("lab.filterHmos") }}',
-            'lab.filterServices': '{{ route("lab.filterServices") }}',
-            'lab.statistics': '{{ route("lab.statistics") }}',
-            'lab.reports': '{{ route("lab.reports") }}'
+            'imaging.filterDoctors': '{{ route("imaging.filterDoctors") }}',
+            'imaging.filterHmos': '{{ route("imaging.filterHmos") }}',
+            'imaging.filterServices': '{{ route("imaging.filterServices") }}',
+            'imaging.statistics': '{{ route("imaging.statistics") }}',
+            'imaging.reports': '{{ route("imaging.reports") }}'
         }
     };
     window.INVEST_RES_SOURCE = 'imaging_workbench';

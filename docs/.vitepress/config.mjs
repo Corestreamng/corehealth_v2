@@ -34,6 +34,7 @@ export default defineConfig({
             { text: 'Longitudinal Clinical Pathway', link: '/user-guides/clinical-pathway' },
             { text: 'Zero-Scroll Cockpit Standards', link: '/user-guides/cockpit-experience' },
             { text: 'CoreHealth Staff App (Mobile, Tablet, Desktop)', link: '/user-guides/native-client' },
+            { text: 'Staff App: Laboratory and Imaging', link: '/user-guides/native-client-lab-imaging' },
           ]
         },
         {

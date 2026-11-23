@@ -158,7 +158,7 @@
         <!-- Reports View (Full Screen - Global Access) -->
         <div class="queue-view" id="reports-view">
             <div class="queue-view-header">
-                <h4><i class="mdi mdi-chart-box"></i> Laboratory Reports & Analytics</h4>
+                <h4><i class="mdi mdi-chart-box"></i> Imaging Reports & Analytics</h4>
                 <button class="btn btn-secondary btn-close-queue" id="btn-close-reports">
                     <i class="mdi mdi-close"></i> Close
                 </button>
@@ -185,9 +185,10 @@
                                     <select class="form-control" id="report-status-filter" name="status">
                                         <option value="">All Statuses</option>
                                         <option value="1">Awaiting Billing</option>
-                                        <option value="2">Awaiting Sample</option>
-                                        <option value="3">Awaiting Results</option>
+                                        <option value="2">Awaiting Results</option>
                                         <option value="4">Completed</option>
+                                        <option value="5">Pending Approval</option>
+                                        <option value="6">Rejected</option>
                                     </select>
                                 </div>
                                 <div class="form-group col-md-3">

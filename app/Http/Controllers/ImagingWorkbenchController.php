@@ -1848,6 +1848,154 @@ class ImagingWorkbenchController extends Controller
     }
 
     // ═══════════════════════════════════════════════════════════
+    //  REPORTS (imaging's own: the Imaging Reports page used to read the laboratory's)
+    // ═══════════════════════════════════════════════════════════
+
+    private function imagingReportQuery(Request $request, bool $withRelations = true)
+    {
+        $query = $withRelations
+            ? ImagingServiceRequest::with(['service', 'patient.user', 'patient.hmo', 'doctor', 'biller', 'resultBy'])
+            : ImagingServiceRequest::query();
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('service_id')) {
+            $query->where('service_id', $request->service_id);
+        }
+        if ($request->filled('doctor_id')) {
+            $query->where('doctor_id', $request->doctor_id);
+        }
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient', fn ($q) => $q->where('hmo_id', $request->hmo_id));
+        }
+        if ($request->filled('patient_search')) {
+            $search = $request->patient_search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('patient', function ($pq) use ($search) {
+                    $pq->where('file_no', 'like', "%{$search}%")
+                        ->orWhereHas('user', fn ($uq) => $uq->where('surname', 'like', "%{$search}%")->orWhere('firstname', 'like', "%{$search}%"));
+                });
+            });
+        }
+
+        return $query;
+    }
+
+    /** GET imaging-workbench/reports : the detailed report, a DataTable paged by the server. */
+    public function getImagingReports(Request $request)
+    {
+        try {
+            return DataTables::of($this->imagingReportQuery($request))
+                ->addIndexColumn()
+                ->editColumn('created_at', fn ($row) => $this->formatDateTime($row->created_at))
+                ->addColumn('file_no', fn ($row) => $row->patient->file_no ?? 'N/A')
+                ->addColumn('patient_name', fn ($row) => $row->patient && $row->patient->user ? $row->patient->user->surname . ' ' . $row->patient->user->firstname : 'N/A')
+                ->addColumn('service_name', fn ($row) => htmlspecialchars($row->service_name ?? ''))
+                ->addColumn('doctor_name', fn ($row) => $row->doctor ? $row->doctor->surname . ' ' . $row->doctor->firstname : 'N/A')
+                ->addColumn('hmo_name', fn ($row) => $row->patient && $row->patient->hmo ? $row->patient->hmo->name : 'N/A')
+                ->addColumn('status_badge', function ($row) {
+                    // imaging has no sample stage: 2 is "awaiting result"
+                    $badges = [
+                        1 => '<span class="badge badge-warning">Awaiting Billing</span>',
+                        2 => '<span class="badge badge-primary">Awaiting Results</span>',
+                        4 => '<span class="badge badge-success">Completed</span>',
+                        5 => '<span class="badge" style="background-color: #6f42c1; color: #fff;">Pending Approval</span>',
+                        6 => '<span class="badge badge-danger"><i class="mdi mdi-close-circle"></i> Rejected</span>',
+                    ];
+
+                    return $badges[$row->status] ?? '<span class="badge badge-secondary">Unknown</span>';
+                })
+                ->addColumn('tat', function ($row) {
+                    if ($row->status == 4 && $row->result_date) {
+                        return Carbon::parse($row->created_at)->diffInHours(Carbon::parse($row->result_date)) . 'h';
+                    }
+
+                    return 'N/A';
+                })
+                ->addColumn('actions', fn ($row) => '<button class="btn btn-sm btn-info view-request-details" data-id="' . $row->id . '"><i class="mdi mdi-eye"></i></button>')
+                ->rawColumns(['status_badge', 'actions', 'service_name'])
+                ->make(true);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'An error occurred while fetching reports.', 'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'], 500);
+        }
+    }
+
+    /** GET imaging-workbench/statistics : totals, by status, monthly trend, top services and requesting doctors. */
+    public function getImagingStatistics(Request $request)
+    {
+        try {
+            $query = $this->imagingReportQuery($request, false);
+
+            $total = (clone $query)->count();
+            $completed = (clone $query)->where('status', 4)->count();
+            $pending = (clone $query)->whereIn('status', [1, 2])->count();
+            $avgTat = (clone $query)->where('status', 4)->whereNotNull('result_date')->get(['created_at', 'result_date'])
+                ->map(fn ($r) => Carbon::parse($r->created_at)->diffInHours(Carbon::parse($r->result_date)))->average();
+
+            $byStatus = (clone $query)->select('status', DB::raw('count(*) as count'))->groupBy('status')->get()
+                ->map(fn ($i) => ['status' => $i->status, 'count' => $i->count]);
+
+            // the last six months, ignoring the date filter (a fixed trend) but keeping the other filters
+            $trendBase = $this->imagingReportQuery(new Request($request->except(['date_from', 'date_to'])), false);
+            $monthly = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $month = Carbon::now()->subMonths($i);
+                $monthly[] = ['month' => $month->format('M Y'), 'count' => (clone $trendBase)->whereYear('created_at', $month->year)->whereMonth('created_at', $month->month)->count()];
+            }
+
+            $topServices = (clone $query)->with('service')->select('service_id', DB::raw('count(*) as total'))->whereNotNull('service_id')->groupBy('service_id')->orderByDesc('total')->limit(10)->get()
+                ->map(fn ($i) => ['name' => $i->service_name, 'count' => $i->total, 'revenue' => 0]);
+
+            $topDoctors = (clone $query)->with('doctor')->select('doctor_id', DB::raw('count(*) as total'))->whereNotNull('doctor_id')->groupBy('doctor_id')->orderByDesc('total')->limit(10)->get()
+                ->map(fn ($i) => ['name' => $i->doctor ? $i->doctor->surname . ' ' . $i->doctor->firstname : 'Unknown', 'doctor' => $i->doctor ? ['id' => $i->doctor->id, 'surname' => $i->doctor->surname, 'firstname' => $i->doctor->firstname] : null, 'count' => $i->total, 'revenue' => 0]);
+
+            return response()->json([
+                'summary' => ['total_requests' => $total, 'completed_requests' => $completed, 'pending_requests' => $pending, 'estimated_revenue' => 0, 'avg_tat' => round((float) $avgTat, 1)],
+                'by_status' => $byStatus,
+                'monthly_trends' => $monthly,
+                'top_services' => $topServices,
+                'top_doctors' => $topDoctors,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to load statistics', 'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'], 500);
+        }
+    }
+
+    /** GET imaging-workbench/filter-doctors */
+    public function getRequestingDoctors()
+    {
+        $doctors = ImagingServiceRequest::with('doctor')->select('doctor_id')->distinct()->whereNotNull('doctor_id')->get()->pluck('doctor')->filter()
+            ->map(fn ($d) => ['id' => $d->id, 'name' => $d->surname . ' ' . $d->firstname])->sortBy('name')->values();
+
+        return response()->json($doctors);
+    }
+
+    /** GET imaging-workbench/filter-hmos : active HMOs grouped by scheme. */
+    public function getHmosForFilter()
+    {
+        $hmos = \App\Models\Hmo::with('scheme')->where('status', 1)->orderBy('name')->get()
+            ->groupBy(fn ($h) => $h->scheme ? $h->scheme->name : 'Uncategorized')
+            ->map(fn ($g) => $g->map(fn ($h) => ['id' => $h->id, 'name' => $h->name])->values());
+
+        return response()->json($hmos);
+    }
+
+    /** GET imaging-workbench/filter-services : imaging services for the report filter. */
+    public function getImagingServicesForFilter()
+    {
+        $categoryId = appsettings('imaging_category_id', 6);
+
+        return response()->json(Service::where('category_id', $categoryId)->orderBy('service_name')->get()->map(fn ($s) => ['id' => $s->id, 'name' => $s->service_name]));
+    }
+
+    // ═══════════════════════════════════════════════════════════
     //  RESULT APPROVAL WORKFLOW
     // ═══════════════════════════════════════════════════════════
 

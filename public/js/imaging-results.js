@@ -904,7 +904,7 @@ function setDefaultDateFilters() {
 function loadFilterOptions() {
     // Load doctors
     $.ajax({
-        url: wbRoute('lab.filterDoctors', '/lab-workbench/filter-doctors'),
+        url: wbRoute('imaging.filterDoctors', '/imaging-workbench/filter-doctors'),
         method: 'GET',
         success: function(doctors) {
             let options = '<option value="">All Doctors</option>';
@@ -920,7 +920,7 @@ function loadFilterOptions() {
 
     // Load HMOs with optgroups
     $.ajax({
-        url: wbRoute('lab.filterHmos', '/lab-workbench/filter-hmos'),
+        url: wbRoute('imaging.filterHmos', '/imaging-workbench/filter-hmos'),
         method: 'GET',
         success: function(hmoGroups) {
             let options = '<option value="">All HMOs</option>';
@@ -940,7 +940,7 @@ function loadFilterOptions() {
 
     // Load services
     $.ajax({
-        url: wbRoute('lab.filterServices', '/lab-workbench/filter-services'),
+        url: wbRoute('imaging.filterServices', '/imaging-workbench/filter-services'),
         method: 'GET',
         success: function(services) {
             let options = '<option value="">All Services</option>';
@@ -970,7 +970,7 @@ function loadReportsStatistics(filters = {}) {
     }
 
     $.ajax({
-        url: wbRoute('lab.statistics', '/lab-workbench/statistics'),
+        url: wbRoute('imaging.statistics', '/imaging-workbench/statistics'),
         method: 'GET',
         data: filters,
         success: function(data) {
@@ -1031,7 +1031,7 @@ function initializeReportsDataTable() {
         processing: true,
         serverSide: true,
         ajax: {
-            url: wbRoute('lab.reports', '/lab-workbench/reports'),
+            url: wbRoute('imaging.reports', '/imaging-workbench/reports'),
             data: function(d) {
                 // Add filter values to request
                 d.date_from = $('#report-date-from').val();
@@ -1407,7 +1407,7 @@ function loadReportsStatistics(filters = {}) {
     $('#stat-avg-tat').text('Loading...');
 
     $.ajax({
-        url: wbRoute('lab.statistics', '/lab/statistics'),
+        url: wbRoute('imaging.statistics', '/imaging-workbench/statistics'),
         method: 'GET',
         data: filters,
         success: function(response) {

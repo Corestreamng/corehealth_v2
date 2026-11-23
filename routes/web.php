@@ -827,6 +827,13 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/imaging-workbench/remove-bundle', [\App\Http\Controllers\ImagingWorkbenchController::class, 'removeBundle'])->name('imaging.removeBundle');
         Route::post('/imaging-workbench/remove-bundle-item', [\App\Http\Controllers\ImagingWorkbenchController::class, 'removeBundleItem'])->name('imaging.removeBundleItem');
 
+        // Imaging reports (imaging's own data; the page used to call the laboratory's endpoints)
+        Route::get('/imaging-workbench/reports', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getImagingReports'])->name('imaging.reports');
+        Route::get('/imaging-workbench/statistics', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getImagingStatistics'])->name('imaging.statistics');
+        Route::get('/imaging-workbench/filter-doctors', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getRequestingDoctors'])->name('imaging.filterDoctors');
+        Route::get('/imaging-workbench/filter-hmos', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getHmosForFilter'])->name('imaging.filterHmos');
+        Route::get('/imaging-workbench/filter-services', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getImagingServicesForFilter'])->name('imaging.filterServices');
+
         // Imaging Result Approval Routes
         Route::get('/imaging-workbench/approval-queue', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getApprovalQueue'])->name('imaging.approvalQueue');
         Route::get('/imaging-workbench/approval-count', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getApprovalCount'])->name('imaging.approvalCount');
