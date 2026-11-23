@@ -99,13 +99,19 @@ Every change to these apps or their API considers the patient app, CoreHMS Super
 | Records | `GET /api/mobile/patient/{encounters, vitals, lab-results, imaging-results, prescriptions, procedures, admissions, referrals, appointments}` (`API\MobilePatientController`) | `features/health` |
 | Chat | `/api/mobile/patient/chat/*` (`API\MobileChatController`, own doctors only) | `features/chat` |
 
+- **Responsive App Shell & Navigation:**
+  - **Phone (<600px):** Full-width content, 60px bottom navigation bar with primary tabs (Home, Visits, Results, Prescriptions) + More tab, upward flyouts for sub-items on active tab tap/long-press, and a comprehensive More bottom drawer with real-time record search, theme toggle, and categorized module access.
+  - **Tablet (600–1199px):** 68px collapsed vertical icon rail with anchored right-side flyouts for sub-items.
+  - **Desktop (≥1200px):** 260px full sidebar with hospital branding, patient header, menu search filter, and grouped sections (Overview, Medical Records, Care & Schedule, Preferences).
+- **Design System & Theming:**
+  - Dynamic hospital theme palette (`hos_color`), light and dark mode support with `LocalStorage` persistence (`ThemeMode.system | light | dark`), and semantic tokens via `AppTheme`, `AppColors`, `SectionCard`, `MetricTile`, `AppBadge`, `Avatar`, `KeyValueRow`, and `ContentWidth`.
 - **Isolation:** patients can't sign in to the staff app, and staff endpoints refuse patient tokens (`native.workspace`).
-- **Known gaps:** the patient app is still portrait-only, with no tablet or desktop layouts yet. The remaining record-screen parity items are in `docs_archive/MOBILE_WEB_PARITY_PLAN.md` (Phase 5).
 
 ## 6. Tests
 ```bash
 vendor/bin/phpunit tests/Feature/NativeClient          # registry ↔ sidebar parity, guards, login, wrapper parity
 (cd native_clients/client_app && flutter analyze && flutter test)
+(cd native_clients/patient_app && flutter analyze && flutter test)
 ```
 - **`DoctorQueueStatsScopeTest`:** `GET /api/mobile/doctor/queues/stats` takes optional `start_date` and `end_date`. With them the badges count the same date range as the list and the web stats bar (`getDoctorQueueCounts`); without them every day is counted (older app builds).
 - **`FileNumberManagementTest`:** `GET .../patient/next-file-number` returns `prefix_options` (the series a department may use, e.g. maternity `ANC-`/`PANC-`, from `Patient::getPrefixOptionsForWorkbench`) and `POST .../patient/check-file-number` answers `exists`/`patients` (warn, never block). The staff app's `FileNumberField` (Auto/Manual, series switch, recent numbers, live duplicate check) is used by the patient form (new, walk-in, department registrations, edit) and emergency intake. `POST /emergency/intake` honours `file_no` only when `file_no_manual=1` (kept in the `EX-` series); the web form never sends it.
