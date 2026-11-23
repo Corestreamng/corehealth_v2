@@ -62,7 +62,17 @@ class ClientSettings
 
             // AI features (AI Scribe Studio, note polish, patient briefing)
             'llm_enabled' => self::llmEnabled(),
+            // The web's "Quick Polish" button follows llm_config.polish_note_enabled (on unless switched off)
+            'llm_polish_enabled' => self::llmPolishEnabled(),
         ];
+    }
+
+    protected static function llmPolishEnabled(): bool
+    {
+        $config = appsettings('llm_config');
+        $config = is_string($config) ? json_decode($config, true) : $config;
+
+        return (bool) (is_array($config) ? ($config['polish_note_enabled'] ?? true) : true);
     }
 
     protected static function llmEnabled(): bool

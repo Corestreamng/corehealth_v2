@@ -173,6 +173,32 @@ The header shows the patient, clinic and admission status, the **consultation ti
 
 Tabs follow the web: **Treatment Plans** (when switched on in Hospital Config), **Clinical Story**, Vitals (with trend chart), Nurse Charts (fluid and solid intake/output: start, record, end), Inj/Imm, **Notes** (diagnoses with status and course, **favourites**, templates, dictation, **AI polish**; autosaves every 10 seconds), Labs and Imaging (**Perform / Enter / Edit result** when the hospital allows; unviewed results counted on the tab), Meds (**Simple** or **Structured** dosing, starting with the hospital's default), **Care Plan**, Procedures, Admissions, Referrals, Med Chart (tap a drug to schedule, give, edit, discontinue or resume), History and Summary.
 
+### On a phone, and writing the note
+The consultation follows the web's phone layout: the bottom row shows **Plans** (when switched on), **Story**, **Vitals** and **Notes**, and **More** opens a sheet of tiles for everything else (Nurse Charts, Inj / Imm, Lab, Imaging, Meds, Care Plan, Procedures, Admissions, Referrals, Patient details, Med Chart, History, Summary). It opens on Plans, or on Story when plans are off. On a computer the same sections are listed in the web's order in the side list.
+
+![Consultation on a phone](/images/workbenches/native-phone-consult-story.png)
+
+![More tiles](/images/workbenches/native-phone-consult-more.png)
+
+**Notes** has two sub-tabs like the web: **Notes History** and **Enter New Notes** (with a **Plans** link across to Treatment Plans). Entering a note:
+1. **Clinical Notes / Diagnosis**: a formatted editor (bold, italic, underline, headings, bullet and numbered lists, quote, undo). The row above it has **Insert Template**, **AI Scribe Studio**, **Quick Polish** and voice dictation; the AI buttons show when the hospital has AI switched on.
+2. **Forms / Profiles** opens the patient's profiles.
+3. **Diagnosis** is last: switch **Diagnosis Applicable** on (when the hospital requires it), search the ICPC-2 code, set each diagnosis's status and course, use or save **Favourites**, then **Save Diagnosis**.
+
+![Writing the note](/images/workbenches/native-phone-consult-notes.png)
+
+**Autosave and Conclude.** Your note is autosaved every 10 seconds, and the bar at the bottom shows where it stands (**Autosave on / Saved 10:42 / Unsaved changes / Not saved**). **Save** writes it now. **Conclude** saves the note first and does not conclude if the save failed. Nothing floats over the page.
+
+**Quick Polish** rewrites what you typed in place (clearer wording, standard abbreviations) and keeps your note's structure as headings and lists; **Undo polish** brings the original back.
+
+![A polished note](/images/workbenches/native-phone-consult-notes-polished.png)
+
+The nurse and maternity notes use the same editor and the same buttons: **Nursing Workbench → a patient → Notes & I/O → Add note** (choose the note type, then write, polish or open the AI Scribe Studio), and **Maternity Workbench → an enrolment → Notes → Add note**. On those screens the phone's bottom row also shows the main sections and **More** the rest.
+
+![A nursing note](/images/workbenches/native-phone-nursing-note-sheet.png)
+
+![A maternity note](/images/workbenches/native-phone-maternity-note-sheet.png)
+
 ![Clinical story](/images/workbenches/native-desktop-clinical-story.png)
 
 ![Care plan](/images/workbenches/native-desktop-care-plan.png)
