@@ -19,14 +19,6 @@
     </a>
 </li>
 @endhasanyrole
-@hasanyrole('SUPERADMIN|ADMIN|SURGERY|DOCTOR|NURSE')
-<li class="nav-item {{ request()->routeIs('surgery-workbench.*') ? 'active' : '' }}">
-    <a class="nav-link {{ request()->routeIs('surgery-workbench.*') ? 'active' : '' }}" href="{{ route('surgery-workbench.index') }}" id="sidebar-surgery-workbench">
-        <i class="mdi mdi-scalpel menu-icon"></i>
-        <span class="menu-title">{{ __('sidebar.surgery_workbench') }}</span>
-    </a>
-</li>
-@endhasanyrole
 <li class="nav-item">
     <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-nurse-admissions" data-bs-target="#sidebar-nurse-admissions" aria-expanded="false" aria-controls="sidebar-nurse-admissions" id="sidebar-nurse-admissions-toggle">
         <i class="mdi mdi-hotel menu-icon"></i>

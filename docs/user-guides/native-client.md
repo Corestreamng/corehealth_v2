@@ -256,6 +256,24 @@ A patient record has sections grouped as *Clinical*, *Care*, *Orders & billing* 
 
 On **Medications**, **Add drug** charts a ward-stock or patient's-own drug that has no prescription: set a schedule or give a dose now; ward stock is taken from the chosen store and billed unless you switch billing off. **Requests** has the order sets (re-order from an earlier encounter, shared treatment plan templates, bundles). Picking a bundle shows its price and every item before you apply it; the **Bundles** list then lets you remove a single item (with a reason) or the whole bundle. **Billing** raises service, lab, imaging and consumable bills and shows the billing history. **Surgery Workbench** and **Manage Beds** are in the Nursing menu, and **Reports** is on the desk. End your shift to create the handover for the next nurse. Surgery and bed setup open on the web.
 
+## Surgery
+**Surgery** is its own section (it used to be a link inside Nursing). It shows for administrators, surgeons (the SURGERY role), doctors and nurses, like the web sidebar. Open **Surgery → Surgery Workbench**.
+
+![Surgery desk on a phone](/images/workbenches/native-phone-surgery-desk.png)
+
+- **Queue:** tap a stage tile (Requested, Scheduled, In progress, Completed, Cancelled); filter by **Emergency / Urgent / Routine**, **Surgical / Bedside**, consent, or a day (**Today**); find a patient's procedures by patient. Every procedure shows whether it is **Surgical** (theatre and surgical team) or **Bedside** (procedure room). The list loads a page at a time.
+- **A procedure** has the same sections as the web page: **Clinical** (theatre or room, safety checklist, team, notes), **Orders** (labs, imaging and medication ordered on it), **Services rendered** (billing kit), **Consent & Billing** (record consent or **sign the consent form** by drawing or typing, base fee, outcome) and **Files** (the signed form and anything you upload). The steps (Requested → Scheduled → In theatre/In progress → Completed) sit under the header and the **next action** (Schedule, Start, Complete, Reopen for administrators) is docked at the bottom. A bedside procedure uses its own words (procedure room, clinical team, Pre-Procedure and Procedure notes).
+
+![A bedside procedure](/images/workbenches/native-phone-procedure-bedside.png)
+
+### Booking a procedure (doctor, nurse, maternity)
+Choosing a procedure when you order opens the booking form. The form depends on the procedure's type, exactly like the web's:
+- **Surgical:** priority, date and time, theatre, fasting (NPO), anaesthesia plan, surgical consent, blood on standby, preparation notes, clinical indications.
+- **Bedside:** priority, date and time, procedure room, procedure pack, informed consent, post-procedure observation, preparation notes, clinical indications.
+The base fee follows the hospital's setting: billed at the standard tariff, or deferred to the procedure page when doctors may set procedure prices.
+
+![Booking a procedure](/images/workbenches/native-phone-procedure-booking.png)
+
 ## Maternity desk
 ![Maternity desk](/images/workbenches/native-desktop-maternity-desk.png)
 

@@ -105,7 +105,6 @@ class WorkspaceRegistry
                 'items' => [
                     ['key' => 'nursing.workbench', 'label' => 'sidebar.nursing_workbench', 'route' => 'nursing-workbench.index'],
                     ['key' => 'nursing.maternity', 'label' => 'sidebar.maternity_workbench', 'route' => 'maternity-workbench.index', 'guard' => ['roles' => ['SUPERADMIN', 'ADMIN', 'MATERNITY']]],
-                    ['key' => 'nursing.surgery', 'label' => 'sidebar.surgery_workbench', 'route' => 'surgery-workbench.index', 'guard' => ['roles' => ['SUPERADMIN', 'ADMIN', 'SURGERY', 'DOCTOR', 'NURSE']]],
                     ['key' => 'nursing.beds', 'label' => 'sidebar.manage_beds', 'route' => 'beds.index'],
                 ],
             ],
@@ -122,6 +121,13 @@ class WorkspaceRegistry
                 'guard' => ['roles' => ['SUPERADMIN', 'ADMIN', 'MATERNITY']],
                 'items' => [
                     ['key' => 'maternity.workbench', 'label' => 'sidebar.maternity_workbench', 'route' => 'maternity-workbench.index'],
+                ],
+            ],
+            [
+                'key' => 'surgery', 'partial' => '_nav-surgery', 'label' => 'sidebar.surgery', 'icon' => 'medical_services',
+                'guard' => ['roles' => ['SUPERADMIN', 'ADMIN', 'SURGERY', 'DOCTOR', 'NURSE']],
+                'items' => [
+                    ['key' => 'surgery.workbench', 'label' => 'sidebar.surgery_workbench', 'route' => 'surgery-workbench.index'],
                 ],
             ],
             [

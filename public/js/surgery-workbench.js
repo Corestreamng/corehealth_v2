@@ -13,6 +13,7 @@
                 let currentStatus = 'requested';
                 let currentPriority = '';
                 let currentConsent = '';
+                let currentType = ''; // '' | surgical | bedside
                 let currentDate = '';
                 let searchTerm = '';
                 let selectedPatientId = null;
@@ -69,6 +70,7 @@
                     if (currentStatus && currentStatus !== 'all') params.status = currentStatus;
                     if (currentPriority) params.priority = currentPriority;
                     if (currentConsent) params.consent = currentConsent;
+                    if (currentType) params.type = currentType;
                     if (currentDate) params.date = currentDate;
                     if (searchTerm) params.search = searchTerm;
                     if (selectedPatientId) params.patient_id = selectedPatientId;
@@ -159,6 +161,11 @@
                         `<span class="badge-consent ${consentClass}">${consentLabel(p.consent_status)}</span>` :
                         '';
 
+                    // Surgical (theatre, surgical team) or bedside (procedure room): the page, booking and checklist differ
+                    const typeBadge = p.is_surgical ?
+                        '<span class="badge-type surgical"><i class="mdi mdi-content-cut"></i> Surgical</span>' :
+                        '<span class="badge-type bedside"><i class="mdi mdi-stethoscope"></i> Bedside</span>';
+
                     const scheduledLine = p.scheduled_date ?
                         `<span class="proc-card-detail-item"><i class="mdi mdi-calendar"></i>${p.scheduled_date}${p.scheduled_time ? ' ' + p.scheduled_time : ''}</span>` :
                         '';
@@ -184,6 +191,7 @@
             </div>
             <div class="proc-card-badges">
                 <span class="badge-status ${p.procedure_status}">${statusLabel(p.procedure_status)}</span>
+                ${typeBadge}
                 ${priorityBadge}
                 ${consentBadge}
             </div>
@@ -332,6 +340,7 @@
                         if (currentStatus && currentStatus !== 'all') params.status = currentStatus;
                         if (currentPriority) params.priority = currentPriority;
                         if (currentConsent) params.consent = currentConsent;
+                        if (currentType) params.type = currentType;
                         if (currentDate) params.date = currentDate;
                         if (searchTerm) params.search = searchTerm;
                         $.get(ROUTES.queue, params, function(resp) {
@@ -339,6 +348,70 @@
                         });
                     }, 90000);
                 }
+
+                /* ── Controls (status tabs, filters, refresh, view, open) ── */
+                $(document).on('click', '.sw-stat-tab', function() {
+                    $('.sw-stat-tab').removeClass('active');
+                    $(this).addClass('active');
+                    currentStatus = $(this).data('status');
+                    loadQueue();
+                });
+
+                $('#filter-priority').on('change', function() {
+                    currentPriority = $(this).val();
+                    loadQueue();
+                });
+                $('#filter-consent').on('change', function() {
+                    currentConsent = $(this).val();
+                    loadQueue();
+                });
+                $('#filter-type').on('change', function() {
+                    currentType = $(this).val();
+                    loadQueue();
+                });
+                $('#filter-date').on('change', function() {
+                    currentDate = $(this).val();
+                    $('#btn-clear-date').toggle(!!currentDate);
+                    loadQueue();
+                });
+                $('#btn-clear-date').on('click', function() {
+                    currentDate = '';
+                    $('#filter-date').val('');
+                    $(this).hide();
+                    $('#btn-filter-today').css('font-weight', '');
+                    loadQueue();
+                });
+                $('#btn-filter-today').on('click', function() {
+                    const now = new Date();
+                    const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+                    currentDate = today;
+                    $('#filter-date').val(today);
+                    $('#btn-clear-date').show();
+                    $(this).css('font-weight', '700');
+                    loadQueue();
+                });
+                $('#btn-refresh-queue').on('click', function() {
+                    loadStats();
+                    loadQueue();
+                });
+                $('#btn-view-grid').on('click', function() {
+                    viewMode = 'grid';
+                    $('#btn-view-grid').addClass('active');
+                    $('#btn-view-list').removeClass('active');
+                    renderFromCache();
+                });
+                $('#btn-view-list').on('click', function() {
+                    viewMode = 'list';
+                    $('#btn-view-list').addClass('active');
+                    $('#btn-view-grid').removeClass('active');
+                    renderFromCache();
+                });
+                // Open the procedure on a card click (the "Open" button handles itself)
+                $(document).on('click', '.proc-card', function(e) {
+                    if ($(e.target).closest('.btn-open-proc').length) return;
+                    const url = $(this).data('show-url');
+                    if (url) window.open(url, '_blank');
+                });
 
                 /* ── Init ── */
                 $(function() {

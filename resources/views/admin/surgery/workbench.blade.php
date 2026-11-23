@@ -78,6 +78,13 @@
                 <option value="waived">Waived</option>
             </select>
 
+            <span class="sw-filter-label">Type:</span>
+            <select class="sw-filter-select" id="filter-type">
+                <option value="">All</option>
+                <option value="surgical">Surgical (theatre)</option>
+                <option value="bedside">Bedside (procedure room)</option>
+            </select>
+
             <span class="sw-filter-label">Date:</span>
             <button class="sw-btn-refresh" id="btn-filter-today" title="Show today's OR schedule" style="background:var(--surgery-primary);color:#fff;border-color:var(--surgery-primary);">
                 <i class="mdi mdi-calendar-today"></i> Today

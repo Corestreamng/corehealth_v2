@@ -70,6 +70,7 @@ class SurgeryWorkbenchController extends Controller
         $consent = $request->get('consent');
         $date = $request->get('date');
         $patientId = $request->get('patient_id');
+        $type = $request->get('type'); // surgical | bedside (ProcedureDefinition.is_surgical)
 
         $query = Procedure::with([
             'service',
@@ -100,6 +101,15 @@ class SurgeryWorkbenchController extends Controller
 
         if ($date) {
             $query->whereDate('scheduled_date', $date);
+        }
+
+        if ($type === 'surgical') {
+            $query->whereHas('procedureDefinition', fn ($q) => $q->where('is_surgical', true));
+        } elseif ($type === 'bedside') {
+            // the same rule the clinical context list uses: a definition that is not surgical, or none at all
+            $query->where(function ($q) {
+                $q->whereHas('procedureDefinition', fn ($inner) => $inner->where('is_surgical', false))->orWhereDoesntHave('procedureDefinition');
+            });
         }
 
         if ($patientId) {
@@ -135,10 +145,20 @@ class SurgeryWorkbenchController extends Controller
             });
         }
 
-        $procedures = $query->orderByRaw("FIELD(procedure_status, 'in_progress', 'scheduled', 'requested', 'completed', 'cancelled')")
+        // Opt-in paging (the staff app): `per_page` returns one page plus the total; without it the whole
+        // list is returned exactly as the web workbench expects.
+        $perPage = min(max((int) $request->get('per_page', 0), 0), 100);
+        $page = max((int) $request->get('page', 1), 1);
+        $total = $perPage > 0 ? (clone $query)->count() : null;
+
+        $query->orderByRaw("FIELD(procedure_status, 'in_progress', 'scheduled', 'requested', 'completed', 'cancelled')")
             ->orderByRaw("FIELD(priority, 'emergency', 'urgent', 'routine')")
             ->orderBy('scheduled_date', 'ASC')
-            ->get();
+            ->orderBy('id', 'ASC');
+        if ($perPage > 0) {
+            $query->forPage($page, $perPage);
+        }
+        $procedures = $query->get();
 
         $results = $procedures->map(function ($proc) {
             $patient = $proc->patient;
@@ -150,6 +170,7 @@ class SurgeryWorkbenchController extends Controller
                 'category' => optional(optional($proc->procedureDefinition)->procedureCategory)->category_name ?? '',
                 'procedure_status' => $proc->procedure_status,
                 'priority' => $proc->priority,
+                'is_surgical' => (bool) $proc->is_surgical,
                 'scheduled_date' => $proc->scheduled_date ? $proc->scheduled_date->format('d M Y') : null,
                 'scheduled_time' => $proc->scheduled_time,
                 'operating_room' => $proc->operating_room,
@@ -164,6 +185,10 @@ class SurgeryWorkbenchController extends Controller
                 'show_url' => route('patient-procedures.show', $proc->id),
             ];
         });
+
+        if ($perPage > 0) {
+            return response()->json(['data' => $results, 'total' => $total, 'page' => $page, 'per_page' => $perPage, 'last_page' => max(1, (int) ceil($total / $perPage)), 'has_more' => $page * $perPage < $total]);
+        }
 
         return response()->json(['data' => $results]);
     }

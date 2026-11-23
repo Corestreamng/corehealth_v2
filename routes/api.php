@@ -862,7 +862,7 @@ Route::prefix('mobile/maternity')->middleware(['auth:sanctum', 'native.workspace
 | Mobile Surgery Routes — wraps the web Surgery workbench
 |--------------------------------------------------------------------------
 */
-Route::prefix('mobile/surgery')->middleware(['auth:sanctum', 'native.workspace:nursing|doctor'])->group(function () {
+Route::prefix('mobile/surgery')->middleware(['auth:sanctum', 'native.workspace:surgery'])->group(function () {
     Route::get('queue', [\App\Http\Controllers\SurgeryWorkbenchController::class, 'getQueue']);
     Route::get('queue-counts', [\App\Http\Controllers\SurgeryWorkbenchController::class, 'getQueueCounts']);
     Route::get('search-patients', [\App\Http\Controllers\SurgeryWorkbenchController::class, 'searchPatients']);
@@ -870,6 +870,14 @@ Route::prefix('mobile/surgery')->middleware(['auth:sanctum', 'native.workspace:n
     // JSON detail of a procedure (the page itself is a Blade view)
     Route::get('procedure/{procedure}/details', [\App\Http\Controllers\EncounterController::class, 'getProcedureDetails'])->whereNumber('procedure');
     Route::get('procedure/{procedure}/checklist', [\App\Http\Controllers\API\MobileSurgeryController::class, 'checklist'])->whereNumber('procedure');
+    // Lists, flags and abilities the Blade page computes (team roles, note types, consent, what this user may do)
+    Route::get('procedure/{procedure}/meta', [\App\Http\Controllers\API\MobileSurgeryController::class, 'meta'])->whereNumber('procedure');
+    Route::get('staff-search', [\App\Http\Controllers\API\MobileSurgeryController::class, 'staffSearch']);
+    // Attachments (the web's session routes, for the app's token)
+    Route::get('procedure/{procedure}/attachments', [\App\Http\Controllers\API\MobileSurgeryController::class, 'attachments'])->whereNumber('procedure');
+    Route::post('procedure/{procedure}/attachments', [\App\Http\Controllers\PatientProcedureController::class, 'uploadAttachment'])->whereNumber('procedure');
+    Route::get('procedure/{procedure}/attachments/{attachment}/download', [\App\Http\Controllers\API\MobileSurgeryController::class, 'downloadAttachment'])->whereNumber('procedure')->whereNumber('attachment');
+    Route::delete('procedure/{procedure}/attachments/{attachment}', [\App\Http\Controllers\PatientProcedureController::class, 'deleteAttachment'])->whereNumber('procedure')->whereNumber('attachment');
     // The procedure page itself (PatientProcedureController): scheduling, team, notes, checklist, consent, items, outcome
     Route::get('procedure/{procedure}', [\App\Http\Controllers\PatientProcedureController::class, 'show'])->whereNumber('procedure');
     Route::put('procedure/{procedure}', [\App\Http\Controllers\PatientProcedureController::class, 'update'])->whereNumber('procedure');
@@ -900,6 +908,24 @@ Route::prefix('mobile/surgery')->middleware(['auth:sanctum', 'native.workspace:n
     Route::put('procedure/{procedure}/team/{member}', [\App\Http\Controllers\PatientProcedureController::class, 'updateTeamMember'])->whereNumber('procedure')->whereNumber('member');
     Route::delete('procedure/{procedure}/team/{member}', [\App\Http\Controllers\PatientProcedureController::class, 'removeTeamMember'])->whereNumber('procedure')->whereNumber('member');
     Route::get('procedure/{procedure}/{patient}/pending-bills', [\App\Http\Controllers\PatientProcedureController::class, 'getItems'])->whereNumber('procedure')->whereNumber('patient');
+
+    // "Services rendered" and the item pickers: the web's procedure page uses the nursing workbench's billing kit
+    // routes (any signed-in user). A surgery-only user is not a nurse, so the same methods are exposed here.
+    Route::get('context', [\App\Http\Controllers\API\MobileNursingController::class, 'context']);
+    Route::get('search-services', [\App\Http\Controllers\NursingWorkbenchController::class, 'searchServices']);
+    Route::get('search-products', [\App\Http\Controllers\NursingWorkbenchController::class, 'searchProducts']);
+    Route::get('product-batches', [\App\Http\Controllers\NursingWorkbenchController::class, 'getProductBatches']);
+    Route::get('batch-fulfillment', [\App\Http\Controllers\NursingWorkbenchController::class, 'getBatchFulfillmentSuggestion']);
+    Route::get('product-stock/{productId}/store/{storeId}', [\App\Http\Controllers\NursingWorkbenchController::class, 'getProductStockByStore'])->whereNumber('productId')->whereNumber('storeId');
+    Route::get('patient/{patientId}/pending-bills', [\App\Http\Controllers\NursingWorkbenchController::class, 'getPendingBills'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/service-requests', [\App\Http\Controllers\NursingWorkbenchController::class, 'getServiceRequests'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/service-requests-stats', [\App\Http\Controllers\NursingWorkbenchController::class, 'getServiceRequestsStats'])->whereNumber('patientId');
+    Route::get('products/{product}/packagings', [\App\Http\Controllers\ProductController::class, 'getPackagings'])->whereNumber('product');
+    Route::post('billing/add-lab-bill', [\App\Http\Controllers\NursingWorkbenchController::class, 'addLabBill']);
+    Route::post('billing/add-imaging-bill', [\App\Http\Controllers\NursingWorkbenchController::class, 'addImagingBill']);
+    Route::post('billing/add-service', [\App\Http\Controllers\NursingWorkbenchController::class, 'addServiceBill']);
+    Route::post('billing/add-consumable-bill', [\App\Http\Controllers\NursingWorkbenchController::class, 'addConsumableBill']);
+    Route::delete('billing/remove-bill/{id}', [\App\Http\Controllers\NursingWorkbenchController::class, 'removeBillItem'])->whereNumber('id');
 });
 
 /*
@@ -1054,13 +1080,13 @@ Route::prefix('mobile/nursing')->middleware(['auth:sanctum', 'native.workspace:n
 */
 // Shared patient search (web: admin/partials/patient_search_html + patient-search-widget.js → /patient-search)
 Route::get('mobile/patient-search', [\App\Http\Controllers\PatientSearchController::class, 'search'])
-    ->middleware(['auth:sanctum', 'native.workspace:reception|billing|pharmacy|nursing|maternity|lab|radiology|hmo|doctor']);
+    ->middleware(['auth:sanctum', 'native.workspace:reception|billing|pharmacy|nursing|maternity|surgery|lab|radiology|hmo|doctor']);
 
 /*
 | Shared Clinical Context (web: admin/partials/clinical_context_modal + public/js/clinical-context.js).
 | Same controller methods as the web modal, for every workbench that includes it.
 */
-Route::prefix('mobile/clinical-context')->middleware(['auth:sanctum', 'native.workspace:nursing|maternity|doctor|lab|radiology|pharmacy|hmo'])->group(function () {
+Route::prefix('mobile/clinical-context')->middleware(['auth:sanctum', 'native.workspace:nursing|maternity|surgery|doctor|lab|radiology|pharmacy|hmo'])->group(function () {
     Route::get('patient/{patientId}/vitals', [\App\Http\Controllers\ClinicalContextController::class, 'getVitals'])->whereNumber('patientId');
     Route::get('patient/{patientId}/notes', [\App\Http\Controllers\ClinicalContextController::class, 'getNotes'])->whereNumber('patientId');
     Route::get('patient/{patientId}/medications', [\App\Http\Controllers\ClinicalContextController::class, 'getMedications'])->whereNumber('patientId');
@@ -1074,7 +1100,7 @@ Route::prefix('mobile/clinical-context')->middleware(['auth:sanctum', 'native.wo
     Route::post('result-views', [ResultViewController::class, 'store']);
 });
 
-Route::prefix('mobile/shared')->middleware(['auth:sanctum', 'native.workspace:reception|doctor|billing|nursing|maternity|pharmacy'])->group(function () {
+Route::prefix('mobile/shared')->middleware(['auth:sanctum', 'native.workspace:reception|doctor|billing|nursing|maternity|surgery|pharmacy'])->group(function () {
     Route::get('hospital-contacts', [HospitalContactController::class, 'index']);
     Route::post('hospital-contacts', [HospitalContactController::class, 'store']);
     Route::put('hospital-contacts/{id}', [HospitalContactController::class, 'update']);

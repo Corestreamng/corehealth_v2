@@ -116,6 +116,7 @@ return [
     'store_governance' => 'Governança de Loja',
     'store_inventory' => 'Loja / Inventário',
     'store_workbench' => 'Área de Trabalho de Loja',
+    'surgery' => 'Cirurgia',
     'surgery_workbench' => 'Área de Trabalho de Cirurgia',
     'vaccine_schedule' => 'Calendário de Vacinas',
     'view_calender' => 'Ver Calendário',

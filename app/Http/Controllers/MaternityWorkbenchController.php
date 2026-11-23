@@ -3897,7 +3897,7 @@ class MaternityWorkbenchController extends Controller
             return response()->json([]);
         }
 
-        $query = Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product'])
+        $query = Service::with(['price', 'category', 'procedureDefinition.procedureCategory', 'bundleItems.service', 'bundleItems.product'])
             ->where('status', 1);
 
         if ($term) {
@@ -3960,6 +3960,10 @@ class MaternityWorkbenchController extends Controller
                     'mode' => $hmoData['mode'],
                 ] : null,
                 'is_combo' => false,
+                // procedures: the booking form differs for surgical and bedside procedures (ProcedureDefinition)
+                'is_surgical' => (bool) ($service->procedureDefinition?->is_surgical ?? false),
+                'estimated_duration_minutes' => $service->procedureDefinition?->estimated_duration_minutes,
+                'procedure_category' => $service->procedureDefinition?->procedureCategory?->name,
             ];
             $results[] = $result;
         }

@@ -903,7 +903,9 @@ if (typeof window.wbRoute !== 'function') {
                         const onClick = alreadyAdded ? '' : 'MaternityClinicalOrders.selectProcedureService(decodeURIComponent(\'' + itemData + '\'))';
                         $res.append(ClinicalOrdersKit.renderSearchResultItem({
                             id: item.id,
-                            category: item.category?.category_name || 'Procedure',
+                            category: (item.procedure_category || item.category?.category_name || 'Procedure') + (Boolean(item.is_surgical)
+                                ? ' <span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="fa fa-cut"></i> Surgical</span>'
+                                : ' <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fa fa-stethoscope"></i> Bedside</span>'),
                             name: name,
                             code: code,
                             price: price,

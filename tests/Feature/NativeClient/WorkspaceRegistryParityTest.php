@@ -60,7 +60,6 @@ class WorkspaceRegistryParityTest extends TestCase
     {
         $nested = [
             ['_nav-nursing', 'maternity-workbench.index', 'nursing.maternity'],
-            ['_nav-nursing', 'surgery-workbench.index', 'nursing.surgery'],
             ['_nav-doctor', 'maternity-workbench.index', 'doctor.maternity'],
         ];
         $items = collect(WorkspaceRegistry::sections())->flatMap(fn ($s) => $s['items'])->keyBy('key');

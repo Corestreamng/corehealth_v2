@@ -122,6 +122,7 @@ return [
     'store_governance' => 'Store Governance',
     'store_inventory' => 'Store / Inventory',
     'store_workbench' => 'Store Workbench',
+    'surgery' => 'Surgery',
     'surgery_workbench' => 'Surgery Workbench',
     'vaccine_schedule' => 'Vaccine Schedule',
     'view_calender' => 'View calender',

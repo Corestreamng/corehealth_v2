@@ -962,7 +962,7 @@ class PatientProcedureController extends Controller
         }
 
         $request->validate([
-            'role' => 'nullable|in:lead_surgeon,assistant_surgeon,anesthesiologist,scrub_nurse,circulating_nurse,other',
+            'role' => 'nullable|in:' . implode(',', array_keys(ProcedureTeamMember::ROLES)),
             'custom_role' => 'required_if:role,other|nullable|string|max:100',
             'is_lead' => 'nullable|boolean',
             'notes' => 'nullable|string|max:1000',
@@ -1033,7 +1033,8 @@ class PatientProcedureController extends Controller
      */
     public function getNotes(Procedure $procedure)
     {
-        $notes = $procedure->notes()->with(['createdBy', 'updatedBy'])->orderBy('created_at', 'desc')->get();
+        // procedure_notes has no updated_by column (or relation): the list used to fail for any procedure with notes
+        $notes = $procedure->notes()->with(['createdBy'])->orderBy('created_at', 'desc')->get();
 
         return response()->json([
             'success' => true,
@@ -1044,7 +1045,7 @@ class PatientProcedureController extends Controller
                     'title' => $note->title,
                     'content' => $note->content,
                     'created_by' => optional($note->createdBy)->name,
-                    'updated_by' => optional($note->updatedBy)->name,
+                    'updated_by' => null,
                     'created_at' => $note->created_at->format('d M Y H:i'),
                     'updated_at' => $note->updated_at->format('d M Y H:i'),
                 ];
@@ -1893,7 +1894,7 @@ class PatientProcedureController extends Controller
 
         $typeBadge = $procedure->is_surgical
             ? '<span class="badge badge-danger badge-sm ms-1"><i class="fa fa-cut"></i> Surgical</span>'
-            : '<span class="badge badge-info badge-sm ms-1"><i class="fa fa-stethoscope"></i> Clinical</span>';
+            : '<span class="badge badge-info badge-sm ms-1"><i class="fa fa-stethoscope"></i> Bedside</span>';
 
         // Billing status
         $billing = $procedure->productOrServiceRequest;

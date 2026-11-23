@@ -42,6 +42,9 @@
             {{-- Maternity --}}
             @include('admin.partials.sidebar._nav-maternity')
 
+            {{-- Surgery --}}
+            @include('admin.partials.sidebar._nav-surgery')
+
             {{-- Medical Laboratory --}}
             @include('admin.partials.sidebar._nav-lab')
 

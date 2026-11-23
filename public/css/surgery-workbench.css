@@ -810,3 +810,9 @@ body.has-workbench .sw-proc-grid {
     grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)) !important;
     gap: 0.65rem !important;
 }
+
+/* Surgical vs bedside type badge on a procedure card */
+.badge-type { display: inline-flex; align-items: center; gap: 3px; font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; letter-spacing: .02em; }
+.badge-type.surgical { background: #fdecea; color: #c62828; }
+.badge-type.bedside { background: #e3f2fd; color: #1565c0; }
+

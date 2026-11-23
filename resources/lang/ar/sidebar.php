@@ -116,6 +116,7 @@ return [
     'store_governance' => 'حوكمة المخزن',
     'store_inventory' => 'المخزن / المخزون',
     'store_workbench' => 'بيئة عمل المخزن',
+    'surgery' => 'الجراحة',
     'surgery_workbench' => 'بيئة عمل الجراحة',
     'vaccine_schedule' => 'جدول التطعيمات',
     'view_calender' => 'عرض التقويم',
