@@ -589,6 +589,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/billing-workbench/print-receipt', [\App\Http\Controllers\BillingWorkbenchController::class, 'printReceipt'])->name('billing.print-receipt');
         Route::post('/billing-workbench/print-invoice', [\App\Http\Controllers\BillingWorkbenchController::class, 'printInvoice'])->name('billing.print-invoice');
         Route::get('/billing-workbench/my-transactions', [\App\Http\Controllers\BillingWorkbenchController::class, 'getMyTransactions'])->name('billing.my-transactions');
+        Route::get('/billing-workbench/my-activity', [\App\Http\Controllers\ProcessedTransactionsController::class, 'activity'])->name('billing.my-activity');
         Route::get('/billing-workbench/manage-transactions', [\App\Http\Controllers\BillingWorkbenchController::class, 'getManageTransactions'])->name('billing.manage-transactions');
         Route::post('/billing-workbench/adjust-payment', [\App\Http\Controllers\BillingWorkbenchController::class, 'adjustPaymentMethod'])->name('billing.adjust-payment');
         Route::post('/billing-workbench/void-transaction', [\App\Http\Controllers\BillingWorkbenchController::class, 'voidTransaction'])->name('billing.void-transaction');

@@ -241,6 +241,66 @@ An enrolment opens with the **Overview**: gestation today, days to EDD, ANC visi
 
 Sections: **Overview**, **ANC** (visits), **History** (medical history and previous pregnancies), **Orders** (labs, imaging, procedures, prescriptions), **Delivery**, **Partograph**, **Babies** (tap a baby for details, growth and immunization), **Postnatal**, **Immunization** (the mother's schedule), **Vitals**, **Notes** and **Audit**. **Billing**, **Investigations**, the order sets and bundles work as in Nursing. **Clinical story** and the **AI Scribe Studio** (Antenatal, Labour & delivery, Postnatal, Neonatal) are on the enrolment too. The **ANC card** and **Road-to-health card** open in the app as text (printing the layout stays on the web); **Outreach** and **Reports** are on the desk.
 
+## Pharmacy desk
+Open **Pharmacy → Pharmacy Workbench**. It is built for a phone first: the bottom bar and the **More** drawer move you between workspaces, and everything below works one-handed.
+
+![Pharmacy desk on a phone](/images/workbenches/native-phone-pharmacy-desk.png)
+
+- **Store:** the chip at the top is the pharmacy store you dispense from (tap it to change when you have more than one).
+- **Queue:** tap a tile (**Emergency, All Pending, Unbilled, Ready to Dispense, HMO Items, Free-Form / External**) to list the patients waiting, emergencies first. Search by name or file number; the list loads a page at a time, so it stays fast with thousands waiting. Tap a patient to open them.
+- **More** holds the other actions: New Patient, Register Walk-in, Emergency Intake (with the same file number controls as everywhere), **My Transactions**, **Returns**, **Damages**, **Stock Reports**, **Summary Reports**, Contacts and Price List.
+
+### A patient's prescriptions
+Sections: **Prescriptions**, **New request**, **History**, **Patient**. The banner shows the allergy alerts and the Clinical Context.
+
+![A patient's prescriptions](/images/workbenches/native-phone-pharmacy-patient.png)
+
+Prescriptions are in the stages the web uses. Pick a stage, tick items and act on them:
+
+| Stage | Meaning | Actions on the selection |
+|---|---|---|
+| **To bill** | Prescribed, not billed | **Bill** (hands the charge to the cashier), print the slip, dismiss |
+| **On hold** | Billed, waiting for payment or HMO validation | Print the slip, dismiss |
+| **Ready** | Paid or HMO validated | **Dispense**, print the slip, dismiss |
+| **Free-form** | External items | **Mark dispensed**, dismiss |
+
+![Selecting items](/images/workbenches/native-phone-pharmacy-select.png)
+
+Each item's **⋮** menu has **Adjust price** (before billing, with a reason), **Adjust quantity** (with a reason), **Adapt to another product** (with a note), print slip and dismiss. **Dispense** opens a sheet: the store, whether each item is in stock there, and the batch (oldest expiry first, or choose one). Nothing is sent until you confirm, and the server re-checks stock.
+
+![Dispense sheet](/images/workbenches/native-phone-pharmacy-dispense.png)
+
+Your selection is only ever for this patient: it is cleared when you leave the patient, and after an action succeeds.
+
+**New request** searches the catalogue (stock and price shown) to add items with quantity and dose, adds an external item as free-form, or adds a bundle's product items after you confirm it. **History** lists what was dispensed, by whom and how it was paid.
+
+### Returns, damages and reports
+- **Returns:** the list with its status tiles; tap one for its details and accounting entry; **Approve**, **Reject** (reason of at least 10 characters) and **Process refund**, one at a time or ticked in bulk. **New return** finds the dispensed items, then sets quantity, condition and reason for each.
+- **Damages:** the same list and approvals; **Report damage** chooses the store, product and batch, the quantity and cost, the type, a reason and the date found.
+- **Stock Reports:** overview with stock status, by store, by category, valuation, expiring batches and low stock.
+- **Summary Reports:** a period with filters (pharmacist, doctor, HMO, category, payment type, patient), then overview, dispensing, revenue, stock, performance, HMO claims, top products, payments and the executive summary.
+
+![Returns](/images/workbenches/native-phone-pharmacy-returns.png)
+
+## Transactions Console (what I did, and what I was paid)
+Reception, Billing and Pharmacy open the same console from **My Transactions**. It has up to three views, shown by what you are allowed to do (the same rule as the web: reception staff need biller rights for the cash views):
+
+| View | Who sees it | What it shows |
+|---|---|---|
+| **What I did** | Everyone | The stages you work at in your workbench, with *your* counts for the period, and the items you did at each stage |
+| **Paid through me** | Billing, and Reception with biller rights | The web's *My Transactions*: money collected by method and bank, refunds, discounts, department and category totals, each receipt with its itemised breakdown |
+| **Manage** | The same | Details and receipt, adjust a payment method, void |
+
+**What I did** follows your workbench: **Reception** books; **Pharmacy** bills, dispenses and raises returns; **Lab** takes samples, enters results and, if the hospital requires approval and you are an approver, approves; **Imaging** bills, enters results and approves. The strip across the top shows each stage with its count. Tap a stage to list what you did there, or **All my work** for one row per item with a badge for everything you did to it. The second row asks *where is it now*: **Needs my attention** (for example a result you entered that was rejected), **Waiting on others** (unpaid, awaiting a sample, a result or approval) or **Done**. Department and category chips filter the list; tapping them in the totals does the same.
+
+![What I did, on a phone](/images/workbenches/native-phone-console-what-i-did.png)
+
+![The items](/images/workbenches/native-phone-console-items.png)
+
+On the web the same console is the **Transactions Console** modal; billers keep the web layout (**My Transactions**, **Manage Transactions**) and gain **What I did**.
+
+![What I did on the web](/images/workbenches/pharmacy-console-what-i-did.png)
+
 Everything the app saves goes through the same hospital system as the web, so billing, queues and records update for every department immediately.
 
 ---

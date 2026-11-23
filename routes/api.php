@@ -32,6 +32,7 @@ use App\Http\Controllers\PharmacyDamagesController;
 use App\Http\Controllers\PharmacyReportsController;
 use App\Http\Controllers\PharmacyReturnsController;
 use App\Http\Controllers\PharmacyWorkbenchController;
+use App\Http\Controllers\ProcessedTransactionsController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReceptionWorkbenchController;
 use App\Http\Controllers\ResultViewController;
@@ -544,7 +545,14 @@ Route::prefix('mobile/reception')->middleware(['auth:sanctum', 'native.workspace
 
     // Checkout and cashier (web: payment modal + My Transactions); payment gated like the web page
     Route::post('process-payment', [MobileReceptionController::class, 'processPayment']);
+    Route::get('my-activity', [ProcessedTransactionsController::class, 'activity']); // what I did, by stage
     Route::get('my-transactions', [BillingWorkbenchController::class, 'getMyTransactions']);
+    // The web transactions console's Manage tab and receipts, on the reception page too
+    Route::get('manage-transactions', [BillingWorkbenchController::class, 'getManageTransactions']);
+    Route::get('payment/{id}/details', [BillingWorkbenchController::class, 'getPaymentDetails']);
+    Route::post('print-receipt', [BillingWorkbenchController::class, 'printReceipt']);
+    Route::post('void-transaction', [BillingWorkbenchController::class, 'voidTransaction']);
+    Route::post('adjust-payment', [BillingWorkbenchController::class, 'adjustPaymentMethod']);
     Route::get('banks/active', [BankController::class, 'getActiveBanks']);
     Route::get('billing/staff-list', [BillingWorkbenchController::class, 'getStaffList']);
     Route::get('billing/organization-list', [BillingWorkbenchController::class, 'getOrganizationList']);
@@ -590,6 +598,7 @@ Route::prefix('mobile/billing')->middleware(['auth:sanctum', 'native.workspace:b
     Route::post('account-transaction', [BillingWorkbenchController::class, 'processAccountTransaction']);
     Route::post('void-transaction', [BillingWorkbenchController::class, 'voidTransaction']);
     Route::post('adjust-payment', [BillingWorkbenchController::class, 'adjustPaymentMethod']);
+    Route::get('my-activity', [ProcessedTransactionsController::class, 'activity']);
     Route::get('my-transactions', [BillingWorkbenchController::class, 'getMyTransactions']);
     Route::get('manage-transactions', [BillingWorkbenchController::class, 'getManageTransactions']);
 
@@ -653,9 +662,11 @@ Route::prefix('mobile/pharmacy')->middleware(['auth:sanctum', 'native.workspace:
     Route::post('dispense-with-batch', [PharmacyWorkbenchController::class, 'dispenseMedicationWithBatch']);
     Route::post('dispense-free-form', [PharmacyWorkbenchController::class, 'dispenseFreeFormMedication']);
     Route::get('my-transactions', [PharmacyWorkbenchController::class, 'getMyTransactions']);
+    Route::get('my-activity', [ProcessedTransactionsController::class, 'activity']); // what I did, by stage
 
     // Returns
     Route::get('returns', [PharmacyReturnsController::class, 'datatables']);
+    Route::get('returns/stats', [PharmacyReturnsController::class, 'index']); // send stats_only=1
     Route::get('returns/search-dispensed', [PharmacyReturnsController::class, 'searchDispensedItems']);
     Route::post('returns', [PharmacyReturnsController::class, 'store']);
     Route::post('returns/bulk-store', [PharmacyReturnsController::class, 'bulkStore']);
@@ -668,6 +679,7 @@ Route::prefix('mobile/pharmacy')->middleware(['auth:sanctum', 'native.workspace:
 
     // Damages
     Route::get('damages', [PharmacyDamagesController::class, 'datatables']);
+    Route::get('damages/stats', [PharmacyDamagesController::class, 'index']); // send stats_only=1
     Route::get('damages/search-products', [PharmacyDamagesController::class, 'searchProducts']);
     Route::get('damages/batches', [PharmacyDamagesController::class, 'getBatches']);
     Route::post('damages', [PharmacyDamagesController::class, 'store']);

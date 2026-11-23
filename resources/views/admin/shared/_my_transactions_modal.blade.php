@@ -11,6 +11,9 @@
         $sq->select('user_id')->from('payments')->whereNotNull('user_id');
     })->orderBy('surname')->get() : collect();
     $userHasPayments = auth()->check() ? \App\Models\Payment::where('user_id', auth()->id())->exists() : false;
+    // The cash views (paid through me, manage) follow the web's biller rule; everyone sees "What I did".
+    $canCollect = (auth()->check() && \App\Http\Controllers\ReceptionWorkbenchController::userCanBill(auth()->user())) || request()->is('ops-audit*');
+    $activityWorkbench = $activityWorkbench ?? (request()->is('billing*') ? 'billing' : (request()->is('pharmacy*') ? 'pharmacy' : (request()->is('lab*') ? 'lab' : (request()->is('imaging*') ? 'imaging' : 'reception'))));
 @endphp
 <div class="modal fade" id="myTransactionsModal" role="dialog" aria-labelledby="myTransactionsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
@@ -28,6 +31,7 @@
                 <!-- Navigation Tabs Bar inside Body -->
                 <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
                     <ul class="nav nav-pills" id="trans-console-tabs" role="tablist">
+                        @if($canCollect)
                         <li class="nav-item">
                             <button class="nav-link active py-1 px-3 font-13" id="tab-my-transactions" data-toggle="pill" data-bs-toggle="pill" data-target="#pane-my-transactions" data-bs-target="#pane-my-transactions" type="button" role="tab">
                                 <i class="mdi mdi-account-cash"></i> My Transactions
@@ -38,10 +42,17 @@
                                 <i class="mdi mdi-tune-vertical"></i> Manage Transactions
                             </button>
                         </li>
+                        @endif
+                        <li class="nav-item ms-2 ml-2">
+                            <button class="nav-link py-1 px-3 font-13 {{ $canCollect ? '' : 'active' }}" id="tab-my-activity" data-toggle="pill" data-bs-toggle="pill" data-target="#pane-my-activity" data-bs-target="#pane-my-activity" type="button" role="tab">
+                                <i class="mdi mdi-timeline-check-outline"></i> What I did
+                            </button>
+                        </li>
                     </ul>
                 </div>
 
                 <div class="tab-content" id="trans-console-tab-content">
+                    @if($canCollect)
                     <!-- ========================================== -->
                     <!-- TAB 1: MY TRANSACTIONS & ITEM BREAKDOWN   -->
                     <!-- ========================================== -->
@@ -372,6 +383,48 @@
                                     </tr>
                                 </thead>
                                 <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    @endif
+                    <!-- ========================================== -->
+                    <!-- WHAT I DID: my stages in this workbench    -->
+                    <!-- ========================================== -->
+                    <div class="tab-pane fade {{ $canCollect ? '' : 'show active' }}" id="pane-my-activity" role="tabpanel" data-workbench="{{ $activityWorkbench }}" data-can-collect="{{ $canCollect ? 1 : 0 }}">
+                        <!-- Pipeline: the stages of this workbench with my counts -->
+                        <div class="d-flex align-items-stretch gap-2 overflow-auto pb-2 mb-2" id="act-pipeline" aria-label="My stages"></div>
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Where is it now">
+                                <button type="button" class="btn btn-outline-secondary act-lens active" data-state="">Everything</button>
+                                <button type="button" class="btn btn-outline-danger act-lens" data-state="attention">Needs my attention <span class="badge bg-danger text-white ms-1" id="act-lens-attention">0</span></button>
+                                <button type="button" class="btn btn-outline-warning act-lens" data-state="waiting">Waiting on others <span class="badge bg-warning text-dark ms-1" id="act-lens-waiting">0</span></button>
+                                <button type="button" class="btn btn-outline-success act-lens" data-state="done">Done <span class="badge bg-success text-white ms-1" id="act-lens-done">0</span></button>
+                            </div>
+                            <span class="text-muted small" id="act-stage-hint"></span>
+                        </div>
+                        <div class="card bg-light border mb-3">
+                            <div class="card-body p-2">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-lg-2 col-md-4 col-6"><label class="small text-muted mb-0">From</label><input type="datetime-local" class="form-control form-control-sm" id="act-from"></div>
+                                    <div class="col-lg-2 col-md-4 col-6"><label class="small text-muted mb-0">To</label><input type="datetime-local" class="form-control form-control-sm" id="act-to"></div>
+                                    <div class="col-lg-2 col-md-4 col-6"><label class="small text-muted mb-0">Department</label><select class="form-select form-select-sm" id="act-department"><option value="">All departments</option></select></div>
+                                    <div class="col-lg-2 col-md-4 col-6"><label class="small text-muted mb-0">Item scope</label>
+                                        <select class="form-select form-select-sm" id="act-item-type"><option value="">All items</option><option value="product">Products only</option><option value="service">Services only</option><option value="custom">Custom / free-form</option></select></div>
+                                    <div class="col-lg-2 col-md-4 col-6"><label class="small text-muted mb-0">Category</label><select class="form-select form-select-sm" id="act-category"><option value="">All categories</option></select></div>
+                                    <div class="col-lg-2 col-md-4 col-6 d-flex gap-1">
+                                        <button class="btn btn-sm btn-primary flex-grow-1" id="act-load"><i class="mdi mdi-filter"></i> Load</button>
+                                        <button class="btn btn-sm btn-outline-secondary" id="act-today" title="Back to today">Today</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-2" id="act-kpis"></div>
+                        <div id="act-rollups" class="mb-2"></div>
+                        <div id="act-truncated" class="alert alert-info py-1 px-2 mb-2 font-11" style="display:none;"></div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped table-hover align-middle w-100 font-12" id="act-table">
+                                <thead class="table-light"><tr><th>When</th><th>Patient</th><th>Item</th><th>What I did</th><th>Where is it now</th><th class="text-end">Value</th></tr></thead>
+                                <tbody id="act-tbody"><tr><td colspan="6" class="text-center text-muted py-4">Loading…</td></tr></tbody>
                             </table>
                         </div>
                     </div>

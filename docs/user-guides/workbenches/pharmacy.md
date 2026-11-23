@@ -54,3 +54,12 @@ flowchart TD
 
 ## Developer Reference
 👉 **[Read the Pharmacy & Dispensary Developer API Reference](/developer/workbenches/pharmacy)**
+
+## What stays in your hands (the bag and the dispense cart)
+Items you tick are only ever for the patient on screen. They are cleared when you open another patient, when you leave the patient (queue, Returns, Damages, Stock or Summary reports), after a bill or dispense succeeds, and with **Esc** or **Clear**. The dispense cart is rebuilt from your ticked items every time it opens, so an earlier patient's items can never be dispensed by mistake. If someone else bills, pays, dispenses or dismisses an item while you hold it, it drops out of your selection at the next refresh and you are told.
+
+## My Transactions (the Transactions Console)
+**My Transactions** opens the shared Transactions Console. Everyone gets **What I did**: your stages here (**Billed by me**, **Dispensed by me**, **Returns I raised**) with your counts, a *where is it now* filter (needs my attention, waiting on others, done), department and category totals that filter the list, and one row per item. Staff with biller rights (for example an administrator) also see **My Transactions** (money collected) and **Manage Transactions**, exactly as on the Billing and Reception workbenches.
+
+![What I did](/images/workbenches/pharmacy-console-what-i-did.png)
+

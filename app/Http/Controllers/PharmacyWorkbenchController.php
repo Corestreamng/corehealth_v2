@@ -937,6 +937,31 @@ class PharmacyWorkbenchController extends Controller
             ->orderByDesc('last_created')
             ->get();
 
+        // Paged mode (the staff app): DataTables parameters in, a DataTables page out, so a queue of thousands
+        // is never sent whole. The web page sends no `length` and gets the full list as before.
+        $paged = $request->has('length');
+        $recordsTotal = $results->count();
+        $recordsFiltered = $recordsTotal;
+        if ($paged) {
+            $term = trim((string) data_get($request->input('search'), 'value', ''));
+            if ($term !== '') {
+                $matching = Patient::searchByTerm($term)->pluck('id');
+                $results = $results->whereIn('patient_id', $matching)->values();
+                $recordsFiltered = $results->count();
+            }
+            // Emergency patients first, then the most recent: the order of the full list.
+            $ids = $results->pluck('patient_id')->all();
+            $emergencyAll = collect();
+            if (!empty($ids)) {
+                $emergencyAll = DoctorQueue::where('priority', 'emergency')->whereIn('patient_id', $ids)->whereIn('status', [1, 2, 3])->pluck('patient_id')
+                    ->merge(AdmissionRequest::where('priority', 'emergency')->whereIn('patient_id', $ids)->where('discharged', 0)->pluck('patient_id'))->unique();
+            }
+            $results = $results->sortBy(fn ($r) => [$emergencyAll->contains($r->patient_id) ? 0 : 1, -strtotime((string) $r->last_created)])->values();
+            $start = max(0, (int) $request->input('start', 0));
+            $length = (int) $request->input('length', 25);
+            $results = $length > 0 ? $results->slice($start, $length)->values() : $results->slice($start)->values();
+        }
+
         // Preload patient data
         $patients = Patient::with('user', 'hmo')
             ->whereIn('id', $results->pluck('patient_id'))
@@ -979,6 +1004,15 @@ class PharmacyWorkbenchController extends Controller
 
         // Sort emergency patients first
         $queue = $queue->sortByDesc('is_emergency')->values();
+
+        if ($paged) {
+            return response()->json([
+                'draw' => (int) $request->input('draw', 1),
+                'recordsTotal' => $recordsTotal,
+                'recordsFiltered' => $recordsFiltered,
+                'data' => $queue->values(),
+            ]);
+        }
 
         return response()->json($queue->values());
     }

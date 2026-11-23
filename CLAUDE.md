@@ -71,6 +71,12 @@ Two Flutter apps, both following the same native standards (responsive, no dupli
 - **Single source of truth:** `App\Support\Navigation\WorkspaceRegistry` mirrors the sidebar. Change the sidebar and the registry together; `tests/Feature/NativeClient` enforces it. The app shows what `GET /api/mobile/staff/workspaces` returns.
 - **No duplication:** mobile routes (`routes/api.php`, `mobile/<workspace>`) point at the same controller methods the web uses. When output must be adapted, add a thin `API\Mobile<Workspace>Controller` that only adapts and calls the web controller or service. Never copy business rules into mobile controllers or Dart.
 - **Guards:** every mobile route group uses `native.workspace:<registry key>`. Only active staff pass, so patients cannot reach staff data.
+- **Mobile first, desktop second (every flow, web and native).** Design and build each flow for a **phone (390×844, one hand, the bottom navigation bar)** first; tablet and desktop only add columns, side panels and density. Check it at 390 wide before 900 and 1440.
+  - Phone nav contract (`AppShell`): a 60px bottom bar with the workspace's first three destinations plus **More**; tapping the active tab opens its sub-items; **More** opens the searchable all-workspaces drawer. Content must never sit behind that bar, so no screen adds its own bottom bar or a floating button over it.
+  - Touch targets are at least 44px and nothing needs hover. The primary action is reachable by thumb. No horizontal page scroll: tables fold into cards, filter rows scroll sideways or open a sheet, dialogs become bottom sheets (`showAdaptiveSheet`).
+  - Anything that can exceed about 100 rows is **paged by the server**, never sent whole (the pharmacy queue was 12,000 patients).
+  - Selection and bulk actions use one bar: the first action in full, the rest in a menu.
+  - The web follows the same rule for the pages it shares with the app (modals usable at 390px). A flow is done when it works at 390, 900 and 1440 widths; add a phone-size widget test (`test/workbenches_mobile_test.dart` pattern) for each new screen.
 - **Native parity rule (every workbench change):**
   - **New feature on any web workbench:** build it in the native client in the same change, in the matching workspace of the staff app. If patients should see the result, build it in the patient app too.
   - **Updating an existing feature:** check whether the native client has it. If it does, update it in step. If it doesn't and it's a **core feature**, add it natively now.

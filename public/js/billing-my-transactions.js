@@ -317,7 +317,7 @@
                     $(this).addClass('active');
                     $('#trans-console-tab-content .tab-pane').removeClass('show active');
                     $(target).addClass('show active');
-                    if (target === '#pane-manage-transactions') {
+                    if (target === '#pane-manage-transactions' && $('#manage-transactions-datatable').length) {
                         self.initManageDataTable();
                     }
                 }
@@ -371,6 +371,8 @@
 
         loadMyTransactions: function() {
             const self = this;
+            // A user without biller rights gets only the "What I did" view (no cash table in the modal).
+            if (!$('#my-transactions-table').length) return;
             if (myTransactionsDataTable) {
                 myTransactionsDataTable.ajax.reload();
             } else {

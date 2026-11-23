@@ -35,6 +35,8 @@ window.WORKBENCH_CONFIG = {
 <script src="{{ versioned_asset('js/pharmacy-stock.js') }}"></script>
 <script src="{{ versioned_asset('js/pharmacy-reports.js') }}"></script>
 <script src="{{ versioned_asset('js/pharmacy-core.js') }}"></script>
+<script src="{{ versioned_asset('js/billing-my-transactions.js') }}"></script>
+<script src="{{ versioned_asset('js/my-activity.js') }}"></script>
 @include('admin.partials.clinical_alerts_modal')
 @include('admin.partials.hospital_contacts_modal')
 @include('admin.partials.price_list_modal', ['products_only' => true])

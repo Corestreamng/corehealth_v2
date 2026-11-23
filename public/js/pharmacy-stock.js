@@ -171,6 +171,8 @@ function animateRefresh(buttonElement) {
 
 // Hide all overlapping views - call this before showing any new view
 function hideAllViews() {
+    // Leaving the patient screen (queue, returns, damages, reports, another patient): nothing stays in hand.
+    if (typeof window.pharmResetCarts === 'function') window.pharmResetCarts('left patient');
     $('#empty-state').hide();
     $('#queue-view').removeClass('active').hide();
     $('.queue-item').removeClass('active');
@@ -1224,6 +1226,11 @@ window.dismissPrescItemsConfirmed = function(type) {
 
 // Cart data structure
 let dispenseCart = [];
+// Empties the dispense cart without a toast (patient changed, screen left, action done, modal closed).
+window.pharmResetDispenseCart = function() {
+    dispenseCart = [];
+    try { renderDispenseCart(); } catch (e) { /* modal not drawn yet */ }
+};
 
 // Open the dispense cart modal
 function openDispenseCartModal() {
@@ -1253,6 +1260,9 @@ function addSelectedToCartAndOpen() {
         toastr.warning('Please select items to add to cart');
         return;
     }
+
+    // The cart is always rebuilt from what is bagged now: nothing carried over from an earlier open.
+    dispenseCart = [];
 
     let addedCount = 0;
     const addOne = function(item) {

@@ -53,6 +53,7 @@ window.WORKBENCH_CONFIG = {
 <script src="{{ versioned_asset('js/reception-queue.js') }}"></script>
 <script src="{{ versioned_asset('js/walkin-sales-shared.js') }}"></script>
 <script src="{{ versioned_asset('js/billing-my-transactions.js') }}"></script>
+<script src="{{ versioned_asset('js/my-activity.js') }}"></script>
 <script src="{{ versioned_asset('js/reception-registration.js') }}"></script>
 {{-- Admission Module JS --}}
 @include('admin.partials.admissions-module-js')

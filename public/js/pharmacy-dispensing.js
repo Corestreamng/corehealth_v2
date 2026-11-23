@@ -94,10 +94,10 @@ function initializeEventListeners() {
         }
     });
 
-    // Clear dispense selection when cart modal closes
+    // Closing the dispense cart without dispensing keeps what was ticked. The cart is rebuilt from the bag each
+    // time it opens, and a successful dispense empties everything (pharmOnTillActionSuccess).
     $('#dispenseCartModal').on('hidden.bs.modal', function() {
-        console.log('Dispense cart modal closed - clearing selection');
-        clearSelection('dispense');
+        if (typeof window.pharmResetDispenseCart === 'function') window.pharmResetDispenseCart();
     });
 
     // Navigation buttons
@@ -847,9 +847,7 @@ function loadPatient(patientId) {
 
     // Reset till bag + selection bookkeeping (new patient = new bag), so the
     // previous patient's items can never linger in the till.
-    pharmBagClearAll();
-    selectedItemsData = { billing: [], pending: [], dispense: [] };
-    prescBillingTotal = 0;
+    window.pharmResetCarts('new patient');
 
     // Hide all views to prevent stacking
     hideAllViews();
@@ -2351,6 +2349,52 @@ function pharmTillQtyStep(type, id, delta) {
     });
 }
 
+// ONE place that empties everything a pharmacist can have "in hand": the till bag, the ticked rows, the
+// totals, the sticky bars and floating cart, the cart-review modal and the separate dispense cart (which
+// holds request ids that are sent to the server). Called when the patient changes, when the patient screen
+// is left (queue, returns, damages, reports) and after bill / dispense. Never leaves the previous
+// patient's items behind to be dispensed for the next one.
+window.pharmResetCarts = function(reason) {
+    try { pharmBagClearAll(); } catch (e) { /* bag not ready */ }
+    selectedItemsData = { billing: [], pending: [], dispense: [] };
+    prescBillingTotal = 0;
+    try { ['billing', 'pending', 'dispense'].forEach(function(t) { if (checkedItemsState[t]) checkedItemsState[t].clear(); }); } catch (e) { /* state not ready */ }
+    $('.presc-billing-check, .presc-pending-check, .presc-dispense-check').prop('checked', false);
+    $('#select-all-billing, #select-all-pending, #select-all-dispense').prop('checked', false).prop('indeterminate', false);
+    $('.presc-card.selected').removeClass('selected');
+    try { hideAllStickyBars(); } catch (e) { /* no bars */ }
+    $('#floating-cart').hide();
+    try { renderTillBag(); } catch (e) { /* till not drawn */ }
+    if (typeof window.pharmResetDispenseCart === 'function') window.pharmResetDispenseCart();
+    try { $('#cartReviewModal').modal('hide'); } catch (e) { /* not open */ }
+};
+
+// After the server's list of this patient's items arrives: drop from the bag anything that no longer
+// exists or has moved to another stage (billed, paid, dispensed or dismissed by someone else), so the
+// bag only ever holds what can still be acted on, in the section it is bagged under.
+window.pharmPruneBag = function(items) {
+    var stageOf = {};
+    (items || []).forEach(function(it) {
+        var st = parseInt(it.status, 10);
+        stageOf[String(it.id)] = st === 1 ? 'billing' : (it.is_ready ? 'dispense' : 'pending');
+    });
+    var dropped = 0;
+    ['billing', 'pending', 'dispense'].forEach(function(type) {
+        Array.from(pharmBag[type].keys()).forEach(function(id) {
+            if (stageOf[id] !== type) { pharmBag[type].delete(id); dropped++; }
+        });
+    });
+    if (dropped) {
+        $('.presc-billing-check, .presc-pending-check, .presc-dispense-check').each(function() {
+            var $c = $(this);
+            var type = $c.hasClass('presc-billing-check') ? 'billing' : ($c.hasClass('presc-pending-check') ? 'pending' : 'dispense');
+            if ($c.prop('checked') && !pharmBag[type].has(String($c.data('id')))) $c.prop('checked', false);
+        });
+        try { updateStickyActionBar(); } catch (e) { /* bars not drawn */ }
+        if (window.toastr) toastr.info(dropped + ' item(s) changed since you selected them and were removed from the bag');
+    }
+};
+
 // Called after a till CTA action (bill / dispense) completes — keeps the cashier
 // in the flow: bag cleared, scan bar focused, next scan ready.
 window.pharmOnTillActionSuccess = function(type) {
@@ -2363,6 +2407,7 @@ window.pharmOnTillActionSuccess = function(type) {
         });
     } catch (e) { /* tables may be mid-redraw */ }
     try { $('#cartReviewModal').modal('hide'); } catch (e) { /* not open */ }
+    if (typeof window.pharmResetDispenseCart === 'function') window.pharmResetDispenseCart();
     pharmBeep('ok');
     if (type === 'billed' && $('#presc-pending-pane').length && !$('#presc-pending-pane').hasClass('active')
         && $('#presc-pending-tab').length) {
@@ -2652,6 +2697,7 @@ $(document).on('click', '.pharm-till-drag', function(e) {
 // Clear all selections across all tabs
 function clearAllSelections() {
     ['billing', 'pending', 'dispense'].forEach(type => clearSelection(type));
+    if (typeof window.pharmResetDispenseCart === 'function') window.pharmResetDispenseCart();
     $('#cartReviewModal').modal('hide');
 }
 
