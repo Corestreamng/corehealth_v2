@@ -12,6 +12,9 @@ use Illuminate\Http\Request;
 
 class SurgeryWorkbenchController extends Controller
 {
+    /** Completed and cancelled procedures stay on the desk this long (a patient's own list shows them all). */
+    private const RECENT_DAYS = 30;
+
     /**
      * Surgery Workbench index page.
      */
@@ -36,15 +39,17 @@ class SurgeryWorkbenchController extends Controller
      */
     public function getQueueCounts()
     {
+        // The tile counts what the list below it shows: open work (requested, scheduled, in progress) is counted
+        // whenever it was requested; completed and cancelled only within the recent window (RECENT_DAYS).
+        $recent = Carbon::today()->subDays(self::RECENT_DAYS);
         $counts = Procedure::selectRaw('procedure_status, count(*) as count')
-            ->whereIn('procedure_status', [
-                Procedure::STATUS_REQUESTED,
-                Procedure::STATUS_SCHEDULED,
-                Procedure::STATUS_IN_PROGRESS,
-                Procedure::STATUS_COMPLETED,
-                Procedure::STATUS_CANCELLED,
-            ])
-            ->whereDate('created_at', '>=', Carbon::today()->subDays(30))
+            ->where(function ($q) use ($recent) {
+                $q->whereIn('procedure_status', [Procedure::STATUS_REQUESTED, Procedure::STATUS_SCHEDULED, Procedure::STATUS_IN_PROGRESS])
+                    ->orWhere(function ($done) use ($recent) {
+                        $done->whereIn('procedure_status', [Procedure::STATUS_COMPLETED, Procedure::STATUS_CANCELLED])
+                            ->whereDate('updated_at', '>=', $recent);
+                    });
+            })
             ->groupBy('procedure_status')
             ->pluck('count', 'procedure_status')
             ->toArray();
@@ -83,6 +88,10 @@ class SurgeryWorkbenchController extends Controller
 
         if ($status && in_array($status, array_keys(Procedure::STATUSES))) {
             $query->where('procedure_status', $status);
+            // the same window the tile counts (a chosen patient or day shows everything)
+            if (in_array($status, [Procedure::STATUS_COMPLETED, Procedure::STATUS_CANCELLED], true) && !$patientId && !$date) {
+                $query->whereDate('updated_at', '>=', Carbon::today()->subDays(self::RECENT_DAYS));
+            }
         } else {
             // Default: exclude completed/cancelled older than 7 days
             $query->where(function ($q) {

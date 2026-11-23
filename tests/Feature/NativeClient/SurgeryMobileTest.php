@@ -148,4 +148,14 @@ class SurgeryMobileTest extends TestCase
         $this->assertNotEmpty($notes);
         $this->assertArrayHasKey('created_by', $notes[0]);
     }
+
+    public function test_each_tile_counts_what_its_list_shows()
+    {
+        Sanctum::actingAs($this->staff('SURGERY'));
+        $counts = $this->getJson('/api/mobile/surgery/queue-counts', self::AJAX)->assertOk()->json();
+        foreach (['requested', 'scheduled', 'in_progress', 'completed', 'cancelled'] as $status) {
+            $list = $this->getJson("/api/mobile/surgery/queue?status={$status}", self::AJAX)->assertOk()->json('data');
+            $this->assertSame($counts[$status], count($list), "The {$status} tile and its list differ.");
+        }
+    }
 }
