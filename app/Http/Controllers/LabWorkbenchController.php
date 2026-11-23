@@ -2153,11 +2153,11 @@ class LabWorkbenchController extends Controller
     /**
      * Get lab services for filter dropdown
      */
-    public function getLabServicesForFilter()
+    public function getLabServicesForFilter(Request $request)
     {
         try {
             // Get investigation/lab service category ID from app settings
-            $labCategoryId = appsettings('investigation_category_id') ?? appsettings()->investigation_service_cat_id ?? null;
+            $labCategoryId = appsettings('investigation_category_id', 2);
 
             $query = \App\Models\Service::orderBy('service_name');
 
@@ -2170,8 +2170,7 @@ class LabWorkbenchController extends Controller
                 });
             } elseif ($labCategoryId) {
                 $query->where(function ($sub) use ($labCategoryId) {
-                    $sub->where('service_cat_id', $labCategoryId)
-                        ->orWhere('category_id', $labCategoryId)
+                    $sub->where('category_id', $labCategoryId)
                         ->orWhereHas('category', fn ($c) => $c->where('id', $labCategoryId)->orWhere('category_name', 'like', '%lab%'))
                         ->orWhereHas('department', fn ($d) => $d->where('name', 'like', '%laborat%')->orWhere('name', 'like', '%haematolog%')->orWhere('name', 'like', '%patholog%'));
                 });

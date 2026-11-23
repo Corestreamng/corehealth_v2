@@ -859,6 +859,62 @@ Route::prefix('mobile/maternity')->middleware(['auth:sanctum', 'native.workspace
 
 /*
 |--------------------------------------------------------------------------
+| Mobile Laboratory Routes — the web Lab workbench's controller methods
+|--------------------------------------------------------------------------
+| Same LabWorkbenchController methods as routes/web.php (/lab-workbench/*): billing, samples and lab numbers,
+| results, approvals, dismiss/delete, new requests, reports. Who may enter or approve a result is decided inside
+| the controller (lab scientist always; requesting doctor/nurse by setting; approvers: unit/dept heads and admins).
+*/
+Route::prefix('mobile/lab')->middleware(['auth:sanctum', 'native.workspace:lab'])->group(function () {
+    $c = LabWorkbenchController::class;
+    Route::get('departments', [\App\Http\Controllers\API\MobileLabController::class, 'departments']);
+    Route::get('meta', [\App\Http\Controllers\API\MobileLabController::class, 'meta']);
+    Route::get('queue', [$c, 'getLabQueue']);
+    Route::get('queue-counts', [$c, 'getQueueCounts']);
+    Route::get('patient/{id}/requests', [$c, 'getPatientRequests'])->whereNumber('id');
+    Route::get('patient/{patient_id}/history', [EncounterController::class, 'investigationHistoryList'])->whereNumber('patient_id');
+    Route::post('record-billing', [$c, 'recordBilling']);
+    Route::post('claim-self-perform', [$c, 'claimSelfPerform']);
+    Route::post('collect-sample', [$c, 'collectSample']);
+    Route::get('next-lab-number', [$c, 'getNextLabNumber']);
+    Route::get('check-lab-number', [$c, 'checkLabNumberExists']);
+    Route::post('dismiss-requests', [$c, 'dismissRequests']);
+    Route::post('store-request', [$c, 'storeLabRequest']);
+    Route::post('apply-combo', [$c, 'labApplyCombo']);
+    Route::post('remove-bundle', [$c, 'removeBundle']);
+    Route::post('remove-bundle-item', [$c, 'removeBundleItem']);
+    Route::get('requests/{id}', [$c, 'getLabRequest'])->whereNumber('id');
+    Route::get('requests/{id}/attachments', [$c, 'getRequestAttachments'])->whereNumber('id');
+    Route::post('save-result', [$c, 'saveResult']);
+    Route::delete('requests/{id}', [$c, 'deleteRequest'])->whereNumber('id');
+    Route::post('requests/{id}/restore', [$c, 'restoreRequest'])->whereNumber('id');
+    Route::post('requests/{id}/dismiss', [$c, 'dismissRequest'])->whereNumber('id');
+    Route::post('requests/{id}/undismiss', [$c, 'undismissRequest'])->whereNumber('id');
+    Route::post('requests/{id}/dismiss-free-form', [$c, 'dismissFreeForm'])->whereNumber('id');
+    Route::get('deleted-requests/{patientId?}', [$c, 'getDeletedRequests'])->whereNumber('patientId');
+    Route::get('dismissed-requests/{patientId?}', [$c, 'getDismissedRequests'])->whereNumber('patientId');
+    Route::get('audit-logs', [$c, 'getAuditLogs']);
+    Route::get('approval-queue', [$c, 'getApprovalQueue']);
+    Route::get('approval-count', [$c, 'getApprovalCount']);
+    Route::get('approval/{id}', [$c, 'getApprovalDetail'])->whereNumber('id');
+    Route::post('approval/{id}/approve', [$c, 'approveResult'])->whereNumber('id');
+    Route::post('approval/{id}/reject', [$c, 'rejectResult'])->whereNumber('id');
+    Route::post('approval/{id}/reverse', [$c, 'reverseApproval'])->whereNumber('id');
+    Route::post('self-approve/{id}', [$c, 'selfApproveResult'])->whereNumber('id');
+    Route::get('reports', [$c, 'getLabReports']);
+    Route::get('statistics', [$c, 'getLabStatistics']);
+    Route::get('filter-doctors', [$c, 'getRequestingDoctors']);
+    Route::get('filter-hmos', [$c, 'getHmosForFilter']);
+    Route::get('filter-services', [$c, 'getLabServicesForFilter']);
+    Route::get('v1-result-templates', [\App\Http\Controllers\V1ResultTemplateController::class, 'getTemplates']);
+    Route::get('nhmis/service-mapping/{serviceId}', [NhmisWorkbenchController::class, 'getMappingForService']);
+    Route::post('result-views', [ResultViewController::class, 'store']);
+    Route::get('my-activity', [ProcessedTransactionsController::class, 'activity']); // what I did, by stage
+    Route::get('search-services', [\App\Http\Controllers\ServiceController::class, 'liveSearchServices']);
+});
+
+/*
+|--------------------------------------------------------------------------
 | Mobile Surgery Routes — wraps the web Surgery workbench
 |--------------------------------------------------------------------------
 */
@@ -1100,7 +1156,7 @@ Route::prefix('mobile/clinical-context')->middleware(['auth:sanctum', 'native.wo
     Route::post('result-views', [ResultViewController::class, 'store']);
 });
 
-Route::prefix('mobile/shared')->middleware(['auth:sanctum', 'native.workspace:reception|doctor|billing|nursing|maternity|surgery|pharmacy'])->group(function () {
+Route::prefix('mobile/shared')->middleware(['auth:sanctum', 'native.workspace:reception|doctor|billing|nursing|maternity|surgery|pharmacy|lab|radiology'])->group(function () {
     Route::get('hospital-contacts', [HospitalContactController::class, 'index']);
     Route::post('hospital-contacts', [HospitalContactController::class, 'store']);
     Route::put('hospital-contacts/{id}', [HospitalContactController::class, 'update']);
