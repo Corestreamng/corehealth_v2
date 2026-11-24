@@ -56,15 +56,16 @@ In the **Store** section, **Stores**, **Products** and **Categories** open one s
 - **Finance modules:** each sidebar item opens its group, with a bar to move inside it.
   - *Fixed assets, Capex:* register, edit, dispose or void an asset; request, approve, reject, ask for revision, start, record expenses and complete a project.
   - *Liabilities, Leases, Statutory remittances:* create, record payments (liabilities), modify or terminate (leases), submit, approve, pay or void (remittances); each record shows its schedule.
-  - *Budgets, Cash-flow forecast, Cost centres, KPIs:* see lines against actual, submit, approve, reject, unapprove and lock budgets; create and activate forecasts and apply patterns; manage cost centres; add KPIs and calculate them.
+  - *Budgets, Cash-flow forecast, Cost centres, KPIs:* create or edit a budget with its lines (account, amount, note), see lines against actual, submit, approve, reject, unapprove and lock it; create and activate forecasts, add items to a period and keep the recurring patterns; manage cost centres with their budgets and cost allocations; add and edit KPIs, calculate them, read their history and acknowledge alerts.
   - *Banks, Reconciliation, Opening balances:* start a reconciliation from the bank statement figures, add statement lines, select a ledger line and a statement line and **match** them, unmatch, mark outstanding, then submit for review, approve and finalise; set each account's opening balance for a fiscal year.
 ![A liability on a phone](/images/workbenches/native-phone-finance-liability.png)
 ![Bank reconciliation on a phone](/images/workbenches/native-phone-finance-reconciliation.png)
 ![Bank reconciliation on a desktop](/images/workbenches/native-desktop-finance-reconciliation.png)
 ![A budget on a tablet](/images/workbenches/native-tablet-finance-budget.png)
+![Budget editor on a phone](/images/workbenches/native-phone-finance-budget-editor.png)
 ![Financial KPIs on a phone](/images/workbenches/native-phone-finance-kpis.png)
 
 - **Saved filters and downloads:** on Reports, the menu saves the report with its dates, loads or deletes saved filters, and hands the PDF or Excel download to the browser.
-- **Still on the web:** creating a budget with its lines, forecast period items and patterns, cost-centre budgets and allocations, KPI editing and alerts, and importing a bank statement file.
+- **Still on the web:** importing a bank statement file.
 
 👉 Developer reference: [Native Clients](/developer/native-client)

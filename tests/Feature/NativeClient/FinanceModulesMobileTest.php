@@ -124,4 +124,59 @@ class FinanceModulesMobileTest extends TestCase
         $this->assertSame(200, $add->status(), substr($add->getContent(), 0, 400));
         $this->assertSame(1, count($this->getJson("/api/mobile/accounting/bank-reconciliation/{$rid}", self::AJAX)->json('unmatchedStatement')));
     }
+
+    public function test_a_budget_is_created_with_lines_edited_and_submitted()
+    {
+        $this->as('SUPERADMIN');
+        $year = DB::table('fiscal_years')->value('id');
+        $acct = DB::table('accounts')->where('is_active', 1)->value('id');
+        $body = fn (string $name, int $amount) => ['budget_name' => $name, 'fiscal_year_id' => $year, 'items' => [['account_id' => $acct, 'amount' => $amount, 'notes' => 'n']]];
+        $r = $this->postJson('/api/mobile/accounting/budgets', $body('Mobile budget', 500), self::AJAX);
+        $this->assertSame(200, $r->status(), substr($r->getContent(), 0, 300));
+        $bid = $r->json('id') ?? DB::table('budgets')->latest('id')->value('id');
+        $detail = $this->getJson("/api/mobile/accounting/budgets/{$bid}", self::AJAX)->assertOk()->json();
+        $this->assertSame('draft', $detail['budget']['status']);
+        $this->assertCount(1, $detail['budget']['items'], 'the record carries its lines for the editor');
+        $this->putJson("/api/mobile/accounting/budgets/{$bid}", $body('Mobile budget 2', 900), self::AJAX)->assertOk();
+        $this->assertSame('Mobile budget 2', DB::table('budgets')->where('id', $bid)->value('budget_name'));
+        $this->postJson("/api/mobile/accounting/budgets/{$bid}/submit", [], self::AJAX)->assertOk();
+        $this->assertSame('pending_approval', DB::table('budgets')->where('id', $bid)->value('status'));
+    }
+
+    public function test_forecast_items_patterns_cost_centre_budget_allocation_kpi_and_bank_edits()
+    {
+        $this->as('SUPERADMIN');
+        $period = DB::table('cash_flow_forecast_periods')->value('id');
+        if ($period) {
+            $this->postJson("/api/mobile/accounting/cash-flow-forecast/periods/{$period}/items", ['description' => 'Rent', 'type' => 'outflow', 'amount' => 100, 'category' => 'rent'], self::AJAX)->assertOk();
+        }
+        $p = $this->postJson('/api/mobile/accounting/cash-flow-forecast/patterns', ['pattern_name' => 'Mobile pattern', 'cash_flow_category' => 'operating_inflow', 'frequency' => 'monthly', 'expected_amount' => 1000], self::AJAX);
+        $this->assertSame(200, $p->status(), substr($p->getContent(), 0, 300));
+        $pid = DB::table('cash_flow_recurring_patterns')->where('pattern_name', 'Mobile pattern')->value('id');
+        $this->putJson("/api/mobile/accounting/cash-flow-forecast/patterns/{$pid}", ['pattern_name' => 'Mobile pattern', 'cash_flow_category' => 'operating_inflow', 'frequency' => 'weekly', 'expected_amount' => 1200], self::AJAX)->assertOk();
+        $this->postJson("/api/mobile/accounting/cash-flow-forecast/patterns/{$pid}/toggle", [], self::AJAX)->assertOk();
+        $this->deleteJson("/api/mobile/accounting/cash-flow-forecast/patterns/{$pid}", [], self::AJAX)->assertOk();
+
+        $cc = DB::table('cost_centers')->value('id');
+        $other = DB::table('cost_centers')->where('id', '!=', $cc)->value('id');
+        $year = DB::table('fiscal_years')->where('status', 'open')->value('id') ?? DB::table('fiscal_years')->value('id');
+        $acct = DB::table('accounts')->where('is_active', 1)->value('id');
+        $b = $this->postJson("/api/mobile/accounting/cost-centers/{$cc}/budgets", ['fiscal_year_id' => $year, 'account_id' => $acct, 'budget_amount' => 5000], self::AJAX);
+        $this->assertSame(200, $b->status(), substr($b->getContent(), 0, 300));
+        if ($other) {
+            $a = $this->postJson('/api/mobile/accounting/cost-centers/allocations', ['source_cost_center_id' => $cc, 'target_cost_center_id' => $other, 'amount' => 10, 'allocation_date' => now()->toDateString(), 'description' => 'Test', 'allocation_basis' => 'Manual'], self::AJAX);
+            $this->assertContains($a->status(), [200, 422], $a->getContent());
+        }
+
+        $kid = DB::table('financial_kpis')->value('id');
+        $k = $this->getJson("/api/mobile/accounting/kpi/{$kid}/edit", self::AJAX)->assertOk()->json('kpi');
+        $this->putJson("/api/mobile/accounting/kpi/{$kid}", ['kpi_code' => $k['kpi_code'], 'kpi_name' => $k['kpi_name'] . ' ', 'category' => $k['category'], 'calculation_formula' => $k['calculation_formula'], 'unit' => $k['unit'], 'frequency' => $k['frequency']], self::AJAX)->assertSuccessful();
+        $this->getJson('/api/mobile/accounting/kpi/alerts', self::AJAX)->assertOk()->assertJsonStructure(['alerts' => ['data'], 'summary']);
+
+        $this->postJson('/api/mobile/accounting/banks', ['name' => 'Mobile test bank'], self::AJAX)->assertSuccessful();
+        $bank = DB::table('banks')->where('name', 'Mobile test bank')->value('id');
+        $this->putJson("/api/mobile/accounting/banks/{$bank}", ['name' => 'Mobile test bank 2', 'account_number' => '123'], self::AJAX)->assertSuccessful();
+        $this->assertSame('123', DB::table('banks')->where('id', $bank)->value('account_number'));
+        $this->deleteJson("/api/mobile/accounting/banks/{$bank}", [], self::AJAX)->assertSuccessful();
+    }
 }

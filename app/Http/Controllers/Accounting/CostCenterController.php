@@ -641,7 +641,7 @@ class CostCenterController extends Controller
         if ($existing) {
             $existing->update([
                 'budgeted_amount' => $validated['budget_amount'],
-                'notes' => $validated['notes'],
+                'notes' => ($validated['notes'] ?? null),
             ]);
             $message = 'Budget updated successfully.';
         } else {
@@ -651,7 +651,7 @@ class CostCenterController extends Controller
                 'account_id' => $validated['account_id'],
                 'year' => $year,
                 'budgeted_amount' => $validated['budget_amount'],
-                'notes' => $validated['notes'],
+                'notes' => ($validated['notes'] ?? null),
             ]);
             $message = 'Budget created successfully.';
         }
@@ -673,7 +673,7 @@ class CostCenterController extends Controller
 
         $budget->update([
             'budgeted_amount' => $validated['budget_amount'],
-            'notes' => $validated['notes'],
+            'notes' => ($validated['notes'] ?? null),
         ]);
 
         return redirect()
