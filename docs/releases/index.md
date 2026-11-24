@@ -11,6 +11,9 @@ Every release tag is bound directly to documentation updates, PHPUnit verificati
 
 ## Recent Milestones
 
+- **[v2.6.0.73 — Finance Modules, Store Masters, Pharmacy Return Accounting & Synced Components](/releases/v2.6.0.73)**  
+  Books the cost of goods when stock is used, corrects pharmacy return accounting, brings the Store masters, Store Governance and the finance modules into the native staff app, and puts every changed component (staff app, patient app, SDKs, WeCare247) on the core tag.
+
 - **[v2.6.0.72 — HMO Tariff Overrides Engine & Coverage Mode Interception](/releases/v2.6.0.72)**  
   Resolves scope-matching omissions for global catalog overrides (`All Products` and `All Services`), establishes a 6-tier mathematical specificity hierarchy (Item > Category > All Items with HMO > Scheme), and introduces direct Coverage Mode Interception (`express`, `primary`, `secondary`, or `inherit`) across the database schema, models, controllers, calculation engine (`HmoHelper`), and administrative UI.
 

@@ -292,6 +292,7 @@ export default defineConfig({
           text: 'Release Milestones',
           items: [
             { text: 'Release History Index', link: '/releases/index' },
+            { text: 'v2.6.0.73 (Finance Modules, Store Masters & Return Accounting)', link: '/releases/v2.6.0.73' },
             { text: 'v2.6.0.72 (HMO Overrides & Coverage Mode)', link: '/releases/v2.6.0.72' },
             { text: 'v2.6.0.71 (Express Stock Intake & Tally Accounting)', link: '/releases/v2.6.0.71' },
             { text: 'v2.6.0.70 (Multi-Standard Interoperability & NDPA)', link: '/releases/v2.6.0.70' },

@@ -52,15 +52,15 @@ Before you finish, go through the table. For each component:
 
 5. **Tag core** (annotated) and push the commit and the tag.
 
-## 5. Current versions (before the first synced release)
+## 5. Current versions (as of v2.6.0.73)
 | Component | Version | Latest tag |
 |---|---|---|
-| core | — | v2.6.0.72 |
-| client_app | 1.0.0+1 | none |
-| patient_app | 1.0.0+1 | none |
-| js-scribe-sdk | 1.0.0 | none |
-| python-scribe-sdk | 1.0.0 | none |
-| wecare247 | 0.1.0 | v1.0 (+70 commits) |
-| Corehealth-Super-Admin | — | none |
+| core | 2.6.0.73 | v2.6.0.73 |
+| client_app | 1.1.0+2 | v2.6.0.73 |
+| patient_app | 1.1.0+2 | v2.6.0.73 |
+| js-scribe-sdk | 1.0.1 | v2.6.0.73 |
+| python-scribe-sdk | 1.0.1 | v2.6.0.73 |
+| wecare247 | 0.1.1 | v2.6.0.73 |
+| Corehealth-Super-Admin | n/a | none (unchanged) |
 
-The next release brings every changed component onto the core tag.
+Components that did not change in a release keep their last tag and are listed as unchanged in the release note.
