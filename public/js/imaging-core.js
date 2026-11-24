@@ -1496,14 +1496,26 @@ function recordBilling(requestIds) {
 
 // Note: No collectSample function for imaging - no sample collection stage
 
+// Bulk dismissal asks for the reason in the same modal as a single one, then calls sendBulkDismiss.
+let dismissBulkIds = null;
 function dismissRequests(requestIds, section) {
+    dismissBulkIds = requestIds;
+    dismissRequestId = null;
+    $('#dismiss_service_name').text(requestIds.length + ' selected request(s)');
+    $('#dismiss_request_id').text('');
+    $('#dismiss_reason').val('');
+    $('#dismissReasonModal').modal('show');
+}
+
+function sendBulkDismiss(requestIds, reason) {
     $.ajax({
         url: wbRoute('imaging.dismissRequests', '/imaging-workbench/dismiss-requests'),
         method: 'POST',
         data: {
             _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || ''),
             request_ids: requestIds,
-            patient_id: currentPatient
+            patient_id: currentPatient,
+            reason: reason
         },
         beforeSend: function() {
             toastr.info(`Dismissing ${requestIds.length} request(s)...`);
@@ -1754,6 +1766,7 @@ $('#deleteRequestForm').on('submit', function(e) {
 let dismissRequestId = null;
 
 function dismissSingleRequest(requestId, serviceName) {
+    dismissBulkIds = null;
     dismissRequestId = requestId;
     $('#dismiss_service_name').text(serviceName);
     $('#dismiss_request_id').text(requestId);
@@ -1768,6 +1781,13 @@ $('#dismissRequestForm').on('submit', function(e) {
 
     if (reason.length < 10) {
         toastr.warning('Please provide a detailed reason (minimum 10 characters)');
+        return;
+    }
+    if (dismissBulkIds) {
+        const ids = dismissBulkIds;
+        dismissBulkIds = null;
+        $('#dismissReasonModal').modal('hide');
+        sendBulkDismiss(ids, reason);
         return;
     }
     $.ajax({

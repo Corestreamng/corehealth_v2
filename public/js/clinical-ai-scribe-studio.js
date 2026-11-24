@@ -1647,7 +1647,12 @@ class ClinicalAiScribeStudio {
                             }
                         }
                     } else if (ord.order_type === 'REFERRAL' && encId) {
-                        await fetch(`/encounters/${encId}/referrals`, {
+                        if (!ord.target_clinic_id) {
+                            // An internal referral needs a clinic; none matched the specialty, so say so.
+                            toastr.warning('Referral "' + ord.item_name + '" was not sent: no clinic matches that specialty. Refer from the Referrals tab.');
+                            continue;
+                        }
+                        const refResp = await fetch(`/encounters/${encId}/referrals`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -1656,11 +1661,13 @@ class ClinicalAiScribeStudio {
                             },
                             body: JSON.stringify({
                                 referral_type: 'internal',
+                                target_clinic_id: ord.target_clinic_id,
                                 reason: ord.reason || ord.item_name,
                                 urgency: ord.urgency || 'routine',
                                 clinical_summary: ord.clinical_summary || ''
                             })
                         });
+                        if (!refResp.ok) { toastr.warning('Referral "' + ord.item_name + '" could not be sent.'); }
                     } else if (ord.order_type === 'FOLLOW_UP' && encId) {
                         const targetDate = new Date();
                         targetDate.setDate(targetDate.getDate() + (ord.duration_days || 7));

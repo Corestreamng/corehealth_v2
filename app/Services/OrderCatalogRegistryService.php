@@ -373,7 +373,8 @@ class OrderCatalogRegistryService
      * 3. Cross-category search
      * 4. Structured free-form classification with guaranteed proper queue routing
      */
-    public function matchCatalogItem(string $itemName, string $orderType = 'AUTO', ?string $serviceType = null): ?array
+    /** @param string|null $hint the order's dose text (e.g. "1g TID"), used to prefer the matching strength and form */
+    public function matchCatalogItem(string $itemName, string $orderType = 'AUTO', ?string $serviceType = null, ?string $hint = null): ?array
     {
         $cleanName = trim($itemName);
         if (empty($cleanName)) {
@@ -388,13 +389,15 @@ class OrderCatalogRegistryService
                 $words = preg_split('/\s+/', $cleanName);
                 $baseWord = $words[0] ?? $cleanName;
 
-                $product = Product::with(['category', 'price'])
+                $candidates = Product::with(['category', 'price'])
                     ->where('status', 1)
                     ->where(function ($q) use ($cleanName, $baseWord) {
                         $q->where('product_name', 'LIKE', "%{$cleanName}%")
                           ->orWhere('product_name', 'LIKE', "%{$baseWord}%");
                     })
-                    ->first();
+                    ->limit(60)
+                    ->get();
+                $product = $this->bestProductMatch($candidates, $cleanName, $baseWord, $hint);
 
                 if ($product) {
                     return [
@@ -522,6 +525,114 @@ class OrderCatalogRegistryService
     /**
      * Resolve service taxonomy (service_type, category_id, route_target) from item name or hint.
      */
+    /**
+     * The best catalog product for a drug name. The first row that merely contained the first word used to win, so
+     * "Paracetamol" became a tramadol combination and "Metformin" a glimepiride combination. Rank instead: the exact
+     * name, then names that start with it, then single-ingredient products over combinations (unless a combination was
+     * asked for), preferring a matching strength.
+     */
+    protected function bestProductMatch($candidates, string $cleanName, string $baseWord, ?string $hint = null): ?Product
+    {
+        $tidy = fn (string $v) => trim(preg_replace('/\s*([+\/])\s*/', '$1', preg_replace('/\s+/', ' ', mb_strtolower($v))));
+        $clean = $tidy($cleanName);
+        $base = mb_strtolower($baseWord);
+        $wantsCombo = str_contains($clean, '+') || str_contains($clean, '/');
+        preg_match_all('/\d+(?:\.\d+)?\s*(?:mg|g|mcg|ml|iu)/i', $clean, $m);
+        $strengths = array_map(fn ($x) => preg_replace('/\s+/', '', mb_strtolower($x)), $m[0] ?? []);
+        // the dose text names the strength when the item name does not ("1g" is also "1000mg")
+        $hintText = mb_strtolower((string) $hint);
+        if (empty($strengths) && $hintText !== '') {
+            preg_match_all('/(\d+(?:\.\d+)?)\s*(mg|g|mcg|ml|iu)\b/i', $hintText, $hm, PREG_SET_ORDER);
+            foreach ($hm as $x) {
+                $strengths[] = $x[1] . strtolower($x[2]);
+                if (strtolower($x[2]) === 'g') {
+                    $strengths[] = ((int) round(((float) $x[1]) * 1000)) . 'mg';
+                    $strengths[] = $x[1] . 'gm';
+                }
+            }
+        }
+        // oral tablets and capsules unless a syrup, injection or topical form was asked for
+        $askedLiquid = (bool) preg_match('/syr|susp|inj|drop|cream|oint|gel|infus|supp|sol/', $clean . ' ' . $hintText);
+
+        $best = null;
+        $bestScore = -INF;
+        foreach ($candidates as $p) {
+            $name = $tidy($p->product_name);
+            $score = 0;
+            if ($name === $clean) {
+                $score += 100;
+            } elseif (str_starts_with($name, $clean)) {
+                $score += 80;
+            } elseif (str_contains($name, $clean)) {
+                $score += 50;
+            }
+            if (str_starts_with($name, $base)) {
+                $score += 30;
+            } elseif (str_contains($name, $base)) {
+                $score += 5;
+            }
+            $isCombo = (bool) preg_match('/[+\/]/', $name);
+            if ($isCombo && !$wantsCombo) {
+                $score -= 40;
+            }
+            $compact = preg_replace('/\s+/', '', $name);
+            foreach ($strengths as $st) {
+                if (str_contains($compact, $st)) {
+                    $score += 25;
+                }
+            }
+            if (!$askedLiquid && preg_match('/\b(syr|syrup|susp|inj|injection|drops?|cream|oint|ointment|gel|infusion|supp|suppository|solution)\b|\bsyr\./', $name)) {
+                $score -= 35;
+            }
+            if (!$askedLiquid && preg_match('/\b(tab|tabs|tablet|cap|caps|capsule)\b|\btab\./', $name)) {
+                $score += 10;
+            }
+            // a shorter name is the plainer product
+            $score -= strlen($name) / 100;
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $best = $p;
+            }
+        }
+
+        return $best;
+    }
+
+    /**
+     * The clinic an internal referral goes to, from the specialty the note names ("Ophthalmology Consultation" ->
+     * the Ophthalmology clinic). The referral endpoint requires a clinic, and the studios used to send none, so
+     * every scribe referral was rejected. Null when nothing matches; the studio then says so instead of failing quietly.
+     */
+    protected function resolveClinic(array $texts): ?\App\Models\Clinic
+    {
+        $norm = fn (string $v) => str_replace(['ae', 'oe'], 'e', mb_strtolower($v));
+        $haystack = $norm(implode(' ', array_filter($texts)));
+        if (trim($haystack) === '') {
+            return null;
+        }
+        $words = array_filter(preg_split('/[^a-z]+/', $haystack), fn ($w) => strlen($w) >= 5 && !in_array($w, ['consultation', 'clinic', 'review', 'specialist', 'referral', 'department']));
+        $best = null;
+        $bestScore = 0;
+        foreach (\App\Models\Clinic::all(['id', 'name']) as $clinic) {
+            $name = $norm($clinic->name);
+            $score = 0;
+            if (strlen($name) >= 3 && str_contains($haystack, $name)) {
+                $score += 10;
+            }
+            foreach ($words as $w) {
+                if (str_contains($name, substr($w, 0, 7))) {
+                    $score += 5;
+                }
+            }
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $best = $clinic;
+            }
+        }
+
+        return $best;
+    }
+
     protected function resolveServiceTaxonomy(string $cleanName, ?string $serviceType = null): array
     {
         $categoryIds = $this->getAppSettingCategoryIds();
@@ -657,6 +768,8 @@ class OrderCatalogRegistryService
                     'item_name' => $name,
                     'item_code' => null,
                     'specialization' => $order['specialization'] ?? $order['target_specialization'] ?? 'Specialist Consultation',
+                    'target_clinic_id' => ($clinic = $this->resolveClinic([$order['specialization'] ?? '', $order['target_specialization'] ?? '', $name])) ? $clinic->id : null,
+                    'target_clinic_name' => $clinic?->name,
                     'urgency' => in_array(strtolower($order['urgency'] ?? ''), ['routine', 'urgent', 'emergency']) ? strtolower($order['urgency']) : 'routine',
                     'reason' => $order['reason'] ?? $order['indication'] ?? $name,
                     'clinical_summary' => $order['clinical_summary'] ?? '',
@@ -744,7 +857,7 @@ class OrderCatalogRegistryService
 
             // Fallback to deterministic name & acronym search if no valid catalog_id match
             if (!$matched) {
-                $matched = $this->matchCatalogItem($name, $suggestedType, $llmServiceType);
+                $matched = $this->matchCatalogItem($name, $suggestedType, $llmServiceType, trim(($order['dosage'] ?? '') . ' ' . ($order['route'] ?? '')));
             }
 
             if ($matched) {

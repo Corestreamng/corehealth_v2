@@ -60,7 +60,7 @@ class LlmController extends Controller
                 if (isset($cachedData['hash']) && $cachedData['hash'] === $contextHash) {
                     return response()->json([
                         'success' => true,
-                        'summary_text' => $cachedData['summary_text'],
+                        'summary_text' => $this->fillPatientPlaceholders($cachedData['summary_text'], (int) $request->patient_id),
                         'model_used' => $cachedData['model_used'] ?? 'cached',
                         'provider' => $cachedData['provider'] ?? 'cached',
                         'cached' => true,
@@ -73,8 +73,12 @@ class LlmController extends Controller
                 'temperature' => 0.2, // Low temp for clinical facts
                 'source' => 'patient_summary',
                 'user_id' => Auth::id() ?: 1,
-                'patient_id' => $patient->id ?? null,
+                'patient_id' => (int) $request->patient_id,
             ]);
+
+            // The model never sees the patient's identity (privacy), so it writes a placeholder in the heading;
+            // fill it in here, locally, with the real name and file number.
+            $response['content'] = $this->fillPatientPlaceholders($response['content'], (int) $request->patient_id);
 
             $summaryData = [
                 'hash' => $contextHash,
@@ -536,6 +540,22 @@ class LlmController extends Controller
 
             return response()->json(['success' => false, 'message' => 'Failed to convert format: ' . $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Replace "[Patient Name/ID]"-style placeholders in an AI summary with the patient's name and file number.
+     */
+    protected function fillPatientPlaceholders(string $text, int $patientId): string
+    {
+        $patient = \App\Models\Patient::with('user')->find($patientId);
+        if (!$patient || !$patient->user) {
+            return $text;
+        }
+        $u = $patient->user;
+        $name = trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : ''));
+        $label = $name . ($patient->file_no ? ' (' . $patient->file_no . ')' : '');
+
+        return preg_replace(['/\[\s*Patient\s*Name\s*\/\s*ID\s*\]/i', '/\[\s*Patient\s*Name\s*\]/i', '/\[\s*Patient\s*ID\s*\]/i'], [$label, $name, (string) $patient->file_no], $text);
     }
 
     /**

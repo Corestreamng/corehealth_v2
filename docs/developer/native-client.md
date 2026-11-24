@@ -171,3 +171,10 @@ vendor/bin/phpunit tests/Feature/NativeClient          # registry ↔ sidebar pa
 - **App:** `core/widgets/dismissed_browser.dart` (`DismissedBrowser`), `PharmacyDismissedScreen`, `LabTrashScreen(kind)`.
 - **Tests:** `tests/Feature/Trash/DismissedPipelineTest`, `ImagingMobileTest` (approval chain, attachments), `test/dismissed_browser_test.dart`.
 
+
+## AI Scribe orders (grounding and dispatch)
+- **Dispatch** (web `clinical-ai-scribe-studio.js` and the app's `ScribeTarget.doctor`) uses the encounter routes: `add-prescription`, `add-lab`, `add-imaging`, `add-procedure`, `referrals`, `schedule-followup`. Checked live end to end against a real encounter.
+- **Drug matching** (`OrderCatalogRegistryService::bestProductMatch`): ranks exact and starts-with names, prefers single ingredients over combinations (unless one was asked for), the strength named in the dose text (1 g = 1000 mg) and tablets/capsules over liquids. It used to take the first row containing the first word ("Paracetamol" became a tramadol combination, "Metformin" a glimepiride one). Also serves the Scribe SDK.
+- **Referrals** need a clinic: grounding adds `target_clinic_id`/`target_clinic_name` from the specialty; without a match the studios report "not sent" (web and app) instead of the endpoint rejecting it silently.
+- **Patient summary:** the model never receives the patient's identity, so its heading placeholder (`[Patient Name/ID]`) is filled locally with the real name and file number.
+- **Tests:** `tests/Feature/Llm/ScribeOrderGroundingTest`.
