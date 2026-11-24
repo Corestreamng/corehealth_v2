@@ -70,6 +70,12 @@ class JournalEntry extends Model implements Auditable
     public const STATUS_REJECTED = 'rejected';  // Note: May need migration if not in DB
     public const STATUS_REVERSED = 'reversed';
 
+    /**
+     * Statuses whose lines count in the ledger. A reversed entry stays in: its reversing entry is posted and cancels it,
+     * so dropping the original (as the balance queries used to) subtracted the amount twice.
+     */
+    public const LEDGER_STATUSES = [self::STATUS_POSTED, self::STATUS_REVERSED];
+
     // Entry type constants
     public const TYPE_AUTO = 'auto';
     public const TYPE_AUTOMATED = 'auto';  // Alias

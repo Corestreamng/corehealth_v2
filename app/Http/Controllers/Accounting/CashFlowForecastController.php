@@ -134,13 +134,13 @@ class CashFlowForecastController extends Controller
             ->pluck('id');
 
         $debits = JournalEntryLine::whereHas('journalEntry', function ($q) {
-            $q->where('status', 'posted');
+            $q->whereIn('status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES);
         })
         ->whereIn('account_id', $cashAccounts)
         ->sum('debit');
 
         $credits = JournalEntryLine::whereHas('journalEntry', function ($q) {
-            $q->where('status', 'posted');
+            $q->whereIn('status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES);
         })
         ->whereIn('account_id', $cashAccounts)
         ->sum('credit');

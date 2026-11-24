@@ -98,7 +98,7 @@ class AccountSubAccount extends Model
             ->with(['journalEntry', 'account'])
             ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
             ->where('journal_entry_lines.sub_account_id', $this->id)
-            ->where('journal_entries.status', JournalEntry::STATUS_POSTED)
+            ->whereIn('journal_entries.status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
             ->select('journal_entry_lines.*');
 
         if ($fromDate) {

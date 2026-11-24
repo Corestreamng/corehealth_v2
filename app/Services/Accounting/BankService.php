@@ -3,7 +3,6 @@
 namespace App\Services\Accounting;
 
 use App\Models\Accounting\Account;
-use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
 use App\Models\Bank;
 use Illuminate\Support\Collection;
@@ -166,7 +165,7 @@ class BankService
             ->with(['journalEntry', 'subAccount'])
             ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
             ->where('journal_entry_lines.account_id', $bank->account_id)
-            ->where('journal_entries.status', JournalEntry::STATUS_POSTED)
+            ->whereIn('journal_entries.status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
             ->select('journal_entry_lines.*')
             ->orderBy('journal_entries.entry_date', 'desc')
             ->orderBy('journal_entries.id', 'desc');
@@ -203,7 +202,7 @@ class BankService
             ->with(['journalEntry', 'account'])
             ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
             ->whereIn('journal_entry_lines.account_id', $bankAccountIds)
-            ->where('journal_entries.status', JournalEntry::STATUS_POSTED)
+            ->whereIn('journal_entries.status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
             ->where('journal_entries.entry_date', '>=', now()->subDays($days)->toDateString())
             ->select('journal_entry_lines.*')
             ->orderBy('journal_entries.entry_date', 'desc')
@@ -235,7 +234,7 @@ class BankService
         $transactions = JournalEntryLine::query()
             ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
             ->where('journal_entry_lines.account_id', $bank->account_id)
-            ->where('journal_entries.status', JournalEntry::STATUS_POSTED)
+            ->whereIn('journal_entries.status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
             ->whereBetween('journal_entries.entry_date', [$fromDate, $toDate])
             ->select([
                 DB::raw('COALESCE(SUM(journal_entry_lines.debit), 0) as total_debit'),

@@ -60,7 +60,7 @@ class BudgetController extends Controller
 
         // YTD actual expenses (from JE lines)
         $ytdActual = JournalEntryLine::whereHas('journalEntry', function ($q) use ($currentYear) {
-            $q->where('status', 'posted')
+            $q->whereIn('status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
               ->whereYear('entry_date', $currentYear);
         })
         ->whereHas('account.accountGroup.accountClass', function ($q) {
@@ -73,7 +73,7 @@ class BudgetController extends Controller
 
         // MTD actual
         $mtdActual = JournalEntryLine::whereHas('journalEntry', function ($q) use ($currentYear, $currentMonth) {
-            $q->where('status', 'posted')
+            $q->whereIn('status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
               ->whereYear('entry_date', $currentYear)
               ->whereMonth('entry_date', $currentMonth);
         })
@@ -358,7 +358,7 @@ class BudgetController extends Controller
         // Get actual spending per line item
         $itemsWithActuals = $budget->items->map(function ($item) use ($budget) {
             $actual = JournalEntryLine::whereHas('journalEntry', function ($q) use ($budget) {
-                $q->where('status', 'posted')
+                $q->whereIn('status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
                   ->whereYear('entry_date', $budget->year);
             })
             ->where('account_id', $item->account_id)
@@ -389,7 +389,7 @@ class BudgetController extends Controller
         $months = [];
         for ($m = 1; $m <= 12; $m++) {
             $actual = JournalEntryLine::whereHas('journalEntry', function ($q) use ($year, $m) {
-                $q->where('status', 'posted')
+                $q->whereIn('status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
                   ->whereYear('entry_date', $year)
                   ->whereMonth('entry_date', $m);
             })
@@ -639,7 +639,7 @@ class BudgetController extends Controller
             $totalActual = 0;
             $items = $budget->items->map(function ($item) use ($budget, &$totalActual) {
                 $actual = JournalEntryLine::whereHas('journalEntry', function ($q) use ($budget) {
-                    $q->where('status', 'posted')
+                    $q->whereIn('status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
                       ->whereYear('entry_date', $budget->year);
                 })
                 ->where('account_id', $item->account_id)
@@ -718,7 +718,7 @@ class BudgetController extends Controller
             $totalActual = 0;
             $items = $budget->items->map(function ($item) use ($budget, &$totalActual) {
                 $actual = JournalEntryLine::whereHas('journalEntry', function ($q) use ($budget) {
-                    $q->where('status', 'posted')
+                    $q->whereIn('status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
                       ->whereYear('entry_date', $budget->year);
                 })
                 ->where('account_id', $item->account_id)
@@ -795,7 +795,7 @@ class BudgetController extends Controller
             $actualSpending = 0;
             foreach ($budget->items as $item) {
                 $actual = JournalEntryLine::whereHas('journalEntry', function ($q) use ($budget) {
-                    $q->where('status', 'posted')
+                    $q->whereIn('status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
                       ->whereYear('entry_date', $budget->year);
                 })
                 ->where('account_id', $item->account_id)
@@ -828,7 +828,7 @@ class BudgetController extends Controller
                 $actualSpending = 0;
                 foreach ($budget->items as $item) {
                     $actual = JournalEntryLine::whereHas('journalEntry', function ($q) use ($budget) {
-                        $q->where('status', 'posted')
+                        $q->whereIn('status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
                           ->whereYear('entry_date', $budget->year);
                     })
                     ->where('account_id', $item->account_id)

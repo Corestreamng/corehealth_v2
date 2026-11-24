@@ -211,7 +211,7 @@ class ChartOfAccountsController extends Controller
             'subAccounts',
             'journalLines' => function ($query) {
                 $query->with(['journalEntry' => function ($q) {
-                    $q->where('status', 'posted');
+                    $q->whereIn('status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES);
                 }])
                 ->orderBy('created_at', 'desc')
                 ->limit(50);

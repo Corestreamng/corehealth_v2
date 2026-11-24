@@ -81,7 +81,7 @@ class ReconciliationService
             ->with('journalEntry')
             ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
             ->where('journal_entry_lines.account_id', $reconciliation->account_id)
-            ->where('journal_entries.status', JournalEntry::STATUS_POSTED)
+            ->whereIn('journal_entries.status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
             ->whereBetween('journal_entries.entry_date', [
                 $reconciliation->statement_period_from,
                 $reconciliation->statement_period_to,
@@ -152,7 +152,7 @@ class ReconciliationService
             ->with('journalEntry')
             ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
             ->where('journal_entry_lines.account_id', $account->id)
-            ->where('journal_entries.status', JournalEntry::STATUS_POSTED)
+            ->whereIn('journal_entries.status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
             ->whereBetween('journal_entries.entry_date', [$fromDate, $toDate])
             ->select('journal_entry_lines.*')
             ->orderBy('journal_entries.entry_date')

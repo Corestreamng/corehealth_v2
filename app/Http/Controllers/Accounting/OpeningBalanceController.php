@@ -62,7 +62,7 @@ class OpeningBalanceController extends Controller
         if ($fiscalYear) {
             $openingEntries = JournalEntry::where('entry_type', 'opening')
                 ->whereDate('entry_date', $fiscalYear->start_date)
-                ->where('status', 'posted')
+                ->whereIn('status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
                 ->pluck('id');
 
             $stats['accounts_with_opening'] = JournalLine::whereIn('journal_entry_id', $openingEntries)

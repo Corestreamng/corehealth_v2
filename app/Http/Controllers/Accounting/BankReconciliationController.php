@@ -754,14 +754,14 @@ class BankReconciliationController extends Controller
     {
         $debits = JournalEntryLine::where('account_id', $accountId)
             ->whereHas('journalEntry', function ($q) use ($asOfDate) {
-                $q->where('status', 'posted')
+                $q->whereIn('status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
                     ->whereDate('entry_date', '<=', $asOfDate);
             })
             ->sum('debit');
 
         $credits = JournalEntryLine::where('account_id', $accountId)
             ->whereHas('journalEntry', function ($q) use ($asOfDate) {
-                $q->where('status', 'posted')
+                $q->whereIn('status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
                     ->whereDate('entry_date', '<=', $asOfDate);
             })
             ->sum('credit');
@@ -777,7 +777,7 @@ class BankReconciliationController extends Controller
     {
         $lines = JournalEntryLine::where('account_id', $reconciliation->account_id)
             ->whereHas('journalEntry', function ($q) use ($reconciliation) {
-                $q->where('status', 'posted')
+                $q->whereIn('status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
                     ->whereBetween('entry_date', [
                         $reconciliation->statement_period_from,
                         $reconciliation->statement_period_to,

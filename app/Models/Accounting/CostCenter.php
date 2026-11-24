@@ -99,7 +99,7 @@ class CostCenter extends Model
     {
         $query = JournalEntryLine::where('cost_center_id', $this->id)
             ->whereHas('journalEntry', function ($q) {
-                $q->where('status', JournalEntry::STATUS_POSTED);
+                $q->whereIn('status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES);
             });
 
         if ($fromDate) {
@@ -124,7 +124,7 @@ class CostCenter extends Model
     {
         return JournalEntryLine::where('cost_center_id', $this->id)
             ->whereHas('journalEntry', function ($q) use ($fromDate, $toDate) {
-                $q->where('status', JournalEntry::STATUS_POSTED)
+                $q->whereIn('status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
                   ->whereBetween('entry_date', [$fromDate, $toDate]);
             })
             ->whereHas('account.accountGroup.accountClass', function ($q) {
@@ -140,7 +140,7 @@ class CostCenter extends Model
     {
         return JournalEntryLine::where('cost_center_id', $this->id)
             ->whereHas('journalEntry', function ($q) use ($fromDate, $toDate) {
-                $q->where('status', JournalEntry::STATUS_POSTED)
+                $q->whereIn('status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
                   ->whereBetween('entry_date', [$fromDate, $toDate]);
             })
             ->whereHas('account.accountGroup.accountClass', function ($q) {

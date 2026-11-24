@@ -132,7 +132,7 @@ class Account extends Model implements Auditable
         $query = JournalEntryLine::query()
             ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
             ->where('journal_entry_lines.account_id', $this->id)
-            ->where('journal_entries.status', JournalEntry::STATUS_POSTED);
+            ->whereIn('journal_entries.status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES);
 
         if ($fromDate) {
             $query->where('journal_entries.entry_date', '>=', $fromDate);
@@ -183,7 +183,7 @@ class Account extends Model implements Auditable
         $query = JournalEntryLine::query()
             ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
             ->where('journal_entry_lines.account_id', $this->id)
-            ->where('journal_entries.status', JournalEntry::STATUS_POSTED);
+            ->whereIn('journal_entries.status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES);
 
         if ($fromDate) {
             $query->where('journal_entries.entry_date', '>=', $fromDate);
@@ -208,7 +208,7 @@ class Account extends Model implements Auditable
         $query = JournalEntryLine::query()
             ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
             ->where('journal_entry_lines.account_id', $this->id)
-            ->where('journal_entries.status', JournalEntry::STATUS_POSTED);
+            ->whereIn('journal_entries.status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES);
 
         if ($fromDate) {
             $query->where('journal_entries.entry_date', '>=', $fromDate);
@@ -234,7 +234,7 @@ class Account extends Model implements Auditable
             ->with(['journalEntry', 'subAccount'])
             ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
             ->where('journal_entry_lines.account_id', $this->id)
-            ->where('journal_entries.status', JournalEntry::STATUS_POSTED)
+            ->whereIn('journal_entries.status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
             ->select('journal_entry_lines.*');
 
         if ($fromDate) {

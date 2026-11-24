@@ -181,6 +181,7 @@ class AppServiceProvider extends ServiceProvider
         StockBatch::observe(\App\Observers\Accounting\StockBatchAccountingObserver::class);
         StockBatch::observe(\App\Observers\Accounting\StockBatchVoidObserver::class);
         \App\Models\StockBatchTransaction::observe(\App\Observers\Accounting\StockAdjustmentAccountingObserver::class);
+        \App\Models\StockBatchTransaction::observe(\App\Observers\Accounting\StockDispenseCostObserver::class);
         \App\Models\StockBatchReturn::observe(\App\Observers\Accounting\StockBatchReturnObserver::class);
         \App\Models\StockUtilization::observe(\App\Observers\Accounting\StockUtilizationObserver::class);
 

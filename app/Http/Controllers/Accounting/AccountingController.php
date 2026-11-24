@@ -110,7 +110,7 @@ class AccountingController extends Controller
 
         // Calculate totals from posted entries
         $posted = JournalEntry::with('lines')
-            ->where('status', JournalEntry::STATUS_POSTED)
+            ->whereIn('status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
             ->whereBetween('entry_date', [$period->start_date, $period->end_date])
             ->get();
 
@@ -129,7 +129,7 @@ class AccountingController extends Controller
         $stats['monthly_revenue'] = \DB::table('journal_entry_lines')
             ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
             ->whereIn('journal_entry_lines.account_id', $incomeAccounts)
-            ->where('journal_entries.status', JournalEntry::STATUS_POSTED)
+            ->whereIn('journal_entries.status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
             ->whereBetween('journal_entries.entry_date', [$period->start_date, $period->end_date])
             ->sum('journal_entry_lines.credit');
 
@@ -141,7 +141,7 @@ class AccountingController extends Controller
         $stats['monthly_expenses'] = \DB::table('journal_entry_lines')
             ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
             ->whereIn('journal_entry_lines.account_id', $expenseAccounts)
-            ->where('journal_entries.status', JournalEntry::STATUS_POSTED)
+            ->whereIn('journal_entries.status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
             ->whereBetween('journal_entries.entry_date', [$period->start_date, $period->end_date])
             ->sum('journal_entry_lines.debit');
 

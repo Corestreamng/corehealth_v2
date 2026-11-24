@@ -203,7 +203,7 @@ class ReportService
         $linesQuery = JournalEntryLine::with(['journalEntry', 'department'])
             ->where('account_id', $accountId)
             ->whereHas('journalEntry', function ($q) use ($fromDate, $toDate) {
-                $q->where('status', JournalEntry::STATUS_POSTED)
+                $q->whereIn('status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
                     ->whereBetween('entry_date', [$fromDate, $toDate]);
             });
 
@@ -1361,7 +1361,7 @@ class ReportService
             ])
             ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
             ->join('accounts', 'journal_entry_lines.account_id', '=', 'accounts.id')
-            ->where('journal_entries.status', 'posted')
+            ->whereIn('journal_entries.status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES)
             ->whereBetween('journal_entries.entry_date', [$fromDate, $toDate])
             ->where('journal_entry_lines.cash_flow_category', $category)
             ->groupBy('journal_entry_lines.category', 'accounts.id', 'accounts.name')

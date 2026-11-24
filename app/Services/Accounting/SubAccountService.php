@@ -211,7 +211,7 @@ class SubAccountService
     {
         $query = $subAccount->journalEntryLines()
             ->whereHas('journalEntry', function ($q) use ($asOfDate) {
-                $q->where('status', 'posted');
+                $q->whereIn('status', \App\Models\Accounting\JournalEntry::LEDGER_STATUSES);
                 if ($asOfDate) {
                     $q->where('entry_date', '<=', $asOfDate);
                 }
