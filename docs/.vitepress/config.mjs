@@ -36,6 +36,7 @@ export default defineConfig({
             { text: 'CoreHealth Staff App (Mobile, Tablet, Desktop)', link: '/user-guides/native-client' },
             { text: 'Staff App: Laboratory and Imaging', link: '/user-guides/native-client-lab-imaging' },
             { text: 'Staff App: Store, Requisitions and Accounting', link: '/user-guides/native-client-store-accounts' },
+            { text: 'Staff App: HMO Executive', link: '/user-guides/native-client-hmo' },
           ]
         },
         {

@@ -1836,3 +1836,111 @@ Route::prefix('mobile/accounting')->middleware(['auth:sanctum', 'native.workspac
     Route::post('purchase-orders/{purchaseOrder}/cancel', [$po, 'cancel'])->whereNumber('purchaseOrder');
     Route::post('purchase-orders/{purchaseOrder}/receive', [$po, 'receive'])->whereNumber('purchaseOrder');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Staff app: HMO Executive (workbench, reports, management)
+|--------------------------------------------------------------------------
+| MobileHmoController extends the web HmoWorkbenchController, so a route here is the web's own method; only the list
+| the web renders as DataTables HTML is answered as JSON. Guard: the registry's `hmo` section (SUPERADMIN, ADMIN,
+| HMO Executive), the same roles as the web routes.
+*/
+Route::prefix('mobile/hmo')->middleware(['auth:sanctum', 'native.workspace:hmo', 'mobile.json'])->group(function () {
+    $wb = \App\Http\Controllers\API\MobileHmoController::class;
+    $rp = \App\Http\Controllers\HmoReportsController::class;
+
+    Route::get('context', [$wb, 'context']);
+    Route::get('requests', [$wb, 'requests']);
+    Route::get('queue-counts', [$wb, 'getQueueCounts']);
+    Route::get('financial-summary', [$wb, 'getFinancialSummary']);
+    Route::get('requests/{id}', [$wb, 'show'])->whereNumber('id');
+    Route::post('requests/{id}/approve', [$wb, 'approveRequest'])->whereNumber('id');
+    Route::post('requests/{id}/reject', [$wb, 'rejectRequest'])->whereNumber('id');
+    Route::post('requests/{id}/reverse', [$wb, 'reverseApproval'])->whereNumber('id');
+    Route::post('requests/{id}/reapprove', [$wb, 'reapproveRequest'])->whereNumber('id');
+    Route::get('requests/{id}/tariff-details', [$wb, 'getTariffDetails'])->whereNumber('id');
+    Route::post('requests/{id}/update-tariff', [$wb, 'updateTariffInline'])->whereNumber('id');
+    Route::post('requests/{id}/submit-auth-code', [$wb, 'submitAuthCode'])->whereNumber('id');
+    Route::post('requests/batch-submit-auth-code', [$wb, 'batchSubmitAuthCode']);
+    Route::post('batch-approve', [$wb, 'batchApprove']);
+    Route::post('batch-reject', [$wb, 'batchReject']);
+    Route::post('group-approve', [$wb, 'groupApprove']);
+    Route::post('group-reject', [$wb, 'groupReject']);
+    Route::get('export-claims', [$wb, 'exportClaimsReport']);
+    Route::get('patient/{patientId}/history', [$wb, 'getPatientHistory'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/vitals', [$wb, 'getPatientVitals'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/notes', [$wb, 'getPatientNotes'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/medications', [$wb, 'getPatientMedications'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/allergies', [$wb, 'getPatientAllergies'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/pending-requests', [$wb, 'getPatientPendingRequests'])->whereNumber('patientId');
+    Route::get('patient/{patientId}/all-requests', [$wb, 'getPatientAllRequests'])->whereNumber('patientId');
+    Route::post('patient/{patient}/update-hmo', [$wb, 'updatePatientHmo'])->whereNumber('patient');
+    Route::get('search-patients', [$rp, 'searchPatients']);
+
+    Route::get('banks', [\App\Http\Controllers\BankController::class, 'getActiveBanks']);
+
+    // Reports and remittances
+    Route::get('reports/claims', [$rp, 'getClaimsReport']);
+    Route::get('reports/outstanding', [$rp, 'getOutstandingReport']);
+    Route::get('reports/patient/{patientId}', [$rp, 'getPatientReport'])->whereNumber('patientId');
+    Route::get('reports/patient/{patientId}/print', [$rp, 'getPatientPrintData'])->whereNumber('patientId');
+    Route::get('reports/monthly', [$rp, 'getMonthlySummary']);
+    Route::get('reports/utilization', [$rp, 'getUtilizationReport']);
+    Route::get('reports/auth-codes', [$rp, 'getAuthCodeReport']);
+    Route::get('reports/remittances', [$rp, 'getRemittances']);
+    Route::post('reports/remittances', [$rp, 'storeRemittance']);
+    Route::get('reports/remittances/{id}', [$rp, 'showRemittance'])->whereNumber('id');
+    Route::put('reports/remittances/{id}', [$rp, 'updateRemittance'])->whereNumber('id');
+    Route::delete('reports/remittances/{id}', [$rp, 'deleteRemittance'])->whereNumber('id');
+    Route::post('reports/mark-submitted', [$rp, 'markAsSubmitted']);
+    Route::post('reports/link-claims', [$rp, 'linkClaimsToRemittance']);
+    Route::get('reports/print-data', [$rp, 'getPrintData']);
+    Route::get('reports/export-excel', [$rp, 'exportExcel']);
+    Route::get('reports/export-pdf', [$rp, 'exportPdf']);
+
+    // The HMO list of patients (the web Patients page filtered to those with an HMO)
+    Route::get('patients', [\App\Http\Controllers\PatientController::class, 'patientsList']);
+
+    // Management (HMOs, Tariffs, Billing Organizations): the sidebar shows these only to admins and HMO heads (hmo_mgmt)
+    Route::middleware('native.condition:hmo_mgmt')->group(function () use ($wb) {
+        $hm = \App\Http\Controllers\HmoController::class;
+        $tf = \App\Http\Controllers\Admin\TariffManagementController::class;
+        $og = \App\Http\Controllers\OrganizationController::class;
+        $ob = \App\Http\Controllers\API\MobileHmoController::class;
+
+        Route::get('hmos', [$hm, 'listHmo']);
+        Route::get('hmos/create', [$hm, 'create']);
+        Route::post('hmos', [$hm, 'store']);
+        Route::get('hmos/{hmo}/edit', [$hm, 'edit'])->whereNumber('hmo');
+        Route::put('hmos/{hmo}', [$hm, 'update'])->whereNumber('hmo');
+        Route::post('hmos/{hmo}/toggle-status', [$hm, 'toggleStatus'])->whereNumber('hmo');
+
+        Route::get('tariffs/lookups', [$tf, 'index']);
+        Route::get('tariffs/items', [$ob, 'searchItems']);
+        Route::get('tariffs', [$tf, 'getTariffs']);
+        Route::post('tariffs', [$tf, 'store']);
+        Route::post('tariffs/bulk-update', [$tf, 'bulkUpdate']);
+        Route::post('tariffs/normalize', [$tf, 'normalizeScheme']);
+        Route::post('tariffs/import/preview', [$tf, 'importPreview']);
+        Route::post('tariffs/import/excel', [$tf, 'importExcel']);
+        Route::post('tariffs/import/csv', [$tf, 'importCsv']);
+        Route::get('tariffs/scheme-hmos/{id}', [$tf, 'getSchemeHmos'])->whereNumber('id');
+        Route::get('tariffs/export/csv', [$tf, 'exportCsv']);
+        Route::get('tariffs/export/excel', [$tf, 'exportExcel']);
+        Route::get('tariffs/overrides', [$tf, 'getOverrides']);
+        Route::post('tariffs/overrides', [$tf, 'storeOverride']);
+        Route::get('tariffs/overrides/item-price', [$tf, 'getItemPrice']);
+        Route::delete('tariffs/overrides/{id}', [$tf, 'deleteOverride'])->whereNumber('id');
+        Route::get('tariffs/{id}', [$tf, 'show'])->whereNumber('id');
+        Route::put('tariffs/{id}', [$tf, 'update'])->whereNumber('id');
+        Route::delete('tariffs/{id}', [$tf, 'destroy'])->whereNumber('id');
+
+        Route::get('organizations', [$og, 'data']);
+        Route::post('organizations', [$og, 'store']);
+        Route::get('organizations/{organization}', [$og, 'show'])->whereNumber('organization');
+        Route::put('organizations/{organization}', [$og, 'update'])->whereNumber('organization');
+        Route::delete('organizations/{organization}', [$og, 'destroy'])->whereNumber('organization');
+        Route::get('organizations/{organization}/bills', [$og, 'bills'])->whereNumber('organization');
+        Route::post('organizations/{organization}/settle', [$og, 'settleBill'])->whereNumber('organization');
+    });
+});

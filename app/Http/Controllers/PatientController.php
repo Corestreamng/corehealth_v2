@@ -76,6 +76,9 @@ class PatientController extends Controller
             ])->with(['user', 'hmo.scheme']);
 
             // Server-side filters
+            if ($request->boolean('hmo_only')) {
+                $query->whereNotNull('hmo_id');
+            }
             if ($request->filled('hmo_id')) {
                 $query->where('hmo_id', $request->hmo_id);
             }

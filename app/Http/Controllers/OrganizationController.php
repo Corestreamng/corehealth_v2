@@ -106,6 +106,10 @@ class OrganizationController extends Controller
     {
         $organization = Organization::findOrFail($id);
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('organization'));
+        }
+
         return view('admin.organizations.show', compact('organization'));
     }
 
@@ -200,7 +204,11 @@ class OrganizationController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $banks = \App\Models\Bank::where('status', 1)->get();
+        $banks = \App\Models\Bank::where('is_active', true)->get();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('organization', 'bills', 'banks'));
+        }
 
         return view('admin.organizations.bills', compact('organization', 'bills', 'banks'));
     }

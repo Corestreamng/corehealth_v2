@@ -37,6 +37,11 @@ class TariffManagementController extends Controller
         $productCategories = ProductCategory::orderBy('category_name', 'ASC')->get();
         $serviceCategories = ServiceCategory::orderBy('category_name', 'ASC')->get();
 
+        if (request()->expectsJson()) {
+            // the app searches items on demand instead of receiving every product and service
+            return response()->json(compact('hmos', 'schemes', 'productCategories', 'serviceCategories'));
+        }
+
         return view('admin.tariffs.index', compact('hmos', 'products', 'services', 'schemes', 'productCategories', 'serviceCategories'));
     }
 
@@ -1612,6 +1617,10 @@ class TariffManagementController extends Controller
         $schemes = HmoScheme::where('status', 1)->orderBy('name', 'ASC')->get();
         $productCategories = ProductCategory::orderBy('category_name', 'ASC')->get();
         $serviceCategories = ServiceCategory::orderBy('category_name', 'ASC')->get();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('hmos', 'products', 'services', 'schemes', 'productCategories', 'serviceCategories'));
+        }
 
         return view('admin.tariffs.overrides', compact('hmos', 'products', 'services', 'schemes', 'productCategories', 'serviceCategories'));
     }

@@ -28,12 +28,19 @@ class MobileRedirectToJson
         $get = fn (string $key) => $session ? $session->get($key) : null;
         $errors = $get('errors');
         $error = $get('error');
-        if ($errors && method_exists($errors, 'getBag') && $errors->getBag('default')->any()) {
+        $flash = ['success' => $get('success'), 'message' => $get('message'), 'info' => $get('info'), 'warning' => $get('warning')];
+        // The flash is the answer now: do not let it leak into the next request that shares this session store.
+        $session?->forget(['errors', 'error', 'success', 'message', 'info', 'warning', 'messageType']);
+        if (is_object($errors) && method_exists($errors, 'getBag') && $errors->getBag('default')->any()) {
             $bag = $errors->getBag('default');
 
             return new JsonResponse(['success' => false, 'message' => $bag->first(), 'errors' => $bag->toArray()], 422);
         }
-        $message = $error ?: ($get('success') ?: ($get('message') ?: $get('info') ?: $get('warning')));
+        if (is_array($errors) && $errors) {
+            // `with('errors', [...])` (a plain list of messages) is how some controllers report a failed validation
+            return new JsonResponse(['success' => false, 'message' => (string) reset($errors), 'errors' => $errors], 422);
+        }
+        $message = $error ?: ($flash['success'] ?: ($flash['message'] ?: $flash['info'] ?: $flash['warning']));
         $id = preg_match('#/(\d+)(?:/[a-z-]+)?/?$#', (string) parse_url($response->getTargetUrl(), PHP_URL_PATH), $m) ? (int) $m[1] : null;
 
         return new JsonResponse(array_filter([

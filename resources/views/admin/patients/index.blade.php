@@ -177,6 +177,7 @@
                     url: '{{ url("patientsList") }}',
                     type: 'GET',
                     data: function (d) {
+                        d.hmo_only   = {{ request()->boolean('hmo_only') ? 1 : 0 }}; // the sidebar's HMO Patients link
                         d.hmo_id     = $('#filterHmo').val();
                         d.scheme_id  = $('#filterScheme').val();
                         d.gender     = $('#filterGender').val();

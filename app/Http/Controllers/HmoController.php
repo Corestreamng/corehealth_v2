@@ -60,6 +60,10 @@ class HmoController extends Controller
     {
         $schemes = HmoScheme::where('status', 1)->orderBy('name', 'ASC')->get();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('schemes'));
+        }
+
         return view('admin.hmo.create', compact('schemes'));
     }
 
@@ -124,6 +128,10 @@ class HmoController extends Controller
     public function edit(Hmo $hmo)
     {
         $schemes = HmoScheme::where('status', 1)->orderBy('name', 'ASC')->get();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('hmo', 'schemes'));
+        }
 
         return view('admin.hmo.edit', compact('hmo', 'schemes'));
     }
