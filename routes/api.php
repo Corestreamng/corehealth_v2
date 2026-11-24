@@ -1466,6 +1466,49 @@ Route::prefix('mobile/store')->middleware(['auth:sanctum', 'native.workspace:sto
     Route::post('po-returns/{id}/approve', [$pr, 'approve'])->whereNumber('id');
     Route::post('po-returns/{id}/reject', [$pr, 'reject'])->whereNumber('id');
 
+    // Store expenses: the Store section's Expenses link (a store keeper is not in the accounting group). Same
+    // ExpenseController, so its expenses.* permissions decide, exactly as on the web.
+    $ex = \App\Http\Controllers\ExpenseController::class;
+    Route::get('expenses', [$ex, 'index']);
+    Route::post('expenses', [$ex, 'store']);
+    Route::get('expenses/{expense}', [$ex, 'show'])->whereNumber('expense');
+    Route::put('expenses/{expense}', [$ex, 'update'])->whereNumber('expense');
+    Route::post('expenses/{expense}/approve', [$ex, 'approve'])->whereNumber('expense');
+    Route::post('expenses/{expense}/reject', [$ex, 'reject'])->whereNumber('expense');
+    Route::post('expenses/{expense}/void', [$ex, 'void'])->whereNumber('expense');
+
+    // Masters: reads are adapters, writes are the web controllers
+    $mm = \App\Http\Controllers\API\MobileStoreMastersController::class;
+    $sc = \App\Http\Controllers\StoreController::class;
+    $pc = \App\Http\Controllers\ProductController::class;
+    $cc = \App\Http\Controllers\ProductCategoryController::class;
+    $sp = \App\Http\Controllers\SupplierController::class;
+    $sg = \App\Http\Controllers\StoreGovernanceController::class;
+    Route::get('masters/options', [$mm, 'options']);
+    Route::get('masters/{kind}', [$mm, 'index'])->where('kind', 'stores|products|categories|suppliers');
+    Route::get('masters/{kind}/{id}', [$mm, 'show'])->where('kind', 'stores|products|categories|suppliers')->whereNumber('id');
+    Route::post('masters/stores', [$sc, 'store']);
+    Route::put('masters/stores/{id}', [$sc, 'update'])->whereNumber('id');
+    Route::post('masters/products', [$pc, 'store']);
+    Route::put('masters/products/{id}', [$pc, 'update'])->whereNumber('id');
+    Route::post('masters/products/{id}/toggle-status', [$pc, 'toggleStatus'])->whereNumber('id');
+    Route::post('masters/categories', [$cc, 'store']);
+    Route::put('masters/categories/{id}', [$cc, 'update'])->whereNumber('id');
+    Route::delete('masters/categories/{id}', [$cc, 'destroy'])->whereNumber('id');
+    Route::post('masters/suppliers', [$sp, 'store']);
+    Route::put('masters/suppliers/{supplier}', [$sp, 'update'])->whereNumber('supplier');
+    Route::delete('masters/suppliers/{supplier}', [$sp, 'destroy'])->whereNumber('supplier');
+
+    // Store Governance (needs store-governance.view / .manage, as the web)
+    Route::get('governance/stores', [$mm, 'governanceStores']);
+    Route::post('governance/stores/{store}', [$sg, 'updateStore'])->whereNumber('store');
+    Route::get('governance/lane-matrix', [$sg, 'laneMatrix']);
+    Route::post('governance/lane-matrix', [$sg, 'updateLane']);
+    Route::get('governance/context-rules', [$mm, 'contextRules']);
+    Route::post('governance/context-rules', [$sg, 'saveContextRule']);
+    Route::delete('governance/context-rules/{rule}', [$sg, 'deleteContextRule'])->whereNumber('rule');
+    Route::post('governance/context-rules/test', [$sg, 'testContextResolution']);
+
     Route::get('banks', [\App\Http\Controllers\BankController::class, 'getActiveBanks']);
 
     // Suppliers lookup used by the forms
@@ -1481,7 +1524,7 @@ Route::prefix('mobile/store')->middleware(['auth:sanctum', 'native.workspace:sto
 | (accounting.journal.*, reports.*, expenses.*), so a route here is exactly as strict as its web page. Views the web
 | renders as Blade are answered as JSON by MobileAccountingController from the same services.
 */
-Route::prefix('mobile/accounting')->middleware(['auth:sanctum', 'native.workspace:accounting'])->group(function () {
+Route::prefix('mobile/accounting')->middleware(['auth:sanctum', 'native.workspace:accounting', 'mobile.json'])->group(function () {
     $ma = \App\Http\Controllers\API\MobileAccountingController::class;
     $je = \App\Http\Controllers\Accounting\JournalEntryController::class;
     $coa = \App\Http\Controllers\Accounting\ChartOfAccountsController::class;
@@ -1496,7 +1539,165 @@ Route::prefix('mobile/accounting')->middleware(['auth:sanctum', 'native.workspac
     Route::get('petty-cash/custodians', [$ma, 'staffSearch']);
     Route::get('banks', [\App\Http\Controllers\BankController::class, 'getActiveBanks']);
 
+    // ── Finance modules: the web controllers' own methods (their role and permission rules apply as on the web) ──
+    $fa = \App\Http\Controllers\Accounting\FixedAssetController::class;
+    Route::get('fixed-assets/datatable', [$fa, 'datatable']);
+    Route::get('fixed-assets/categories', [$fa, 'categories']);
+    Route::post('fixed-assets/categories', [$fa, 'storeCategory']);
+    Route::get('fixed-assets/categories/{category}/defaults', [$fa, 'getCategoryDefaults'])->whereNumber('category');
+    Route::get('fixed-assets/search', [$fa, 'searchAssets']);
+    Route::post('fixed-assets/depreciation/run', [$fa, 'runDepreciation']);
+    Route::post('fixed-assets', [$fa, 'store']);
+    Route::get('fixed-assets/{fixedAsset}', [$fa, 'getAsset'])->whereNumber('fixedAsset');
+    Route::put('fixed-assets/{fixedAsset}', [$fa, 'update'])->whereNumber('fixedAsset');
+    Route::get('fixed-assets/{fixedAsset}/depreciation-history', [$fa, 'getDepreciationHistory'])->whereNumber('fixedAsset');
+    Route::post('fixed-assets/{fixedAsset}/void', [$fa, 'void'])->whereNumber('fixedAsset');
+    Route::post('fixed-assets/{fixedAsset}/dispose', [$fa, 'dispose'])->whereNumber('fixedAsset');
+
+    $cx = \App\Http\Controllers\Accounting\CapexController::class;
+    Route::get('capex/datatable', [$cx, 'datatable']);
+    Route::get('capex', [$cx, 'index']);
+    Route::get('capex/budget-overview', [$cx, 'budgetOverview']);
+    Route::post('capex/budget', [$cx, 'storeBudget']);
+    Route::post('capex', [$cx, 'store']);
+    Route::get('capex/{capex}', [$cx, 'show'])->whereNumber('capex');
+    Route::put('capex/{capex}', [$cx, 'update'])->whereNumber('capex');
+    foreach (['submit' => 'submit', 'approve' => 'approve', 'reject' => 'reject', 'request-revision' => 'requestRevision', 'start' => 'startExecution', 'expense' => 'recordExpense', 'complete' => 'complete'] as $path => $method) {
+        Route::post("capex/{capex}/{$path}", [$cx, $method])->whereNumber('capex');
+    }
+
+    $bg = \App\Http\Controllers\Accounting\BudgetController::class;
+    Route::get('budgets', [$bg, 'index']);
+    Route::get('budgets/datatable', [$bg, 'datatable']);
+    Route::get('budgets/variance-report', [$bg, 'varianceReport']);
+    Route::post('budgets', [$bg, 'store']);
+    Route::get('budgets/{budget}', [$bg, 'show'])->whereNumber('budget');
+    Route::put('budgets/{budget}', [$bg, 'update'])->whereNumber('budget');
+    foreach (['submit', 'approve', 'reject', 'unapprove', 'lock'] as $m) {
+        Route::post("budgets/{budget}/{$m}", [$bg, $m])->whereNumber('budget');
+    }
+
+    $sr = \App\Http\Controllers\Accounting\StatutoryRemittanceController::class;
+    Route::get('statutory-remittances', [$sr, 'index']);
+    Route::get('statutory-remittances/balances', [$sr, 'getOutstandingBalances']);
+    Route::post('statutory-remittances', [$sr, 'store']);
+    Route::get('statutory-remittances/{statutoryRemittance}', [$sr, 'show'])->whereNumber('statutoryRemittance');
+    Route::put('statutory-remittances/{statutoryRemittance}', [$sr, 'update'])->whereNumber('statutoryRemittance');
+    Route::delete('statutory-remittances/{statutoryRemittance}', [$sr, 'destroy'])->whereNumber('statutoryRemittance');
+    foreach (['submit', 'approve', 'pay', 'void'] as $m) {
+        Route::post("statutory-remittances/{statutoryRemittance}/{$m}", [$sr, $m])->whereNumber('statutoryRemittance');
+    }
+
+    $cf = \App\Http\Controllers\Accounting\CashFlowForecastController::class;
+    Route::get('cash-flow-forecast', [$cf, 'index']);
+    Route::get('cash-flow-forecast/datatable', [$cf, 'datatable']);
+    Route::post('cash-flow-forecast', [$cf, 'store']);
+    Route::get('cash-flow-forecast/patterns', [$cf, 'patterns']);
+    Route::post('cash-flow-forecast/patterns', [$cf, 'storePattern']);
+    Route::put('cash-flow-forecast/patterns/{pattern}', [$cf, 'updatePattern'])->whereNumber('pattern');
+    Route::delete('cash-flow-forecast/patterns/{pattern}', [$cf, 'deletePattern'])->whereNumber('pattern');
+    Route::post('cash-flow-forecast/patterns/{pattern}/toggle', [$cf, 'togglePattern'])->whereNumber('pattern');
+    Route::get('cash-flow-forecast/periods/{period}/edit', [$cf, 'editPeriod'])->whereNumber('period');
+    Route::put('cash-flow-forecast/periods/{period}', [$cf, 'updatePeriod'])->whereNumber('period');
+    Route::post('cash-flow-forecast/periods/{period}/items', [$cf, 'addItem'])->whereNumber('period');
+    Route::put('cash-flow-forecast/periods/{period}/actuals', [$cf, 'updateActuals'])->whereNumber('period');
+    Route::get('cash-flow-forecast/{forecast}', [$cf, 'show'])->whereNumber('forecast');
+    Route::post('cash-flow-forecast/{forecast}/activate', [$cf, 'activate'])->whereNumber('forecast');
+    Route::post('cash-flow-forecast/{forecast}/apply-patterns', [$cf, 'applyPatterns'])->whereNumber('forecast');
+
+    $ob = \App\Http\Controllers\Accounting\OpeningBalanceController::class;
+    Route::get('opening-balances/datatable', [$ob, 'datatable']);
+    Route::get('opening-balances/accounts', [$ob, 'getAccounts']);
+    Route::post('opening-balances', [$ob, 'store']);
+    Route::put('opening-balances/{accountId}', [$ob, 'update'])->whereNumber('accountId');
+
+    $lb = \App\Http\Controllers\Accounting\LiabilityController::class;
+    Route::get('liabilities', [$lb, 'index']);
+    Route::get('liabilities/datatable', [$lb, 'datatable']);
+    Route::get('liabilities/create', [$lb, 'create']);
+    Route::post('liabilities', [$lb, 'store']);
+    Route::get('liabilities/{liability}', [$lb, 'show'])->whereNumber('liability');
+    Route::get('liabilities/{liability}/edit', [$lb, 'edit'])->whereNumber('liability');
+    Route::put('liabilities/{liability}', [$lb, 'update'])->whereNumber('liability');
+    Route::get('liabilities/{liability}/payment', [$lb, 'payment'])->whereNumber('liability');
+    Route::post('liabilities/{liability}/payment', [$lb, 'recordPayment'])->whereNumber('liability');
+    Route::get('liabilities/{liability}/schedule', [$lb, 'amortizationSchedule'])->whereNumber('liability');
+
+    $ls = \App\Http\Controllers\Accounting\LeaseController::class;
+    Route::get('leases', [$ls, 'index']);
+    Route::get('leases/datatable', [$ls, 'datatable']);
+    Route::get('leases/create', [$ls, 'create']);
+    Route::post('leases', [$ls, 'store']);
+    Route::get('leases/reports/ifrs16', [$ls, 'ifrs16Report']);
+    Route::get('leases/{lease}', [$ls, 'show'])->whereNumber('lease');
+    Route::get('leases/{lease}/edit', [$ls, 'edit'])->whereNumber('lease');
+    Route::put('leases/{lease}', [$ls, 'update'])->whereNumber('lease');
+    Route::get('leases/{lease}/payment', [$ls, 'payment'])->whereNumber('lease');
+    Route::post('leases/{lease}/payment', [$ls, 'recordPayment'])->whereNumber('lease');
+    Route::get('leases/{lease}/modification', [$ls, 'modification'])->whereNumber('lease');
+    Route::post('leases/{lease}/modification', [$ls, 'storeModification'])->whereNumber('lease');
+    Route::post('leases/{lease}/terminate', [$ls, 'terminate'])->whereNumber('lease');
+    Route::get('leases/{lease}/schedule', [$ls, 'paymentSchedule'])->whereNumber('lease');
+
+    $cc = \App\Http\Controllers\Accounting\CostCenterController::class;
+    Route::get('cost-centers', [$cc, 'index']);
+    Route::get('cost-centers/datatable', [$cc, 'datatable']);
+    Route::get('cost-centers/create', [$cc, 'create']);
+    Route::post('cost-centers', [$cc, 'store']);
+    Route::get('cost-centers/allocations/index', [$cc, 'allocations']);
+    Route::post('cost-centers/allocations', [$cc, 'storeAllocation']);
+    Route::post('cost-centers/allocations/run', [$cc, 'runAllocation']);
+    Route::get('cost-centers/{costCenter}', [$cc, 'show'])->whereNumber('costCenter');
+    Route::get('cost-centers/{costCenter}/edit', [$cc, 'edit'])->whereNumber('costCenter');
+    Route::put('cost-centers/{costCenter}', [$cc, 'update'])->whereNumber('costCenter');
+    Route::get('cost-centers/{costCenter}/budgets', [$cc, 'budgets'])->whereNumber('costCenter');
+    Route::post('cost-centers/{costCenter}/budgets', [$cc, 'storeBudget'])->whereNumber('costCenter');
+    Route::put('cost-centers/{costCenter}/budgets/{budget}', [$cc, 'updateBudget'])->whereNumber('costCenter')->whereNumber('budget');
+    Route::get('cost-centers/{costCenter}/report', [$cc, 'report'])->whereNumber('costCenter');
+
+    $kp = \App\Http\Controllers\Accounting\KpiController::class;
+    Route::get('kpi', [$kp, 'dashboard']);
+    Route::get('kpi/definitions', [$kp, 'index']);
+    Route::get('kpi/datatable', [$kp, 'datatable']);
+    Route::get('kpi/create', [$kp, 'create']);
+    Route::post('kpi', [$kp, 'store']);
+    Route::post('kpi/calculate', [$kp, 'calculate']);
+    Route::get('kpi/alerts', [$kp, 'alerts']);
+    Route::post('kpi/alerts/{alert}/acknowledge', [$kp, 'acknowledgeAlert'])->whereNumber('alert');
+    Route::get('kpi/configure', [$kp, 'configure']);
+    Route::post('kpi/configure', [$kp, 'saveConfig']);
+    Route::get('kpi/{kpi}/edit', [$kp, 'edit'])->whereNumber('kpi');
+    Route::put('kpi/{kpi}', [$kp, 'update'])->whereNumber('kpi');
+    Route::post('kpi/{kpi}/calculate', [$kp, 'calculateSingle'])->whereNumber('kpi');
+    Route::get('kpi/{kpi}/history', [$kp, 'history'])->whereNumber('kpi');
+
+    $br = \App\Http\Controllers\Accounting\BankReconciliationController::class;
+    Route::get('bank-reconciliation', [$br, 'index']);
+    Route::get('bank-reconciliation/datatable', [$br, 'datatable']);
+    Route::get('bank-reconciliation/create/{bank}', [$br, 'create'])->whereNumber('bank');
+    Route::post('bank-reconciliation/store/{bank}', [$br, 'store'])->whereNumber('bank');
+    Route::get('bank-reconciliation/{reconciliation}', [$br, 'show'])->whereNumber('reconciliation');
+    Route::get('bank-reconciliation/{reconciliation}/edit', [$br, 'edit'])->whereNumber('reconciliation');
+    Route::put('bank-reconciliation/{reconciliation}', [$br, 'update'])->whereNumber('reconciliation');
+    Route::put('bank-reconciliation/{reconciliation}/update-details', [$br, 'updateDetails'])->whereNumber('reconciliation');
+    Route::get('bank-reconciliation/{reconciliation}/statements', [$br, 'getStatements'])->whereNumber('reconciliation');
+    Route::post('bank-reconciliation/{reconciliation}/statement-item', [$br, 'addStatementItem'])->whereNumber('reconciliation');
+    foreach (['match' => 'matchItems', 'unmatch' => 'unmatchItems', 'outstanding' => 'markOutstanding', 'submit-review' => 'submitForReview', 'finalize' => 'finalize', 'approve' => 'approve'] as $path => $method) {
+        Route::post("bank-reconciliation/{reconciliation}/{$path}", [$br, $method])->whereNumber('reconciliation');
+    }
+
+    $bk = \App\Http\Controllers\BankController::class;
+    Route::get('banks/list', [$bk, 'list']);
+    Route::post('banks', [$bk, 'store']);
+    Route::put('banks/{bank}', [$bk, 'update'])->whereNumber('bank');
+    Route::delete('banks/{bank}', [$bk, 'destroy'])->whereNumber('bank');
+
     // Reports
+    // Saved report filters (the web Reports page's own save, load and delete); the list is the page's data as JSON
+    Route::get('reports/filters', [$ma, 'savedFilters']);
+    Route::post('reports/filters', [\App\Http\Controllers\Accounting\ReportController::class, 'saveFilter']);
+    Route::get('reports/filters/{id}', [\App\Http\Controllers\Accounting\ReportController::class, 'loadFilter'])->whereNumber('id');
+    Route::delete('reports/filters/{id}', [\App\Http\Controllers\Accounting\ReportController::class, 'deleteFilter'])->whereNumber('id');
     Route::get('reports/{name}', [$ma, 'report'])->where('name', '[a-z-]+');
 
     // Fiscal periods

@@ -381,6 +381,10 @@ class ProductController extends Controller
             $v = validator()->make($request->all(), $rules);
 
             if ($v->fails()) {
+                if (request()->expectsJson()) {
+                    return response()->json(['message' => $v->messages()->first(), 'errors' => $v->errors()], 422);
+                }
+
                 return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             }
 
@@ -427,10 +431,22 @@ class ProductController extends Controller
 
             $msg = 'The Product ' . $request->product_name . ' was Saved Successfully.';
 
+            if (request()->expectsJson()) {
+
+                return response()->json(['success' => true, 'message' => $msg]);
+
+            }
+
             return redirect(route('products.index'))->withMessage($msg)->withMessageType('success');
 
         } catch (\Exception $e) {
             DB::rollBack();
+
+            if (request()->expectsJson()) {
+
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+
+            }
 
             return redirect()->back()->withInput()->withMessage("An error occurred: " . $e->getMessage());
         }
@@ -479,6 +495,10 @@ class ProductController extends Controller
 
             return view('admin.product.edit', compact('product', 'application', 'category', 'departments', 'categoryDepartmentMap'));
         } catch (\Exception $e) {
+            if (request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            }
+
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
@@ -529,6 +549,10 @@ class ProductController extends Controller
             $v = validator()->make($request->all(), $rules);
 
             if ($v->fails()) {
+                if (request()->expectsJson()) {
+                    return response()->json(['message' => $v->messages()->first(), 'errors' => $v->errors()], 422);
+                }
+
                 return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             }
 
@@ -564,10 +588,22 @@ class ProductController extends Controller
 
             $msg = 'The Product ' . $request->product_name . ' Was Updated Successfully.';
 
+            if (request()->expectsJson()) {
+
+                return response()->json(['success' => true, 'message' => $msg]);
+
+            }
+
             return redirect(route('products.index'))->withMessage($msg)->withMessageType('success');
 
         } catch (\Exception $e) {
             DB::rollBack();
+
+            if (request()->expectsJson()) {
+
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+
+            }
 
             return redirect()->back()->withInput()->withMessage("An error occurred: " . $e->getMessage());
         }

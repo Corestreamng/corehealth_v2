@@ -81,6 +81,10 @@ class KpiController extends Controller
             'active_alerts' => $activeAlertsCount,
         ];
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('groupedKpis', 'stats'));
+        }
+
         return view('accounting.kpi.dashboard', compact('groupedKpis', 'stats'));
     }
 
@@ -123,6 +127,10 @@ class KpiController extends Controller
             ->select('category')
             ->distinct()
             ->pluck('category');
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('categories'));
+        }
 
         return view('accounting.kpi.index', compact('categories'));
     }
@@ -246,6 +254,16 @@ class KpiController extends Controller
             ->orderBy('code')
             ->get();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact(
+                'categories',
+                'units',
+                'frequencies',
+                'chartTypes',
+                'accounts'
+            ));
+        }
+
         return view('accounting.kpi.create', compact(
             'categories',
             'units',
@@ -321,6 +339,17 @@ class KpiController extends Controller
             ->where('is_active', true)
             ->orderBy('code')
             ->get();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact(
+                'kpi',
+                'categories',
+                'units',
+                'frequencies',
+                'chartTypes',
+                'accounts'
+            ));
+        }
 
         return view('accounting.kpi.edit', compact(
             'kpi',
@@ -677,6 +706,10 @@ class KpiController extends Controller
             })->toArray(),
         ];
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('kpi', 'history', 'alerts', 'latestValue', 'statistics', 'chartData'));
+        }
+
         return view('accounting.kpi.history', compact('kpi', 'history', 'alerts', 'latestValue', 'statistics', 'chartData'));
     }
 
@@ -707,6 +740,10 @@ class KpiController extends Controller
             'critical' => DB::table('financial_kpi_alerts')->where('alert_type', 'critical')->where('is_acknowledged', false)->count(),
             'warning' => DB::table('financial_kpi_alerts')->where('alert_type', 'warning')->where('is_acknowledged', false)->count(),
         ];
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('alerts', 'summary'));
+        }
 
         return view('accounting.kpi.alerts', compact('alerts', 'summary'));
     }
@@ -754,6 +791,10 @@ class KpiController extends Controller
             ->where('user_id', Auth::id())
             ->where('dashboard_type', 'financial')
             ->first();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('allKpis', 'userConfig'));
+        }
 
         return view('accounting.kpi.configure', compact('allKpis', 'userConfig'));
     }

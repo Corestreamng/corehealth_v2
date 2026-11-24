@@ -37,6 +37,10 @@ class LiabilityController extends Controller
     {
         $stats = $this->getDashboardStats();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('stats'));
+        }
+
         return view('accounting.liabilities.index', compact('stats'));
     }
 
@@ -194,6 +198,10 @@ class LiabilityController extends Controller
 
         $banks = DB::table('banks')->where('is_active', true)->orderBy('name')->get();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('accounts', 'expenseAccounts', 'banks'));
+        }
+
         return view('accounting.liabilities.create', compact('accounts', 'expenseAccounts', 'banks'));
     }
 
@@ -311,6 +319,17 @@ class LiabilityController extends Controller
         $pendingCount = $paymentSchedule->whereNull('payment_date')->count();
         $overdueCount = $paymentSchedule->where('due_date', '<', now()->toDateString())->whereNull('payment_date')->count();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact(
+                'liability',
+                'paymentSchedule',
+                'paidCount',
+                'totalPaid',
+                'pendingCount',
+                'overdueCount'
+            ));
+        }
+
         return view('accounting.liabilities.show', compact(
             'liability',
             'paymentSchedule',
@@ -366,6 +385,17 @@ class LiabilityController extends Controller
             ->get();
 
         $banks = DB::table('banks')->where('is_active', true)->orderBy('name')->get();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact(
+                'liability',
+                'accounts',
+                'expenseAccounts',
+                'banks',
+                'paidPayments',
+                'totalPayments'
+            ));
+        }
 
         return view('accounting.liabilities.edit', compact(
             'liability',
@@ -587,6 +617,10 @@ class LiabilityController extends Controller
         $liabilityAccount = $liability->account;
         $interestAccount = $liability->interestExpenseAccount ?? Account::where('code', '6300')->first();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('liability', 'nextPayment', 'banks', 'liabilityAccount', 'interestAccount'));
+        }
+
         return view('accounting.liabilities.payment', compact('liability', 'nextPayment', 'banks', 'liabilityAccount', 'interestAccount'));
     }
 
@@ -707,6 +741,10 @@ class LiabilityController extends Controller
             ->where('liability_id', $id)
             ->orderBy('due_date')
             ->get();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('liability', 'schedule'));
+        }
 
         return view('accounting.liabilities.schedule', compact('liability', 'schedule'));
     }

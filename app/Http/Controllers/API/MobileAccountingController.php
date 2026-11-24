@@ -380,4 +380,13 @@ class MobileAccountingController extends Controller
 
         return response()->json(['success' => true, 'users' => $q->orderBy('surname')->limit(25)->get(['id', 'surname', 'firstname', 'othername'])->map(fn ($u) => ['id' => $u->id, 'name' => trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : ''))])]);
     }
+
+    /** The reports page's saved filters: the user's own and the shared ones (the web page's list, as JSON). */
+    public function savedFilters(Request $request)
+    {
+        $rows = \App\Models\Accounting\SavedReportFilter::where(fn ($q) => $q->where('created_by', auth()->id())->orWhere('is_shared', true))
+            ->orderBy('name')->limit(100)->get(['id', 'name', 'report_type', 'filters', 'is_shared', 'created_by']);
+
+        return response()->json(['filters' => $rows->map(fn ($f) => $f->toArray() + ['mine' => (int) $f->created_by === (int) auth()->id()])]);
+    }
 }

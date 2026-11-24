@@ -39,6 +39,10 @@ class BudgetController extends Controller
         $fiscalYears = FiscalYear::orderBy('start_date', 'desc')->get();
         $departments = Department::where('is_active', true)->orderBy('name')->get();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('stats', 'fiscalYears', 'departments'));
+        }
+
         return view('accounting.budgets.index', compact('stats', 'fiscalYears', 'departments'));
     }
 
@@ -177,8 +181,8 @@ class BudgetController extends Controller
             $query->where('status', $request->status);
         }
 
-        if ($request->search['value']) {
-            $search = $request->search['value'];
+        if ($request->input('search.value')) {
+            $search = $request->input('search.value');
             $query->where(function ($q) use ($search) {
                 $q->where('budget_name', 'like', "%{$search}%")
                   ->orWhereHas('department', function ($dq) use ($search) {
@@ -373,6 +377,10 @@ class BudgetController extends Controller
 
         // Monthly breakdown
         $monthlyData = $this->getMonthlyBreakdown($budget);
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('budget', 'itemsWithActuals', 'monthlyData'));
+        }
 
         return view('accounting.budgets.show', compact('budget', 'itemsWithActuals', 'monthlyData'));
     }
@@ -671,6 +679,16 @@ class BudgetController extends Controller
 
         $fiscalYears = FiscalYear::orderBy('start_date', 'desc')->get();
         $departments = Department::where('is_active', true)->orderBy('name')->get();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact(
+                'reportData',
+                'fiscalYears',
+                'departments',
+                'fiscalYearId',
+                'departmentId'
+            ));
+        }
 
         return view('accounting.budgets.variance-report', compact(
             'reportData',

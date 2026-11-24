@@ -24,8 +24,22 @@ The stock ledger of the whole store or one product: opening balance, every movem
 
 ### Pending, orders, returns, reports
 - **Pending:** six queues (requests to send, my requests, POs to receive, damages, requisition returns, PO returns) with counts; approve or reject in place or open the record.
-- **Purchase orders:** create, submit, approve, **receive goods** (batch, expiry, actual cost), **pay the supplier**, cancel. Receiving creates the amount owed to the supplier; paying clears it.
+- **Purchase orders:** create, **edit a saved draft** (open the order, choose Edit, change supplier, store, dates or items, then Save changes or submit), submit, approve, **receive goods** (batch, expiry, actual cost), **pay the supplier**, cancel. Receiving creates the amount owed to the supplier; paying clears it.
 - **Reports:** expiry (expired, critical, soon), stock value by product, movement summary (given out or received, by category, product or destination, with revenue and profit).
+
+## Store masters, governance and expenses
+In the **Store** section, **Stores**, **Products** and **Categories** open one screen with a bar for Stores, Products, Categories and Suppliers. Each is a paged list with search; tap a row to see the record, edit it, deactivate it (products) or delete it (categories and suppliers, which the server refuses while stock or orders still use them). **New** opens the same form as the web; a product form has its packaging levels (a box of strips of tablets) and the half- and piece-sale fields only when the hospital allows them.
+
+![Products on a phone](/images/workbenches/native-phone-store-products.png)
+![Products on a desktop](/images/workbenches/native-desktop-store-products.png)
+
+**Store Governance** (needs the governance permission): *Store roles* (what each store is, whether it dispenses to patients, who supplies it, its ward, department and manager; switching off direct dispensing with pending dispenses asks you first), *Transfer lanes* (which kind of store may send to which, and who approves) and *Working store rules* (how a person's store is picked, with a panel to try a person and see the steps).
+
+![Transfer lanes on a phone](/images/workbenches/native-phone-store-governance.png)
+
+**Expenses** (Store section) is the same list, record and approve, reject or void flow as in Accounting, available to store keepers; what each person can do still follows the expense permissions.
+
+![Store expenses on a phone](/images/workbenches/native-phone-store-expenses.png)
 
 ## Accounting
 **Accounting** section: Overview, Journals, Reports, Accounts, Periods, Payables, Expenses, Credit notes, Deposits, Petty cash, Transfers. The overview shows the open period, income and expenses, what waits for approval, and the ageing of what is **owed to us** and what **we owe**.
@@ -39,6 +53,18 @@ The stock ledger of the whole store or one product: opening balance, every movem
 ![Trial balance on a phone](/images/workbenches/native-phone-accounting-trial-balance.png)
 
 - **Payables, expenses, credit notes, patient deposits, petty cash, bank transfers:** list, record, approve or reject, as on the web, with the web's permissions.
-- **Still on the web:** bank reconciliation matching, fixed assets, liabilities, leases, cost centres, capex, budgets, cash-flow forecast, financial KPIs, statutory remittances, opening balances and exports.
+- **Finance modules:** each sidebar item opens its group, with a bar to move inside it.
+  - *Fixed assets, Capex:* register, edit, dispose or void an asset; request, approve, reject, ask for revision, start, record expenses and complete a project.
+  - *Liabilities, Leases, Statutory remittances:* create, record payments (liabilities), modify or terminate (leases), submit, approve, pay or void (remittances); each record shows its schedule.
+  - *Budgets, Cash-flow forecast, Cost centres, KPIs:* see lines against actual, submit, approve, reject, unapprove and lock budgets; create and activate forecasts and apply patterns; manage cost centres; add KPIs and calculate them.
+  - *Banks, Reconciliation, Opening balances:* start a reconciliation from the bank statement figures, add statement lines, select a ledger line and a statement line and **match** them, unmatch, mark outstanding, then submit for review, approve and finalise; set each account's opening balance for a fiscal year.
+![A liability on a phone](/images/workbenches/native-phone-finance-liability.png)
+![Bank reconciliation on a phone](/images/workbenches/native-phone-finance-reconciliation.png)
+![Bank reconciliation on a desktop](/images/workbenches/native-desktop-finance-reconciliation.png)
+![A budget on a tablet](/images/workbenches/native-tablet-finance-budget.png)
+![Financial KPIs on a phone](/images/workbenches/native-phone-finance-kpis.png)
+
+- **Saved filters and downloads:** on Reports, the menu saves the report with its dates, loads or deletes saved filters, and hands the PDF or Excel download to the browser.
+- **Still on the web:** creating a budget with its lines, forecast period items and patterns, cost-centre budgets and allocations, KPI editing and alerts, and importing a bank statement file.
 
 👉 Developer reference: [Native Clients](/developer/native-client)

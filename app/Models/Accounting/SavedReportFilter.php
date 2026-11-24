@@ -21,6 +21,9 @@ class SavedReportFilter extends Model
 
     protected $fillable = [
         'user_id',
+        'created_by',
+        'is_shared',
+        'description',
         'report_type',
         'name',
         'filters',
@@ -30,6 +33,7 @@ class SavedReportFilter extends Model
     protected $casts = [
         'filters' => 'array',
         'is_default' => 'boolean',
+        'is_shared' => 'boolean',
     ];
 
     // Report types

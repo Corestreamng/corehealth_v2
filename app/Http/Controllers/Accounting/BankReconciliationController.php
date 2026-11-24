@@ -42,6 +42,10 @@ class BankReconciliationController extends Controller
         $stats = $this->getDashboardStats();
         $banks = Bank::where('is_active', true)->orderBy('name')->get();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('stats', 'banks'));
+        }
+
         return view('accounting.bank-reconciliation.index', compact('stats', 'banks'));
     }
 
@@ -71,7 +75,7 @@ class BankReconciliationController extends Controller
 
         return DataTables::of($query)
             ->addColumn('statement_date_formatted', fn ($r) => $r->statement_date->format('M d, Y'))
-            ->addColumn('bank_name', fn ($r) => $r->bank?->bank_name ?? '-')
+            ->addColumn('bank_name', fn ($r) => $r->bank?->name ?? '-')
             ->addColumn('period', fn ($r) => $r->statement_period_from->format('M d') . ' - ' . $r->statement_period_to->format('M d, Y'))
             ->addColumn('opening_balance_formatted', fn ($r) => '₦' . number_format($r->statement_opening_balance, 2))
             ->addColumn('statement_balance_formatted', fn ($r) => '₦' . number_format($r->statement_closing_balance, 2))
@@ -136,6 +140,10 @@ class BankReconciliationController extends Controller
         $banks = Bank::where('is_active', true)->orderBy('name')->get();
         $periods = AccountingPeriod::where('status', AccountingPeriod::STATUS_OPEN)->orderBy('start_date', 'desc')->get();
         $selectedBank = $bank;  // Renamed to avoid collision with @foreach($banks as $bank)
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('banks', 'periods', 'selectedBank'));
+        }
 
         return view('accounting.bank-reconciliation.create', compact('banks', 'periods', 'selectedBank'));
     }
@@ -244,6 +252,15 @@ class BankReconciliationController extends Controller
             ->where('is_matched', true)
             ->get();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact(
+                'reconciliation',
+                'unmatchedGL',
+                'unmatchedStatement',
+                'matchedItems'
+            ));
+        }
+
         return view('accounting.bank-reconciliation.show', compact(
             'reconciliation',
             'unmatchedGL',
@@ -274,6 +291,14 @@ class BankReconciliationController extends Controller
             ->where('source', BankReconciliationItem::SOURCE_STATEMENT)
             ->orderBy('transaction_date')
             ->get();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact(
+                'reconciliation',
+                'glItems',
+                'statementItems'
+            ));
+        }
 
         return view('accounting.bank-reconciliation.edit', compact(
             'reconciliation',
@@ -527,7 +552,7 @@ class BankReconciliationController extends Controller
                     'amount' => $validated['amount_type'] === 'credit' ? $validated['amount'] : -$validated['amount'],
                 ]),
                 'transaction_date' => $validated['transaction_date'],
-                'reference' => $validated['reference'],
+                'reference' => $validated['reference'] ?? null,
                 'description' => $validated['description'],
                 'amount' => abs($validated['amount']),
                 'amount_type' => $validated['amount_type'],

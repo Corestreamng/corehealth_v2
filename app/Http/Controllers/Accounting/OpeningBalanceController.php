@@ -399,7 +399,7 @@ class OpeningBalanceController extends Controller
             $query->where('account_group_id', $groupId);
         }
 
-        $accounts = $query->orderBy('account_code')->get();
+        $accounts = $query->orderBy('code')->get();
 
         return response()->json([
             'success' => true,

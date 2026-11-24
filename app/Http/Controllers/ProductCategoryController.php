@@ -117,6 +117,10 @@ class ProductCategoryController extends Controller
         $v = validator()->make($request->all(), $rules);
 
         if ($v->fails()) {
+            if (request()->expectsJson()) {
+                return response()->json(['message' => $v->messages()->first(), 'errors' => $v->errors()], 422);
+            }
+
             return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
         } else {
             $category = new ProductCategory();
@@ -128,10 +132,22 @@ class ProductCategoryController extends Controller
             if ($category->save()) {
                 $msg = 'The ProductCategory ' . $request->category_name . ' was saved successfully.';
 
+                if (request()->expectsJson()) {
+
+                    return response()->json(['success' => true, 'message' => $msg]);
+
+                }
+
                 return redirect(route('product-category.index'))->withMessage($msg)->withMessageType('success');
             } else {
 
                 $msg = 'Something is went wrong. But it seems it is not your input contact the system administrator';
+
+                if (request()->expectsJson()) {
+
+                    return response()->json(['success' => false, 'message' => $msg], 422);
+
+                }
 
                 return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger');
             }
@@ -189,6 +205,10 @@ class ProductCategoryController extends Controller
         $v = validator()->make($request->all(), $rules);
 
         if ($v->fails()) {
+            if (request()->expectsJson()) {
+                return response()->json(['message' => $v->messages()->first(), 'errors' => $v->errors()], 422);
+            }
+
             return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
         } else {
             $category = ProductCategory::find($id);
@@ -200,10 +220,22 @@ class ProductCategoryController extends Controller
             if ($category->save()) {
                 $msg = 'The ProductCategory ' . $request->category_name . ' was updated successfully.';
 
+                if (request()->expectsJson()) {
+
+                    return response()->json(['success' => true, 'message' => $msg]);
+
+                }
+
                 return redirect(route('product-category.index'))->withMessage($msg)->withMessageType('success');
             } else {
 
                 $msg = 'Something is went wrong. But it seems it is not your input contact the system administrator';
+
+                if (request()->expectsJson()) {
+
+                    return response()->json(['success' => false, 'message' => $msg], 422);
+
+                }
 
                 return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger')->withInput();
             }

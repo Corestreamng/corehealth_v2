@@ -98,6 +98,12 @@ class StoreController extends Controller
             if ($v->fails()) {
                 Alert::error('Error Title', 'One or more information is needed.');
 
+                if (request()->expectsJson()) {
+
+                    return response()->json(['message' => $v->messages()->first(), 'errors' => $v->errors()], 422);
+
+                }
+
                 return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             } else {
 
@@ -110,10 +116,22 @@ class StoreController extends Controller
                     $msg = 'New Store  ' . $request->store_name . ' was created successfully.';
                     Alert::success('Success ', $msg);
 
+                    if (request()->expectsJson()) {
+
+                        return response()->json(['success' => true, 'message' => $msg]);
+
+                    }
+
                     return redirect()->route('stores.index')->withMessage($msg)->withMessageType('success');
                 }
             }
         } catch (\Exception $e) {
+
+            if (request()->expectsJson()) {
+
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+
+            }
 
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
@@ -146,6 +164,12 @@ class StoreController extends Controller
             return view('admin.stores.edit', compact('store'));
         } catch (\Exception $e) {
 
+            if (request()->expectsJson()) {
+
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+
+            }
+
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
@@ -171,6 +195,12 @@ class StoreController extends Controller
             if ($v->fails()) {
                 Alert::error('Error Title', 'One or more information is needed.');
 
+                if (request()->expectsJson()) {
+
+                    return response()->json(['message' => $v->messages()->first(), 'errors' => $v->errors()], 422);
+
+                }
+
                 return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             } else {
 
@@ -183,10 +213,22 @@ class StoreController extends Controller
                     $msg = 'Store  ' . $request->store_name . ' was Updated successfully.';
                     Alert::success('Success ', $msg);
 
+                    if (request()->expectsJson()) {
+
+                        return response()->json(['success' => true, 'message' => $msg]);
+
+                    }
+
                     return redirect()->route('stores.index')->withMessage($msg)->withMessageType('success');
                 }
             }
         } catch (Exception $e) {
+
+            if (request()->expectsJson()) {
+
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+
+            }
 
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage())->withMessageType('danger');
         }

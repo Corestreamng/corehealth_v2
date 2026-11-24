@@ -536,9 +536,6 @@ class ReportController extends Controller
             })
             ->firstOrFail();
 
-        // Update last_used_at
-        $filter->update(['last_used_at' => now()]);
-
         return response()->json([
             'success' => true,
             'filter' => $filter,

@@ -96,6 +96,12 @@ class SupplierController extends Controller
 
         Alert::success('Success', 'Supplier created successfully');
 
+        if (request()->expectsJson()) {
+
+            return response()->json(['success' => true, 'message' => 'Supplier saved.']);
+
+        }
+
         return redirect()->route('suppliers.index');
     }
 
@@ -166,6 +172,12 @@ class SupplierController extends Controller
         $supplier->update($validated);
 
         Alert::success('Success', 'Supplier updated successfully');
+
+        if (request()->expectsJson()) {
+
+            return response()->json(['success' => true, 'message' => 'Supplier saved.']);
+
+        }
 
         return redirect()->route('suppliers.index');
     }

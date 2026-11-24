@@ -36,6 +36,10 @@ class LeaseController extends Controller
     {
         $stats = $this->getDashboardStats();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('stats'));
+        }
+
         return view('accounting.leases.index', compact('stats'));
     }
 
@@ -229,6 +233,16 @@ class LeaseController extends Controller
             ->whereNull('deleted_at')
             ->orderBy('company_name')
             ->get();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact(
+                'rouAssetAccounts',
+                'liabilityAccounts',
+                'expenseAccounts',
+                'departments',
+                'suppliers'
+            ));
+        }
 
         return view('accounting.leases.create', compact(
             'rouAssetAccounts',
@@ -499,6 +513,17 @@ class LeaseController extends Controller
             ->orderBy('journal_entries.entry_date', 'desc')
             ->get();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact(
+                'lease',
+                'schedule',
+                'paymentSummary',
+                'nextPayment',
+                'modifications',
+                'journalEntries'
+            ));
+        }
+
         return view('accounting.leases.show', compact(
             'lease',
             'schedule',
@@ -530,6 +555,10 @@ class LeaseController extends Controller
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('lease', 'departments'));
+        }
 
         return view('accounting.leases.edit', compact('lease', 'departments'));
     }
@@ -597,6 +626,10 @@ class LeaseController extends Controller
             ->where('is_active', true)
             ->orderBy('code')
             ->get();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('lease', 'nextPayment', 'bankAccounts'));
+        }
 
         return view('accounting.leases.payment', compact('lease', 'nextPayment', 'bankAccounts'));
     }
@@ -732,6 +765,10 @@ class LeaseController extends Controller
         if ($lease->status !== 'active') {
             return redirect()->route('accounting.leases.show', $id)
                 ->with('error', 'Only active leases can be modified.');
+        }
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('lease'));
         }
 
         return view('accounting.leases.modification', compact('lease'));
@@ -905,6 +942,10 @@ class LeaseController extends Controller
             ->orderBy('payment_number')
             ->get();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('lease', 'schedule'));
+        }
+
         return view('accounting.leases.schedule', compact('lease', 'schedule'));
     }
 
@@ -954,6 +995,10 @@ class LeaseController extends Controller
                 'liability' => $items->sum('current_lease_liability'),
             ])
             ->toArray();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('activeLeases', 'summary', 'maturityAnalysis', 'byType'));
+        }
 
         return view('accounting.leases.reports.ifrs16', compact(
             'activeLeases',

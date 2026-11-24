@@ -387,6 +387,10 @@ class FixedAssetController extends Controller
             }
         }
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('fixedAsset', 'depreciationSchedule', 'depreciationHistory'));
+        }
+
         return view('accounting.fixed-assets.show', compact('fixedAsset', 'depreciationSchedule', 'depreciationHistory'));
     }
 
@@ -623,6 +627,10 @@ class FixedAssetController extends Controller
             ->with(['assetAccount', 'depreciationAccount', 'expenseAccount'])
             ->orderBy('name')
             ->get();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('categories'));
+        }
 
         return view('accounting.fixed-assets.categories', compact('categories'));
     }

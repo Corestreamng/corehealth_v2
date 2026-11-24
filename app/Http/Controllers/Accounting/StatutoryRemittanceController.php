@@ -46,7 +46,7 @@ class StatutoryRemittanceController extends Controller
             $query->where('period_to', '<=', $request->period_to);
         }
 
-        $remittances = $query->paginate(20);
+        $remittances = $query->paginate(max(1, min(100, (int) $request->input('per_page', 20))));
 
         // Get pay heads that are deductions with liability accounts
         $payHeads = PayHead::where('type', 'deduction')
@@ -56,7 +56,7 @@ class StatutoryRemittanceController extends Controller
             ->get();
 
         // Get banks for payment
-        $banks = Bank::where('active', true)->orderBy('bank_name')->get();
+        $banks = Bank::where('is_active', true)->orderBy('name')->get();
 
         // Summary stats
         $stats = [
@@ -67,6 +67,15 @@ class StatutoryRemittanceController extends Controller
                 ->sum('amount'),
             'overdue_count' => StatutoryRemittance::overdue()->count(),
         ];
+
+        if (request()->expectsJson()) {
+            return response()->json(compact(
+                'remittances',
+                'payHeads',
+                'banks',
+                'stats'
+            ));
+        }
 
         return view('admin.accounting.statutory-remittances.index', compact(
             'remittances',
@@ -87,7 +96,7 @@ class StatutoryRemittanceController extends Controller
             ->orderBy('name')
             ->get();
 
-        $banks = Bank::where('active', true)->orderBy('bank_name')->get();
+        $banks = Bank::where('is_active', true)->orderBy('name')->get();
 
         return view('admin.accounting.statutory-remittances.create', compact('payHeads', 'banks'));
     }
@@ -179,9 +188,13 @@ class StatutoryRemittanceController extends Controller
         ]);
 
         // Banks for the payment modal
-        $banks = Bank::where('active', true)->orderBy('bank_name')->get();
+        $banks = Bank::where('is_active', true)->orderBy('name')->get();
 
         $remittance = $statutoryRemittance;
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('remittance', 'banks'));
+        }
 
         return view('admin.accounting.statutory-remittances.show', compact('remittance', 'banks'));
     }
@@ -201,7 +214,7 @@ class StatutoryRemittanceController extends Controller
             ->orderBy('name')
             ->get();
 
-        $banks = Bank::where('active', true)->orderBy('bank_name')->get();
+        $banks = Bank::where('is_active', true)->orderBy('name')->get();
 
         $remittance = $statutoryRemittance;
 

@@ -55,6 +55,10 @@ class CashFlowForecastController extends Controller
             ->where('is_active', true)
             ->get();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('stats', 'fiscalYears', 'cashAccounts'));
+        }
+
         return view('accounting.cash-flow-forecast.index', compact('stats', 'fiscalYears', 'cashAccounts'));
     }
 
@@ -178,8 +182,8 @@ class CashFlowForecastController extends Controller
             $query->where('status', $request->status);
         }
 
-        if ($request->search['value']) {
-            $search = $request->search['value'];
+        if ($request->input('search.value')) {
+            $search = $request->input('search.value');
             $query->where('name', 'like', "%{$search}%");
         }
 
@@ -403,6 +407,10 @@ class CashFlowForecastController extends Controller
             ];
         });
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('forecast', 'periodsWithBalance', 'chartData', 'currentCash'));
+        }
+
         return view('accounting.cash-flow-forecast.show', compact('forecast', 'periodsWithBalance', 'chartData', 'currentCash'));
     }
 
@@ -429,6 +437,10 @@ class CashFlowForecastController extends Controller
             ->where('is_active', true)
             ->orderBy('code')
             ->get();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('period', 'expenseAccounts', 'revenueAccounts', 'openingBalance'));
+        }
 
         return view('accounting.cash-flow-forecast.edit-period', compact('period', 'expenseAccounts', 'revenueAccounts', 'openingBalance'));
     }
@@ -815,6 +827,10 @@ class CashFlowForecastController extends Controller
             'total_patterns' => $patterns->count(),
             'user_id' => Auth::id(),
         ]);
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('patterns'));
+        }
 
         return view('accounting.cash-flow-forecast.patterns', compact('patterns'));
     }

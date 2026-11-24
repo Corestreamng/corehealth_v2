@@ -34,6 +34,10 @@ class CapexController extends Controller
         $fiscalYears = $this->getFiscalYears();
         $categories = $this->getCapexCategories();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('stats', 'fiscalYears', 'categories'));
+        }
+
         return view('accounting.capex.index', compact('stats', 'fiscalYears', 'categories'));
     }
 
@@ -337,6 +341,10 @@ class CapexController extends Controller
             ->where('is_active', 1)
             ->orderBy('name')
             ->get();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('capex', 'items', 'expenses', 'assets', 'approvalHistory', 'banks'));
+        }
 
         return view('accounting.capex.show', compact('capex', 'items', 'expenses', 'assets', 'approvalHistory', 'banks'));
     }
@@ -792,6 +800,10 @@ class CapexController extends Controller
             )
             ->where('fiscal_year', $fiscalYear)
             ->first();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('budgets', 'byCategory', 'fiscalYear', 'fiscalYears', 'categories', 'totalBudget', 'totalCommitted', 'totalSpent', 'costCenters', 'capexStats'));
+        }
 
         return view('accounting.capex.budget-overview', compact('budgets', 'byCategory', 'fiscalYear', 'fiscalYears', 'categories', 'totalBudget', 'totalCommitted', 'totalSpent', 'costCenters', 'capexStats'));
     }

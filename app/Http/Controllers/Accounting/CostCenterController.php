@@ -49,6 +49,10 @@ class CostCenterController extends Controller
 
         $departments = Department::orderBy('name')->get();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('stats', 'centerTypes', 'departments'));
+        }
+
         return view('accounting.cost-centers.index', compact('stats', 'centerTypes', 'departments'));
     }
 
@@ -203,6 +207,10 @@ class CostCenterController extends Controller
         $managers = User::where('status', 1)->orderBy('surname')->get(['id', 'surname', 'firstname', 'othername', 'email']);
         $parentCenters = CostCenter::where('is_active', true)->orderBy('name')->get(['id', 'code', 'name']);
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('centerTypes', 'departments', 'managers', 'parentCenters'));
+        }
+
         return view('accounting.cost-centers.create', compact('centerTypes', 'departments', 'managers', 'parentCenters'));
     }
 
@@ -287,6 +295,16 @@ class CostCenterController extends Controller
             'transaction_count' => $recentTransactions->count(),
         ];
 
+        if (request()->expectsJson()) {
+            return response()->json(compact(
+                'costCenter',
+                'periodData',
+                'recentTransactions',
+                'budget',
+                'currentFiscalYear'
+            ));
+        }
+
         return view('accounting.cost-centers.show', compact(
             'costCenter',
             'periodData',
@@ -314,6 +332,10 @@ class CostCenterController extends Controller
             ->where('id', '!=', $costCenter->id)
             ->orderBy('name')
             ->get(['id', 'code', 'name']);
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('costCenter', 'centerTypes', 'departments', 'managers', 'parentCenters'));
+        }
 
         return view('accounting.cost-centers.edit', compact('costCenter', 'centerTypes', 'departments', 'managers', 'parentCenters'));
     }
@@ -418,6 +440,10 @@ class CostCenterController extends Controller
             'total_expenses' => $costCenter->getExpensesForPeriod($fromDate, $toDate),
             'transaction_count' => $transactions->count(),
         ];
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('costCenter', 'fromDate', 'toDate', 'expensesByAccount', 'monthlyTrend', 'budget', 'summary', 'transactions'));
+        }
 
         return view('accounting.cost-centers.report', compact(
             'costCenter',
@@ -583,6 +609,10 @@ class CostCenterController extends Controller
             ->get()
             ->groupBy(fn ($account) => $account->accountGroup ? $account->accountGroup->name : 'Uncategorized');
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('costCenter', 'budgets', 'fiscalYears', 'accounts'));
+        }
+
         return view('accounting.cost-centers.budgets', compact('costCenter', 'budgets', 'fiscalYears', 'accounts'));
     }
 
@@ -697,6 +727,10 @@ class CostCenterController extends Controller
             }
         } catch (\Exception $e) {
             Log::warning('Cost allocations table not found: ' . $e->getMessage());
+        }
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('costCenters', 'fiscalYears', 'recentAllocations', 'stats'));
         }
 
         return view('accounting.cost-centers.allocations', compact('costCenters', 'fiscalYears', 'recentAllocations', 'stats'));
