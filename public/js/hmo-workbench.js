@@ -2695,7 +2695,7 @@ $(function() {
                             '<td>₦' + fmtN(r.claims_amount) + '</td>' +
                             '<td>₦' + fmtN(r.payable_amount) + '</td>' +
                             '<td><span class="badge badge-outline-secondary" style="border:1px solid #adb5bd;">' + (r.coverage_mode || '') + '</span></td>' +
-                            '<td>' + statusBadge(r.validation_status) + '</td>' +
+                            '<td>' + statusBadge(r.validation_status) + (r.no_hmo_share ? '<br><small class="text-muted" title="The HMO pays nothing on this item, so there is nothing to validate">No HMO share</small>' : '') + '</td>' +
                             '<td><small>' + (r.created_at || '') + '</small></td>' +
                             '<td><div class="pf-action-cell">' + pastActions + '</div></td>' +
                             '</tr>';

@@ -65,181 +65,11 @@ class HmoWorkbenchController extends Controller
      */
     public function getRequests(Request $request)
     {
-        $query = ProductOrServiceRequest::with([
-            'user.patient_profile.hmo',
-            'service.price',
-            'product.price',
-            'validator',
-            'staff', // For "Requested By" info
-            'procedure.procedureDefinition', // For Procedure items
-            'receptionValidator',
-            'labRequest',
-            'imagingRequest',
-            'productRequest',
-        ])
-        ->whereHas('user.patient_profile', function ($q) {
-            $q->whereNotNull('hmo_id');
-        })
-        ->whereNotNull('coverage_mode') // Only HMO requests
-        ->where('is_bundle_item', false);
-
-        // Tab filters - each tab has different logic
-        if ($request->filled('tab')) {
-            switch ($request->tab) {
-                case 'pending':
-                    $query->where('validation_status', 'pending')
-                          ->whereIn('coverage_mode', ['primary', 'secondary'])
-                          ->where('claims_amount', '>', 0);
-
-                    break;
-                case 'express':
-                    $query->where('coverage_mode', 'express');
-
-                    break;
-                case 'approved':
-                    $query->where('validation_status', 'approved')
-                          ->where('claims_amount', '>', 0);
-
-                    break;
-                case 'rejected':
-                    $query->where('validation_status', 'rejected')
-                          ->where('claims_amount', '>', 0);
-
-                    break;
-                case 'claims':
-                    $query->whereNotNull('payment_id')
-                          ->where('claims_amount', '>', 0);
-
-                    break;
-                case 'awaiting_code':
-                    $query->where('validation_status', 'awaiting_code')
-                          ->where('claims_amount', '>', 0);
-
-                    break;
-                case 'all':
-                    $query->where('claims_amount', '>', 0); // Skip items with 0 claims
-
-                    break;
-            }
-        }
-
-        // Quick filter presets
-        if ($request->filled('preset')) {
-            switch ($request->preset) {
-                case 'overdue':
-                    $query->where('validation_status', 'pending')
-                          ->where('created_at', '<', Carbon::now()->subHours(4));
-
-                    break;
-                case 'high_value':
-                    $query->where('claims_amount', '>', 50000);
-
-                    break;
-                case 'today_approved':
-                    $query->where('validation_status', 'approved')
-                          ->whereDate('validated_at', today());
-
-                    break;
-                case 'today_rejected':
-                    $query->where('validation_status', 'rejected')
-                          ->whereDate('validated_at', today());
-
-                    break;
-            }
-        }
-
-        // Additional filters
-        if ($request->filled('hmo_id')) {
-            $query->whereHas('user.patient_profile', function ($q) use ($request) {
-                $q->where('hmo_id', $request->hmo_id);
-            });
-        }
-
-        if ($request->filled('coverage_mode')) {
-            $query->where('coverage_mode', $request->coverage_mode);
-        }
-
-        // Service Type filter - Products, Services, or Procedures
-        if ($request->filled('service_type')) {
-            switch ($request->service_type) {
-                case 'product':
-                    // Has product_id and no linked procedure
-                    $query->whereNotNull('product_id')
-                          ->whereDoesntHave('procedure');
-
-                    break;
-                case 'service':
-                    // Has service_id and no linked procedure
-                    $query->whereNotNull('service_id')
-                          ->whereDoesntHave('procedure');
-
-                    break;
-                case 'procedure':
-                    // Has a linked procedure
-                    $query->whereHas('procedure');
-
-                    break;
-            }
-        }
-
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-
-        if ($request->filled('validated_by')) {
-            $query->where('validated_by', $request->validated_by);
-        }
-
-        // Reception validation filter
-        if ($request->filled('reception_validated')) {
-            if ($request->reception_validated === '1') {
-                $query->where('reception_validated', 1);
-            } elseif ($request->reception_validated === '0') {
-                $query->where('reception_validated', 0);
-            }
-        }
-
-        // Search
-        $search = is_array($request->search) ? ($request->search['value'] ?? null) : $request->search;
-        if (!empty($search) && is_string($search)) {
-            $query->where(function ($q) use ($search) {
-                $q->where('product_or_service_requests.id', 'LIKE', "%{$search}%")
-                  ->orWhereHas('user', function ($q2) use ($search) {
-                      $q2->where('firstname', 'LIKE', "%{$search}%")
-                         ->orWhere('surname', 'LIKE', "%{$search}%");
-                  })
-                  ->orWhereHas('user.patient_profile', function ($q2) use ($search) {
-                      $q2->where('file_no', 'LIKE', "%{$search}%")
-                         ->orWhere('hmo_no', 'LIKE', "%{$search}%");
-                  })
-                  ->orWhereHas('service', function ($q2) use ($search) {
-                      $q2->where('service_name', 'LIKE', "%{$search}%");
-                  })
-                  ->orWhereHas('product', function ($q2) use ($search) {
-                      $q2->where('product_name', 'LIKE', "%{$search}%");
-                  })
-                  ->orWhereHas('procedure.procedureDefinition', function ($q2) use ($search) {
-                      $q2->where('name', 'LIKE', "%{$search}%");
-                  });
-            });
-        }
+        $query = $this->requestsQuery($request);
 
         $query->orderBy('product_or_service_requests.created_at', 'DESC');
 
-        // Batch-load emergency patient IDs from active queues & admissions only
-        $emergencyPatientIds = DoctorQueue::where('priority', 'emergency')
-            ->whereIn('status', [1, 2, 3])
-            ->pluck('patient_id')
-            ->merge(
-                AdmissionRequest::where('priority', 'emergency')
-                    ->where('discharged', 0)
-                    ->pluck('patient_id')
-            )
-            ->unique();
+        $emergencyPatientIds = $this->emergencyPatientIds();
 
         $formatUserName = function ($user, $fallbackId = null) {
             if ($user instanceof User) {
@@ -487,9 +317,196 @@ class HmoWorkbenchController extends Controller
     }
 
     /**
+     * The HMO requests the workbench lists, with every filter (tab, preset, HMO, mode, type, dates, validator,
+     * reception, search) applied. Shared by the DataTables list and the staff app's JSON list.
+     */
+    protected function requestsQuery(Request $request)
+    {
+        $query = ProductOrServiceRequest::with([
+            'user.patient_profile.hmo',
+            'service.price',
+            'product.price',
+            'validator',
+            'staff', // For "Requested By" info
+            'procedure.procedureDefinition', // For Procedure items
+            'receptionValidator',
+            'labRequest',
+            'imagingRequest',
+            'productRequest',
+        ])
+        ->whereHas('user.patient_profile', function ($q) {
+            $q->whereNotNull('hmo_id');
+        })
+        ->whereNotNull('coverage_mode') // Only HMO requests
+        ->where('is_bundle_item', false);
+
+        // Tab filters - each tab has different logic
+        if ($request->filled('tab')) {
+            switch ($request->tab) {
+                case 'pending':
+                    $query->where('validation_status', 'pending')
+                          ->whereIn('coverage_mode', ['primary', 'secondary'])
+                          ->where('claims_amount', '>', 0);
+
+                    break;
+                case 'express':
+                    $query->where('coverage_mode', 'express');
+
+                    break;
+                case 'approved':
+                    $query->where('validation_status', 'approved')
+                          ->where('claims_amount', '>', 0);
+
+                    break;
+                case 'rejected':
+                    $query->where('validation_status', 'rejected')
+                          ->where('claims_amount', '>', 0);
+
+                    break;
+                case 'claims':
+                    $query->whereNotNull('payment_id')
+                          ->where('claims_amount', '>', 0);
+
+                    break;
+                case 'awaiting_code':
+                    $query->where('validation_status', 'awaiting_code')
+                          ->where('claims_amount', '>', 0);
+
+                    break;
+                case 'all':
+                    $query->where('claims_amount', '>', 0); // Skip items with 0 claims
+
+                    break;
+            }
+        }
+
+        // Quick filter presets
+        if ($request->filled('preset')) {
+            switch ($request->preset) {
+                case 'overdue':
+                    $query->where('validation_status', 'pending')
+                          ->where('created_at', '<', Carbon::now()->subHours(4));
+
+                    break;
+                case 'high_value':
+                    $query->where('claims_amount', '>', 50000);
+
+                    break;
+                case 'today_approved':
+                    $query->where('validation_status', 'approved')
+                          ->whereDate('validated_at', today());
+
+                    break;
+                case 'today_rejected':
+                    $query->where('validation_status', 'rejected')
+                          ->whereDate('validated_at', today());
+
+                    break;
+            }
+        }
+
+        // Additional filters
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('user.patient_profile', function ($q) use ($request) {
+                $q->where('hmo_id', $request->hmo_id);
+            });
+        }
+
+        if ($request->filled('coverage_mode')) {
+            $query->where('coverage_mode', $request->coverage_mode);
+        }
+
+        // Service Type filter - Products, Services, or Procedures
+        if ($request->filled('service_type')) {
+            switch ($request->service_type) {
+                case 'product':
+                    // Has product_id and no linked procedure
+                    $query->whereNotNull('product_id')
+                          ->whereDoesntHave('procedure');
+
+                    break;
+                case 'service':
+                    // Has service_id and no linked procedure
+                    $query->whereNotNull('service_id')
+                          ->whereDoesntHave('procedure');
+
+                    break;
+                case 'procedure':
+                    // Has a linked procedure
+                    $query->whereHas('procedure');
+
+                    break;
+            }
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        if ($request->filled('validated_by')) {
+            $query->where('validated_by', $request->validated_by);
+        }
+
+        // Reception validation filter
+        if ($request->filled('reception_validated')) {
+            if ($request->reception_validated === '1') {
+                $query->where('reception_validated', 1);
+            } elseif ($request->reception_validated === '0') {
+                $query->where('reception_validated', 0);
+            }
+        }
+
+        // Search
+        $search = is_array($request->search) ? ($request->search['value'] ?? null) : $request->search;
+        if (!empty($search) && is_string($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('product_or_service_requests.id', 'LIKE', "%{$search}%")
+                  ->orWhereHas('user', function ($q2) use ($search) {
+                      $q2->where('firstname', 'LIKE', "%{$search}%")
+                         ->orWhere('surname', 'LIKE', "%{$search}%");
+                  })
+                  ->orWhereHas('user.patient_profile', function ($q2) use ($search) {
+                      $q2->where('file_no', 'LIKE', "%{$search}%")
+                         ->orWhere('hmo_no', 'LIKE', "%{$search}%");
+                  })
+                  ->orWhereHas('service', function ($q2) use ($search) {
+                      $q2->where('service_name', 'LIKE', "%{$search}%");
+                  })
+                  ->orWhereHas('product', function ($q2) use ($search) {
+                      $q2->where('product_name', 'LIKE', "%{$search}%");
+                  })
+                  ->orWhereHas('procedure.procedureDefinition', function ($q2) use ($search) {
+                      $q2->where('name', 'LIKE', "%{$search}%");
+                  });
+            });
+        }
+
+        return $query;
+    }
+
+    /** Patients with an active emergency queue entry or an undischarged emergency admission. */
+    protected function emergencyPatientIds()
+    {
+        // Batch-load emergency patient IDs from active queues & admissions only
+        return DoctorQueue::where('priority', 'emergency')
+            ->whereIn('status', [1, 2, 3])
+            ->pluck('patient_id')
+            ->merge(
+                AdmissionRequest::where('priority', 'emergency')
+                    ->where('discharged', 0)
+                    ->pluck('patient_id')
+            )
+            ->unique();
+    }
+
+    /**
      * Check if a service has been delivered (results entered, encounter completed, etc.)
      */
-    private function checkServiceDeliveryStatus($request)
+    protected function checkServiceDeliveryStatus($request)
     {
         // Check if it's a lab service
         if ($request->service_id) {
@@ -2209,10 +2226,12 @@ class HmoWorkbenchController extends Controller
                 // awaiting_code must be checked BEFORE payment_id: patient may have paid
                 // their payable portion while the HMO auth code is still outstanding.
                 $tabs['awaiting_code']->push($req);
+            } elseif ($req->validation_status === 'pending' && $req->claims_amount > 0) {
+                // Pending must be checked BEFORE payment_id too: a patient who has paid their own share (typical for
+                // Self/Private and co-pay schemes) still has an HMO claim that nobody has validated.
+                $tabs['pending']->push($req);
             } elseif ($req->payment_id && $req->claims_amount > 0) {
                 $tabs['past']->push($req);
-            } elseif ($req->validation_status === 'pending' && $req->claims_amount > 0) {
-                $tabs['pending']->push($req);
             } elseif ($req->validation_status === 'approved' && $req->claims_amount > 0) {
                 $tabs['approved']->push($req);
             } elseif ($req->validation_status === 'rejected' && $req->claims_amount > 0) {
@@ -2251,6 +2270,8 @@ class HmoWorkbenchController extends Controller
                 'payable_amount' => (float) $req->payable_amount,
                 'coverage_mode' => $req->coverage_mode,
                 'validation_status' => $req->validation_status,
+                // A request whose HMO share is nil has nothing to validate: its status stays "pending" but it is not a claim.
+                'no_hmo_share' => $req->validation_status === 'pending' && (float) $req->claims_amount <= 0,
                 'validation_notes' => $req->validation_notes,
                 'auth_code' => $req->auth_code,
                 'validated_by' => $req->validator ? userfullname($req->validated_by) : null,
