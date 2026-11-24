@@ -222,7 +222,6 @@ Route::prefix('accounting')->name('accounting.')->middleware(['auth', 'verified'
         Route::get('/{reconciliation}', [BankReconciliationController::class, 'show'])->name('show');
         Route::get('/{reconciliation}/edit', [BankReconciliationController::class, 'edit'])->name('edit');
         Route::put('/{reconciliation}', [BankReconciliationController::class, 'update'])->name('update');
-        Route::post('/{reconciliation}/import', [BankReconciliationController::class, 'importStatement'])->name('import');
 
         // Statement Upload & Visual Reconciliation
         Route::post('/{reconciliation}/upload-statement', [BankReconciliationController::class, 'uploadStatement'])->name('upload-statement');
@@ -237,14 +236,9 @@ Route::prefix('accounting')->name('accounting.')->middleware(['auth', 'verified'
         Route::post('/{reconciliation}/unmatch', [BankReconciliationController::class, 'unmatchItems'])->name('unmatch');
         Route::post('/{reconciliation}/outstanding', [BankReconciliationController::class, 'markOutstanding'])->name('outstanding');
         Route::post('/{reconciliation}/submit-review', [BankReconciliationController::class, 'submitForReview'])->name('submit-review');
-        Route::post('/{reconciliation}/auto-match', [BankReconciliationController::class, 'autoMatch'])->name('auto-match');
-        Route::post('/{reconciliation}/manual-match', [BankReconciliationController::class, 'manualMatch'])->name('manual-match');
-        Route::post('/items/{item}/unmatch', [BankReconciliationController::class, 'unmatch'])->name('item-unmatch');
-        Route::post('/{reconciliation}/adjustment', [BankReconciliationController::class, 'addAdjustment'])->name('adjustment');
         Route::post('/{reconciliation}/finalize', [BankReconciliationController::class, 'finalize'])->name('finalize');
         Route::post('/{reconciliation}/approve', [BankReconciliationController::class, 'approve'])->name('approve');
         Route::get('/{reconciliation}/export/pdf', [BankReconciliationController::class, 'exportPdf'])->name('export.pdf');
-        Route::get('/{reconciliation}/export/excel', [BankReconciliationController::class, 'exportExcel'])->name('export.excel');
     });
 
     // === PATIENT DEPOSITS ===

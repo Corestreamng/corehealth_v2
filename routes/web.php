@@ -254,15 +254,17 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
-        Route::resource('products', ProductController::class);
-        Route::post('products/{id}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
+        Route::resource('products', ProductController::class)->only(['index', 'show', 'edit']);
+        Route::resource('products', ProductController::class)->only(['create', 'store', 'update', 'destroy'])->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE|PHARMACIST');
+        Route::post('products/{id}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status')->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE|PHARMACIST');
         Route::get('product-list', [ProductController::class, 'listProducts'])->name('product-list');
         Route::get('products/{product}/packagings', [ProductController::class, 'getPackagings'])->name('products.packagings');
     });
 
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
-        Route::resource('product-category', ProductCategoryController::class);
+        Route::resource('product-category', ProductCategoryController::class)->only(['index', 'show', 'edit']);
+        Route::resource('product-category', ProductCategoryController::class)->only(['create', 'store', 'update', 'destroy'])->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE|PHARMACIST');
         Route::get('product-category-list', [ProductCategoryController::class, 'listProductCategories'])->name('product-category-list');
         Route::get('listSalesProduct/{id}', [ProductController::class, 'listSalesProduct'])->name('listSalesProduct');
         Route::get('live-search-products', [ProductController::class, 'liveSearchProducts'])->name('live-search-products');
@@ -1012,13 +1014,15 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
-        Route::resource('stores', StoreController::class);
+        Route::resource('stores', StoreController::class)->only(['index', 'show', 'edit']);
+        Route::resource('stores', StoreController::class)->only(['create', 'store', 'update', 'destroy'])->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE|PHARMACIST');
         Route::get('store-list', [StoreController::class, 'listStores'])->name('store-list');
     });
 
     // Supplier routes
     Route::group(['middleware' => ['auth']], function () {
-        Route::resource('suppliers', \App\Http\Controllers\SupplierController::class);
+        Route::resource('suppliers', \App\Http\Controllers\SupplierController::class)->only(['index', 'show', 'edit']);
+        Route::resource('suppliers', \App\Http\Controllers\SupplierController::class)->only(['create', 'store', 'update', 'destroy'])->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE|ACCOUNTS');
         Route::get('supplier-list', [\App\Http\Controllers\SupplierController::class, 'listSuppliers'])->name('suppliers.list');
         Route::get('suppliers-search', [\App\Http\Controllers\SupplierController::class, 'search'])->name('suppliers.search');
         Route::get('suppliers-export', [\App\Http\Controllers\SupplierController::class, 'export'])->name('suppliers.export');

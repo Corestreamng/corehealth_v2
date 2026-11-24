@@ -7,6 +7,7 @@ use App\Models\Accounting\AccountingPeriod;
 use App\Models\Accounting\JournalEntry;
 use App\Models\ImmunizationRecord;
 use App\Models\MedicationAdministration;
+use App\Models\PharmacyReturn;
 use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;
 use App\Models\StockBatchTransaction;
@@ -37,6 +38,8 @@ class InventoryCostService
     public const BACKFILL_SOURCE = 'InventoryCostBackfill';
 
     public const TRUEUP_SOURCE = 'InventoryTrueUp';
+
+    public const RETURN_FIX_SOURCE = 'PharmacyReturnCorrection';
 
     private const EQUITY_CODE = '3100';
 
@@ -114,6 +117,21 @@ class InventoryCostService
         $tx->forceFill(['journal_entry_id' => $entry->id])->saveQuietly();
 
         return $entry;
+    }
+
+    /** Everything booked to income accounts (4xxx) so far: the yardstick for whether batch costs look sane. */
+    public function incomeBooked(): float
+    {
+        return (float) DB::table('journal_entry_lines as l')->join('journal_entries as e', 'e.id', '=', 'l.journal_entry_id')->join('accounts as a', 'a.id', '=', 'l.account_id')
+            ->whereIn('e.status', JournalEntry::LEDGER_STATUSES)->where('a.code', 'like', '4%')->selectRaw('COALESCE(SUM(l.credit - l.debit), 0) AS v')->value('v');
+    }
+
+    /** True when the backlog costs more than all income ever booked: batch cost prices need checking before it is posted. */
+    public function costLooksUnreliable(): bool
+    {
+        $cost = array_sum(array_column($this->plan(), 'cost'));
+
+        return $cost > 0 && $cost > $this->incomeBooked();
     }
 
     // ═══════════════════════════ Backlog ═══════════════════════════
@@ -292,13 +310,93 @@ class InventoryCostService
         return $result;
     }
 
+    // ═══════════════════════════ Pharmacy returns ═══════════════════════════
+
+    /**
+     * Returns booked by the old rule (restock: Dr Inventory at the refund price; no restock: Dr Loss on returns; the sale
+     * itself never reversed) that have no correction yet.
+     */
+    protected function returnsToCorrect()
+    {
+        return PharmacyReturn::query()
+            ->whereNotNull('journal_entry_id')
+            ->whereExists(fn ($q) => $q->select(DB::raw(1))->from('journal_entry_lines as l')->whereColumn('l.journal_entry_id', 'pharmacy_returns.journal_entry_id')
+                ->where(fn ($w) => $w->where('l.narration', 'like', 'Restocked return:%')->orWhere('l.narration', 'like', 'Non-restockable return loss:%')))
+            ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('journal_entries as e')->where('e.reference_type', self::RETURN_FIX_SOURCE)->whereColumn('e.reference_id', 'pharmacy_returns.id')->where('e.status', '!=', JournalEntry::STATUS_REVERSED)->where('e.entry_type', '!=', JournalEntry::TYPE_REVERSAL));
+    }
+
+    /** What the correction would book: the sale reversed and, where goods went back on the shelf, their cost restored. */
+    public function returnsPlan(): array
+    {
+        $rows = $this->returnsToCorrect()->with('batch')->get();
+        $revenue = 0.0;
+        $cost = 0.0;
+        foreach ($rows as $r) {
+            $revenue += (float) $r->refund_amount;
+            $cost += $r->restock ? round((float) $r->qty_returned * (float) ($r->batch->cost_price ?? 0), 2) : 0.0;
+        }
+
+        return ['returns' => $rows->count(), 'revenue_reversed' => round($revenue, 2), 'cost_restored' => round($cost, 2)];
+    }
+
+    /**
+     * One correction entry per return: undo the old debit (inventory at price, or the loss), reverse the sale against
+     * pharmacy revenue and, for restocked goods, put the cost back into inventory against cost of sales.
+     */
+    public function backfillReturns(bool $apply = false): array
+    {
+        $out = $this->returnsPlan() + ['posted' => 0, 'skipped' => []];
+        if (!$apply) {
+            return $out;
+        }
+        $revenue = Account::where('code', '4020')->first();
+        $inventory = Account::where('code', '1300')->first();
+        $cos = Account::where('code', '5010')->first();
+        $loss = Account::where('code', '5060')->first();
+        if (!$revenue || !$inventory || !$cos || !$loss) {
+            $out['skipped'][] = 'Accounts 4020, 1300, 5010 and 5060 are needed.';
+
+            return $out;
+        }
+        foreach ($this->returnsToCorrect()->with('batch', 'product')->orderBy('id')->get() as $r) {
+            $amount = round((float) $r->refund_amount, 2);
+            if ($amount <= 0) {
+                continue;
+            }
+            $cost = $r->restock ? round((float) $r->qty_returned * (float) ($r->batch->cost_price ?? 0), 2) : 0.0;
+            $name = $r->product->product_name ?? 'Product #' . $r->product_id;
+            $lines = [['account_id' => $revenue->id, 'debit_amount' => $amount, 'credit_amount' => 0, 'description' => "Sale reversed: {$name}"]];
+            $lines[] = ['account_id' => ($r->restock ? $inventory : $loss)->id, 'debit_amount' => 0, 'credit_amount' => $amount, 'description' => $r->restock ? 'Undo inventory booked at the refund price' : 'Undo loss booked for the refund'];
+            if ($cost > 0) {
+                $lines[] = ['account_id' => $inventory->id, 'debit_amount' => $cost, 'credit_amount' => 0, 'description' => "Restocked at cost: {$name}"];
+                $lines[] = ['account_id' => $cos->id, 'debit_amount' => 0, 'credit_amount' => $cost, 'description' => "Cost of sale reversed: {$name}"];
+            }
+
+            try {
+                $this->accounting->createAndPostAutomatedEntry(
+                    self::RETURN_FIX_SOURCE,
+                    $r->id,
+                    "Pharmacy return #{$r->id} corrected: sale reversed" . ($cost > 0 ? ', cost restored' : ''),
+                    $lines,
+                    $this->entryDateFor(optional($r->approved_at ?? $r->created_at)->format('Y-m') ?? now()->format('Y-m')),
+                    1
+                );
+                $out['posted']++;
+            } catch (\Throwable $e) {
+                $out['skipped'][] = "Return #{$r->id}: " . $e->getMessage();
+            }
+        }
+
+        return $out;
+    }
+
     // ═══════════════════════════ Undo ═══════════════════════════
 
     /** Reverse every backfill and true-up entry and free the transactions they covered. */
     public function rollback(string $reason = 'Inventory cost backfill rolled back'): array
     {
         $reversed = 0;
-        foreach (JournalEntry::whereIn('reference_type', [self::BACKFILL_SOURCE, self::TRUEUP_SOURCE])->where('status', JournalEntry::STATUS_POSTED)->get() as $entry) {
+        foreach (JournalEntry::whereIn('reference_type', [self::BACKFILL_SOURCE, self::TRUEUP_SOURCE, self::RETURN_FIX_SOURCE])->where('status', JournalEntry::STATUS_POSTED)->get() as $entry) {
             DB::transaction(function () use ($entry, $reason, &$reversed) {
                 $this->accounting->reverseEntry($entry, 1, $reason);
                 DB::update('UPDATE stock_batch_transactions SET journal_entry_id = NULL WHERE journal_entry_id = ?', [$entry->id]);

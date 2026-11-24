@@ -117,6 +117,36 @@ class ExcelExportService
     }
 
     /**
+     * A section title row (used by the cost centre report).
+     */
+    protected function addSectionHeader(string $title): void
+    {
+        $this->activeSheet->setCellValue('A' . $this->currentRow, $title);
+        $this->activeSheet->getStyle('A' . $this->currentRow)->applyFromArray(['font' => ['bold' => true, 'size' => 12]]);
+        $this->currentRow++;
+    }
+
+    /**
+     * Style one cell: bold, and an optional colour (hex without #). $type is kept for callers that name the cell kind.
+     */
+    protected function styleCell(string $cell, bool $bold = false, string $type = 'text', ?string $color = null): void
+    {
+        $font = ['bold' => $bold];
+        if ($color) {
+            $font['color'] = ['rgb' => ltrim($color, '#')];
+        }
+        $this->activeSheet->getStyle($cell)->applyFromArray(['font' => $font]);
+    }
+
+    /**
+     * A table's column titles (the cost centre report's name for a header row).
+     */
+    protected function addTableHeader(array $headers): void
+    {
+        $this->addHeaderRow($headers);
+    }
+
+    /**
      * Add a header row with styling.
      */
     protected function addHeaderRow(array $headers, int $startColumn = 1): void

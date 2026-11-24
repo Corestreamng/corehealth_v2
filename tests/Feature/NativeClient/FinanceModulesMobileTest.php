@@ -179,4 +179,52 @@ class FinanceModulesMobileTest extends TestCase
         $this->assertSame('123', DB::table('banks')->where('id', $bank)->value('account_number'));
         $this->deleteJson("/api/mobile/accounting/banks/{$bank}", [], self::AJAX)->assertSuccessful();
     }
+
+    public function test_reports_and_modules_download_the_webs_own_files()
+    {
+        $this->as('SUPERADMIN');
+        $id = fn (string $t) => DB::table($t)->value('id');
+        $paths = ['reports/trial-balance/download?format=pdf', 'reports/trial-balance/download?format=excel', 'reports/profit-loss/download?format=pdf', 'reports/balance-sheet/download?format=excel', 'reports/daily-audit/download?format=pdf', 'fixed-assets/export', 'capex/export'];
+        foreach ([['liabilities/export/pdf'], ['liabilities/export/excel'], ['leases/export/pdf'], ['leases/export/excel']] as $p) {
+            $paths[] = $p[0];
+        }
+        if ($l = $id('leases')) {
+            array_push($paths, "leases/{$l}/export/pdf", "leases/{$l}/export/excel", "leases/{$l}/schedule/export/pdf");
+        }
+        if ($b = $id('budgets')) {
+            $paths[] = "budgets/{$b}/export";
+        }
+        if ($c = $id('cost_centers')) {
+            array_push($paths, "cost-centers/{$c}/report/pdf", "cost-centers/{$c}/report/excel");
+        }
+        if ($f = $id('cash_flow_forecasts')) {
+            array_push($paths, "cash-flow-forecast/{$f}/export/pdf", "cash-flow-forecast/{$f}/export/excel");
+        }
+        if ($r = $id('bank_reconciliations')) {
+            $paths[] = "bank-reconciliation/{$r}/export/pdf";
+        }
+        $report = [];
+        foreach ($paths as $p) {
+            $res = $this->get('/api/mobile/accounting/' . $p, ['Accept' => '*/*']);
+            $code = $res->baseResponse->getStatusCode();
+            $this->assertSame(200, $code, "{$p}: " . ($res->baseResponse instanceof \Symfony\Component\HttpFoundation\StreamedResponse ? 'streamed' : substr($res->getContent(), 0, 300)));
+            $this->assertStringNotContainsString('text/html', (string) $res->headers->get('content-type'), "{$p} is a file, not a page");
+        }
+    }
+
+    public function test_a_statement_file_is_uploaded_listed_viewed_and_removed()
+    {
+        $this->as('SUPERADMIN');
+        $rid = DB::table('bank_reconciliations')->value('id') ?? $this->markTestSkipped('No reconciliation.');
+        $csv = \Illuminate\Http\UploadedFile::fake()->createWithContent('statement.csv', "date,description,reference,amount\n2026-01-05,Deposit,R1,2500\n2026-01-06,Charge,R2,-50\n");
+        $r = $this->post("/api/mobile/accounting/bank-reconciliation/{$rid}/upload-statement", ['statement_file' => $csv], self::AJAX);
+        $this->assertSame(200, $r->status(), substr($r->getContent(), 0, 400));
+        $import = $r->json('import.id');
+        $list = $this->getJson("/api/mobile/accounting/bank-reconciliation/{$rid}/statements", self::AJAX)->assertOk()->json('statements');
+        $this->assertContains($import, array_column($list, 'id'));
+        $view = $this->getJson("/api/mobile/accounting/bank-reconciliation/{$rid}/statement/{$import}", self::AJAX)->assertOk()->json();
+        $this->assertSame('table', $view['viewer_type']);
+        $this->assertStringContainsString('Deposit', $view['content']);
+        $this->deleteJson("/api/mobile/accounting/bank-reconciliation/{$rid}/statement/{$import}", [], self::AJAX)->assertOk();
+    }
 }

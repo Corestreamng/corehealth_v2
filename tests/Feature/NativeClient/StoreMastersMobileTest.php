@@ -138,4 +138,22 @@ class StoreMastersMobileTest extends TestCase
         $this->assertFalse($this->getJson("/api/mobile/store/purchase-orders/{$po->id}", self::AJAX)->json('can.edit'));
         $this->putJson("/api/mobile/store/purchase-orders/{$po->id}", ['supplier_id' => $supplier, 'target_store_id' => $store, 'items' => $items(1, 1)], self::AJAX)->assertStatus(403);
     }
+
+    public function test_pharmacists_reach_the_masters_through_the_pharmacy_routes_and_the_web_writes_are_role_guarded()
+    {
+        $this->as('PHARMACIST');
+        $this->getJson('/api/mobile/pharmacy/masters/products?per_page=3', self::AJAX)->assertOk()->assertJsonStructure(['data', 'total']);
+        $this->getJson('/api/mobile/pharmacy/masters/categories?per_page=3', self::AJAX)->assertOk();
+        $this->getJson('/api/mobile/pharmacy/masters/suppliers', self::AJAX)->assertStatus(404);
+        $this->getJson('/api/mobile/store/masters/products', self::AJAX)->assertStatus(403);
+        $tag = uniqid();
+        $this->postJson('/api/mobile/pharmacy/masters/categories', ['category_name' => "PC {$tag}", 'category_code' => "P{$tag}", 'category_description' => 'x'], self::AJAX)->assertOk();
+
+        $this->as('NURSE');
+        $this->getJson('/api/mobile/pharmacy/masters/products', self::AJAX)->assertStatus(403);
+        foreach (['/products', '/stores', '/product-category', '/suppliers'] as $path) {
+            $this->postJson($path, [], ['Accept' => 'application/json'])->assertStatus(403);
+        }
+        $this->get('/products')->assertSuccessful();
+    }
 }

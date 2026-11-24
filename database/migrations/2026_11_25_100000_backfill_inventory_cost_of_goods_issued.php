@@ -27,6 +27,11 @@ return new class () extends Migration {
         }
 
         $svc = app(InventoryCostService::class);
+        if ($svc->costLooksUnreliable()) {
+            Log::warning('Inventory cost backfill skipped: the backlog costs more than all income booked, so batch cost prices need checking. Preview with `php artisan accounting:backfill-inventory-cost`, then run it with --apply.');
+
+            return;
+        }
         $backfill = $svc->backfill(true);
         $trueUp = $svc->trueUp(true);
         Log::info('Inventory cost backfill', ['posted_groups' => $backfill['posted'], 'cost' => $backfill['total_cost'], 'movements' => $backfill['moves'], 'skipped' => $backfill['skipped'], 'true_up' => $trueUp['posted'], 'review' => $trueUp['review']]);

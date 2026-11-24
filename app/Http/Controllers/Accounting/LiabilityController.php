@@ -755,10 +755,9 @@ class LiabilityController extends Controller
     public function exportPdf(Request $request)
     {
         $query = DB::table('liability_schedules')
-            ->leftJoin('vendors', 'liability_schedules.vendor_id', '=', 'vendors.id')
             ->select(
                 'liability_schedules.*',
-                'vendors.name as vendor_name'
+                'liability_schedules.creditor_name as vendor_name'
             )
             ->whereNull('liability_schedules.deleted_at');
 
@@ -791,10 +790,9 @@ class LiabilityController extends Controller
     public function exportExcel(Request $request)
     {
         $query = DB::table('liability_schedules')
-            ->leftJoin('vendors', 'liability_schedules.vendor_id', '=', 'vendors.id')
             ->select(
                 'liability_schedules.*',
-                'vendors.name as vendor_name'
+                'liability_schedules.creditor_name as vendor_name'
             )
             ->whereNull('liability_schedules.deleted_at');
 

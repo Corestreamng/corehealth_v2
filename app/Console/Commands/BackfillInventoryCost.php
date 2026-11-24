@@ -32,6 +32,18 @@ class BackfillInventoryCost extends Command
             $this->warn($s);
         }
 
+        $income = $svc->incomeBooked();
+        $this->line('Income booked so far: ' . number_format($income, 2) . ($income > 0 ? '; the backlog cost is ' . number_format($res['total_cost'] / $income, 2) . ' times it.' : '.'));
+        if ($res['total_cost'] > 0 && ($income <= 0 || $res['total_cost'] > $income)) {
+            $this->warn('The cost to post is larger than all income booked. Check batch cost prices first (a cost entered per pack against quantities in single units inflates it); ' . ($apply ? 'it was posted as asked.' : 'nothing has been posted.'));
+        }
+
+        $ret = $svc->backfillReturns($apply);
+        $this->line(($apply ? 'Corrected ' . $ret['posted'] : 'Would correct ' . $ret['returns']) . ' pharmacy returns: sale reversed ' . number_format($ret['revenue_reversed'], 2) . ', cost restored ' . number_format($ret['cost_restored'], 2));
+        foreach ($ret['skipped'] as $x) {
+            $this->warn($x);
+        }
+
         if (!$this->option('no-true-up')) {
             $t = $svc->trueUp($apply);
             $this->line('Inventory: ledger against the shelves' . ($apply ? ' (after posting)' : ' (before posting; the backlog above lowers the ledger further)'));

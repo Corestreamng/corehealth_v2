@@ -389,4 +389,21 @@ class MobileAccountingController extends Controller
 
         return response()->json(['filters' => $rows->map(fn ($f) => $f->toArray() + ['mine' => (int) $f->created_by === (int) auth()->id()])]);
     }
+
+    /**
+     * The web report's own PDF or Excel file (`?export=pdf|excel` on the web page), for the app to save.
+     * The web ReportController builds the file; this only picks its method and sets the export flag.
+     */
+    public function reportDownload(Request $request, string $name)
+    {
+        $method = [
+            'trial-balance' => 'trialBalance', 'profit-loss' => 'profitAndLoss', 'balance-sheet' => 'balanceSheet', 'cash-flow' => 'cashFlow',
+            'general-ledger' => 'generalLedger', 'account-activity' => 'accountActivity', 'bank-statement' => 'bankStatement',
+            'aged-receivables' => 'agedReceivables', 'aged-payables' => 'agedPayables', 'daily-audit' => 'dailyAudit',
+        ][$name] ?? abort(404, 'Unknown report.');
+        $format = $request->input('format') === 'excel' ? 'excel' : 'pdf';
+        $request->merge(['export' => $format]);
+
+        return app()->call([app(\App\Http\Controllers\Accounting\ReportController::class), $method], ['request' => $request]);
+    }
 }

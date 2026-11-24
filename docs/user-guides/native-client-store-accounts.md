@@ -37,6 +37,8 @@ In the **Store** section, **Stores**, **Products** and **Categories** open one s
 
 ![Transfer lanes on a phone](/images/workbenches/native-phone-store-governance.png)
 
+In the **Pharmacy** section, Stores, Products and Categories open the same screens.
+
 **Expenses** (Store section) is the same list, record and approve, reject or void flow as in Accounting, available to store keepers; what each person can do still follows the expense permissions.
 
 ![Store expenses on a phone](/images/workbenches/native-phone-store-expenses.png)
@@ -65,7 +67,8 @@ In the **Store** section, **Stores**, **Products** and **Categories** open one s
 ![Budget editor on a phone](/images/workbenches/native-phone-finance-budget-editor.png)
 ![Financial KPIs on a phone](/images/workbenches/native-phone-finance-kpis.png)
 
-- **Saved filters and downloads:** on Reports, the menu saves the report with its dates, loads or deletes saved filters, and hands the PDF or Excel download to the browser.
-- **Still on the web:** importing a bank statement file.
+- **Saved filters and downloads:** on Reports, the menu saves the report with its dates, loads or deletes saved filters, and downloads the PDF or Excel. Lists and records that have a PDF or Excel on the web (fixed assets, capex, liabilities, leases, cost centre reports, forecasts, budgets, reconciliations) have a **Download** button too.
+- **Bank statement files:** on a reconciliation, **Upload statement file** stores the bank's file with it; tap the file to read it beside the lines, then add the lines you need to match.
+- **Pharmacy returns:** approving a return reverses the sale; goods put back on the shelf return to inventory at their cost, damaged goods do not.
 
 👉 Developer reference: [Native Clients](/developer/native-client)

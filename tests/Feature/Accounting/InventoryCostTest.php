@@ -4,6 +4,7 @@ namespace Tests\Feature\Accounting;
 
 use App\Models\Accounting\Account;
 use App\Models\Accounting\JournalEntry;
+use App\Models\PharmacyReturn;
 use App\Models\ProductRequest;
 use App\Models\StockBatch;
 use App\Models\StockBatchTransaction;
@@ -137,5 +138,88 @@ class InventoryCostTest extends TestCase
         }
         $second = $svc->trueUp(true);
         $this->assertSame([], $second['posted'], 'Once only.');
+    }
+
+    private function makeReturn(StockBatch $batch, bool $restock, float $amount, int $qty = 2): PharmacyReturn
+    {
+        return PharmacyReturn::create([
+            'product_request_id' => ProductRequest::value('id') ?? 1, 'product_or_service_request_id' => \DB::table('product_or_service_requests')->value('id') ?? 1,
+            'patient_id' => \DB::table('patients')->value('id'), 'product_id' => $batch->product_id, 'store_id' => $batch->store_id, 'batch_id' => $batch->id,
+            'qty_returned' => $qty, 'original_qty' => $qty, 'refund_amount' => $amount, 'original_amount' => $amount, 'return_condition' => $restock ? 'good' : 'damaged',
+            'return_reason' => 'test', 'restock' => $restock, 'refund_to_patient' => $amount, 'refund_to_hmo' => 0, 'status' => 'pending', 'created_by' => 1,
+        ]);
+    }
+
+    public function test_an_approved_return_reverses_the_sale_and_brings_the_cost_back_only_when_restocked()
+    {
+        $batch = $this->pharmacyBatch();
+        $cost = round(2 * (float) $batch->cost_price, 2);
+        $rev = $this->balance('4020');
+        $cos = $this->balance('5010');
+        $inv = $this->balance('1300');
+        $wallet = $this->balance('2200');
+
+        $ret = $this->makeReturn($batch, true, 900);
+        $ret->update(['status' => 'approved', 'approved_by' => 1, 'approved_at' => now()]);
+        $this->assertNotNull($ret->fresh()->journal_entry_id);
+        $this->assertEqualsWithDelta($rev + 900, $this->balance('4020'), 0.01, 'The sale is reversed against revenue (a debit raises debit minus credit).');
+        $this->assertEqualsWithDelta($wallet - 900, $this->balance('2200'), 0.01, 'The refund is owed to the patient.');
+        $this->assertEqualsWithDelta($inv + $cost, $this->balance('1300'), 0.01, 'Restocked goods come back at cost, not at the refund price.');
+        $this->assertEqualsWithDelta($cos - $cost, $this->balance('5010'), 0.01, 'The cost of sale posted at dispense is reversed.');
+
+        $rev2 = $this->balance('4020');
+        $cos2 = $this->balance('5010');
+        $inv2 = $this->balance('1300');
+        $bad = $this->makeReturn($batch, false, 400);
+        $bad->update(['status' => 'approved', 'approved_by' => 1, 'approved_at' => now()]);
+        $this->assertEqualsWithDelta($rev2 + 400, $this->balance('4020'), 0.01);
+        $this->assertEqualsWithDelta($inv2, $this->balance('1300'), 0.01, 'A damaged return puts nothing back in inventory.');
+        $this->assertEqualsWithDelta($cos2, $this->balance('5010'), 0.01, 'and its cost stays expensed.');
+    }
+
+    public function test_old_style_return_entries_are_corrected_once_and_the_correction_can_be_rolled_back()
+    {
+        $batch = $this->pharmacyBatch();
+        $cost = round(2 * (float) $batch->cost_price, 2);
+        $svc = app(InventoryCostService::class);
+        $ret = $this->makeReturn($batch, true, 900);
+        // the old rule: Dr Inventory at the refund price / Cr patient deposits
+        $inventory = Account::where('code', '1300')->first();
+        $wallet = Account::where('code', '2200')->first();
+        $je = app(\App\Services\Accounting\AccountingService::class)->createAndPostAutomatedEntry(PharmacyReturn::class, $ret->id, 'old style', [
+            ['account_id' => $inventory->id, 'debit_amount' => 900, 'credit_amount' => 0, 'description' => 'Restocked return: X'],
+            ['account_id' => $wallet->id, 'debit_amount' => 0, 'credit_amount' => 900, 'description' => 'Patient wallet refund'],
+        ], now()->toDateString(), 1);
+        $ret->forceFill(['journal_entry_id' => $je->id, 'status' => 'completed'])->saveQuietly();
+
+        $rev = $this->balance('4020');
+        $inv = $this->balance('1300');
+        $cos = $this->balance('5010');
+        $plan = $svc->backfillReturns(false);
+        $this->assertGreaterThanOrEqual(1, $plan['returns']);
+        $this->assertEqualsWithDelta($rev, $this->balance('4020'), 0.01, 'A preview posts nothing.');
+
+        $run = $svc->backfillReturns(true);
+        $this->assertSame([], $run['skipped']);
+        $this->assertEqualsWithDelta($rev + $plan['revenue_reversed'], $this->balance('4020'), 0.05, 'Revenue falls by exactly what the preview said.');
+        $this->assertEqualsWithDelta($cos - $plan['cost_restored'], $this->balance('5010'), 0.05);
+        $fix = JournalEntry::where('reference_type', InventoryCostService::RETURN_FIX_SOURCE)->where('reference_id', $ret->id)->firstOrFail();
+        $lineOf = fn (string $code) => $fix->lines->firstWhere('account_id', Account::where('code', $code)->value('id'));
+        $this->assertEqualsWithDelta(900, (float) $lineOf('4020')->debit, 0.01, 'the sale is reversed');
+        $this->assertEqualsWithDelta(900, (float) $fix->lines->where('account_id', $inventory->id)->sum('credit'), 0.01, 'the price-based inventory debit is undone');
+        $this->assertEqualsWithDelta($cost, (float) $fix->lines->where('account_id', $inventory->id)->sum('debit'), 0.01, 'and the cost put back');
+        $this->assertEqualsWithDelta((float) $fix->lines->sum('debit'), (float) $fix->lines->sum('credit'), 0.01);
+        $this->assertSame(0, $svc->backfillReturns(true)['posted'], 'Once only.');
+
+        $svc->rollback(); // also undoes whatever the migrations posted on this database, inside the test transaction
+        $this->assertSame(JournalEntry::STATUS_REVERSED, $fix->fresh()->status, 'The correction is reversed by the rollback.');
+        $this->assertGreaterThanOrEqual(1, $svc->backfillReturns(false)['returns'], 'and the return can be corrected again.');
+    }
+
+    public function test_the_guard_flags_cost_that_dwarfs_income()
+    {
+        $svc = app(InventoryCostService::class);
+        $this->assertIsBool($svc->costLooksUnreliable());
+        $this->assertIsFloat($svc->incomeBooked());
     }
 }

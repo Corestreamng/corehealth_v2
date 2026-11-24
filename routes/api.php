@@ -714,6 +714,19 @@ Route::prefix('mobile/pharmacy')->middleware(['auth:sanctum', 'native.workspace:
     Route::get('reports/payment-methods', [PharmacyWorkbenchController::class, 'getPaymentMethodsBreakdown']);
     Route::get('reports/executive-summary', [PharmacyWorkbenchController::class, 'getExecutiveSummary']);
 
+    // Pharmacy section's Stores, Products and Categories (the web's same pages): reads are adapters, writes the web controllers'
+    $mm = \App\Http\Controllers\API\MobileStoreMastersController::class;
+    Route::get('masters/options', [$mm, 'options']);
+    Route::get('masters/{kind}', [$mm, 'index'])->where('kind', 'stores|products|categories');
+    Route::get('masters/{kind}/{id}', [$mm, 'show'])->where('kind', 'stores|products|categories')->whereNumber('id');
+    Route::post('masters/stores', [\App\Http\Controllers\StoreController::class, 'store']);
+    Route::put('masters/stores/{id}', [\App\Http\Controllers\StoreController::class, 'update'])->whereNumber('id');
+    Route::post('masters/products', [\App\Http\Controllers\ProductController::class, 'store']);
+    Route::put('masters/products/{id}', [\App\Http\Controllers\ProductController::class, 'update'])->whereNumber('id');
+    Route::post('masters/products/{id}/toggle-status', [\App\Http\Controllers\ProductController::class, 'toggleStatus'])->whereNumber('id');
+    Route::post('masters/categories', [\App\Http\Controllers\ProductCategoryController::class, 'store']);
+    Route::put('masters/categories/{id}', [\App\Http\Controllers\ProductCategoryController::class, 'update'])->whereNumber('id');
+    Route::delete('masters/categories/{id}', [\App\Http\Controllers\ProductCategoryController::class, 'destroy'])->whereNumber('id');
 });
 
 /*
@@ -1686,6 +1699,28 @@ Route::prefix('mobile/accounting')->middleware(['auth:sanctum', 'native.workspac
         Route::post("bank-reconciliation/{reconciliation}/{$path}", [$br, $method])->whereNumber('reconciliation');
     }
 
+    // File downloads: the web controllers' own PDF and Excel exports
+    Route::get('fixed-assets/export', [$fa, 'export']);
+    Route::get('capex/export', [$cx, 'export']);
+    Route::get('budgets/variance-report/export', [$bg, 'varianceReportExport']);
+    Route::get('budgets/{budget}/export', [$bg, 'export'])->whereNumber('budget');
+    Route::get('liabilities/export/pdf', [$lb, 'exportPdf']);
+    Route::get('liabilities/export/excel', [$lb, 'exportExcel']);
+    Route::get('leases/export/pdf', [$ls, 'exportPortfolioPdf']);
+    Route::get('leases/export/excel', [$ls, 'exportPortfolioExcel']);
+    Route::get('leases/{lease}/export/pdf', [$ls, 'exportDetailPdf'])->whereNumber('lease');
+    Route::get('leases/{lease}/export/excel', [$ls, 'exportDetailExcel'])->whereNumber('lease');
+    Route::get('leases/{lease}/schedule/export/pdf', [$ls, 'exportSchedulePdf'])->whereNumber('lease');
+    Route::get('leases/{lease}/schedule/export/excel', [$ls, 'exportScheduleExcel'])->whereNumber('lease');
+    Route::get('cost-centers/{costCenter}/report/pdf', [$cc, 'exportReportPdf'])->whereNumber('costCenter');
+    Route::get('cost-centers/{costCenter}/report/excel', [$cc, 'exportReportExcel'])->whereNumber('costCenter');
+    Route::get('cash-flow-forecast/{forecast}/export/pdf', [$cf, 'exportPdf'])->whereNumber('forecast');
+    Route::get('cash-flow-forecast/{forecast}/export/excel', [$cf, 'exportExcel'])->whereNumber('forecast');
+    Route::get('bank-reconciliation/{reconciliation}/export/pdf', [$br, 'exportPdf'])->whereNumber('reconciliation');
+    Route::post('bank-reconciliation/{reconciliation}/upload-statement', [$br, 'uploadStatement'])->whereNumber('reconciliation');
+    Route::get('bank-reconciliation/{reconciliation}/statement/{import}', [$br, 'getStatementContent'])->whereNumber('reconciliation')->whereNumber('import');
+    Route::delete('bank-reconciliation/{reconciliation}/statement/{import}', [$br, 'deleteStatement'])->whereNumber('reconciliation')->whereNumber('import');
+
     $bk = \App\Http\Controllers\BankController::class;
     Route::get('banks/list', [$bk, 'list']);
     Route::post('banks', [$bk, 'store']);
@@ -1698,6 +1733,7 @@ Route::prefix('mobile/accounting')->middleware(['auth:sanctum', 'native.workspac
     Route::post('reports/filters', [\App\Http\Controllers\Accounting\ReportController::class, 'saveFilter']);
     Route::get('reports/filters/{id}', [\App\Http\Controllers\Accounting\ReportController::class, 'loadFilter'])->whereNumber('id');
     Route::delete('reports/filters/{id}', [\App\Http\Controllers\Accounting\ReportController::class, 'deleteFilter'])->whereNumber('id');
+    Route::get('reports/{name}/download', [$ma, 'reportDownload'])->where('name', '[a-z-]+');
     Route::get('reports/{name}', [$ma, 'report'])->where('name', '[a-z-]+');
 
     // Fiscal periods

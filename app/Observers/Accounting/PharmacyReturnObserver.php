@@ -19,19 +19,13 @@ use Illuminate\Support\Facades\Log;
  *   DR: Cash/Bank (1010/1020)
  *   CR: Revenue - Pharmacy (4020)
  *
- * On Return Approved & Refunded:
- *   If Restockable (good condition):
- *     DR: Inventory - Pharmacy (1300) - [refund_amount]
- *     CR: Cash/Bank (1010/1020) - [refund_amount]
- *
- *   If Not Restockable (damaged/expired):
- *     DR: Loss on Returns (5060) - [refund_amount]
- *     CR: Cash/Bank (1010/1020) - [refund_amount]
- *
- * For HMO Split Returns:
- *   DR: Inventory/Loss (based on condition)
- *   CR: Cash (Patient Refund) - [refund_to_patient]
- *   CR: AR-HMO (Reverse HMO claim) - [refund_to_hmo]
+ * On Return Approved & Refunded (the sale is reversed; the cost of the goods comes back only if they go back on the shelf):
+ *     DR: Revenue - Pharmacy (4020)          - [refund_amount]      (sale reversed)
+ *     CR: Customer Deposits (2200)           - [refund_to_patient]  (and CR: AR-HMO (1110) - [refund_to_hmo] for HMO splits)
+ *   If Restockable (good condition), also at the batch's cost:
+ *     DR: Inventory - Pharmacy (1300)        - [qty x batch cost]
+ *     CR: Cost of Pharmacy Sales (5010)      - [qty x batch cost]   (the cost posted at dispense comes back)
+ *   If Not Restockable (damaged/expired): the cost stays expensed, nothing returns to inventory.
  *
  * DUPLICATE JE PREVENTION:
  * - Check if JE already exists for this return before creating new one
@@ -46,6 +40,8 @@ class PharmacyReturnObserver
     private const INVENTORY_PHARMACY = '1300';
     private const AR_HMO = '1110';
     private const LOSS_ON_RETURNS = '5060';
+    private const REVENUE_PHARMACY = '4020';
+    private const COST_OF_PHARMACY_SALES = '5010';
     private const PATIENT_DEPOSITS_LIABILITY = '2200';
 
     /**
@@ -84,16 +80,12 @@ class PharmacyReturnObserver
     {
         $accountingService = App::make(AccountingService::class);
 
-        // Get accounts based on return condition
-        $debitAccount = $return->restock
-            ? Account::where('code', self::INVENTORY_PHARMACY)->first()
-            : Account::where('code', self::LOSS_ON_RETURNS)->first();
+        $debitAccount = Account::where('code', self::REVENUE_PHARMACY)->first();
 
         if (!$debitAccount) {
-            Log::warning('PharmacyReturnObserver: Debit account not found', [
+            Log::warning('PharmacyReturnObserver: Pharmacy revenue account not found', [
                 'return_id' => $return->id,
-                'restock' => $return->restock,
-                'expected_account' => $return->restock ? self::INVENTORY_PHARMACY : self::LOSS_ON_RETURNS,
+                'expected_account' => self::REVENUE_PHARMACY,
             ]);
 
             return;
@@ -133,9 +125,7 @@ class PharmacyReturnObserver
                     'account_id' => $debitAccount->id,
                     'debit_amount' => $return->refund_amount,
                     'credit_amount' => 0,
-                    'description' => $return->restock
-                        ? "Restocked return: {$return->product->product_name}"
-                        : "Non-restockable return loss: {$return->product->product_name}",
+                    'description' => "Sale reversed: {$return->product->product_name}",
                     'product_id' => $return->product_id,
                     'patient_id' => $return->patient_id,
                     'category' => 'pharmacy_return',
@@ -167,9 +157,7 @@ class PharmacyReturnObserver
                     'account_id' => $debitAccount->id,
                     'debit_amount' => $return->refund_amount,
                     'credit_amount' => 0,
-                    'description' => $return->restock
-                        ? "Restocked return: {$return->product->product_name}"
-                        : "Non-restockable return loss: {$return->product->product_name}",
+                    'description' => "Sale reversed: {$return->product->product_name}",
                     'product_id' => $return->product_id,
                     'patient_id' => $return->patient_id,
                     'category' => 'pharmacy_return',
@@ -184,6 +172,31 @@ class PharmacyReturnObserver
                     'category' => 'pharmacy_return',
                 ],
             ];
+        }
+
+        // Restocked goods: the cost expensed at dispense comes back into inventory at the batch's cost
+        $cost = $return->restock ? round((float) $return->qty_returned * (float) ($return->batch->cost_price ?? 0), 2) : 0.0;
+        $costExpense = Account::where('code', self::COST_OF_PHARMACY_SALES)->first();
+        if ($cost > 0 && $costExpense) {
+            $inventory = Account::where('code', self::INVENTORY_PHARMACY)->first();
+            if ($inventory) {
+                $lines[] = [
+                    'account_id' => $inventory->id,
+                    'debit_amount' => $cost,
+                    'credit_amount' => 0,
+                    'description' => "Restocked at cost: {$return->product->product_name}",
+                    'product_id' => $return->product_id,
+                    'category' => 'pharmacy_return',
+                ];
+                $lines[] = [
+                    'account_id' => $costExpense->id,
+                    'debit_amount' => 0,
+                    'credit_amount' => $cost,
+                    'description' => "Cost of sale reversed: {$return->product->product_name}",
+                    'product_id' => $return->product_id,
+                    'category' => 'pharmacy_return',
+                ];
+            }
         }
 
         // Create the journal entry
