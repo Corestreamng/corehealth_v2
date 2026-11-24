@@ -39,8 +39,12 @@
                 <div class="dismiss-items-preview p-3 bg-light rounded" id="dismiss-items-preview" style="max-height: 200px; overflow-y: auto;">
                     <!-- Items list will be populated here -->
                 </div>
-                <div class="alert alert-warning mt-3 mb-0">
-                    <i class="mdi mdi-alert"></i> <strong>Warning:</strong> This action cannot be undone. Dismissed prescriptions will be removed from the queue.
+                <div class="mt-3">
+                    <label for="dismiss-reason" class="form-label mb-1">Reason <span class="text-muted">(recorded with the dismissal)</span></label>
+                    <textarea id="dismiss-reason" class="form-control" rows="2" maxlength="1000" placeholder="e.g. Doctor changed the order, patient declined"></textarea>
+                </div>
+                <div class="alert alert-info mt-3 mb-0">
+                    <i class="mdi mdi-information-outline"></i> Dismissed prescriptions leave the queue. You can find and restore them from the <strong>Dismissed</strong> button.
                 </div>
             </div>
             <div class="modal-footer">
@@ -52,6 +56,27 @@
                 </button>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Dismissed prescriptions (trash): browse, search, restore -->
+<button type="button" class="ph-trash-btn" id="ph-trash-open" title="Dismissed prescriptions" aria-label="Dismissed prescriptions">
+    <i class="mdi mdi-trash-can-outline"></i><span class="badge" id="ph-trash-count">0</span>
+</button>
+<div class="ph-trash-panel" id="ph-trash-panel" role="dialog" aria-label="Dismissed prescriptions">
+    <div class="ph-trash-head">
+        <h5><i class="mdi mdi-trash-can-outline"></i> Dismissed prescriptions</h5>
+        <button type="button" id="ph-trash-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="ph-trash-tools">
+        <input type="search" id="ph-trash-search" class="form-control" placeholder="Search patient, file no or product">
+        <label class="form-check mb-0"><input type="checkbox" class="form-check-input" id="ph-trash-mine"> <span class="form-check-label">Only the selected patient</span></label>
+    </div>
+    <div class="ph-trash-body" id="ph-trash-list"></div>
+    <div class="ph-trash-foot">
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="ph-trash-prev">&lsaquo; Prev</button>
+        <small class="text-muted" id="ph-trash-page"></small>
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="ph-trash-next">Next &rsaquo;</button>
     </div>
 </div>
 

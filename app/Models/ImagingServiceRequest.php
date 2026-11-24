@@ -35,6 +35,9 @@ class ImagingServiceRequest extends Model implements Auditable
             'priority',
             'deleted_by',
             'deletion_reason',
+            'dismissed_at',
+            'dismissed_by',
+            'dismiss_reason',
             'pending_result',
             'pending_result_data',
             'pending_attachments',
@@ -68,6 +71,7 @@ class ImagingServiceRequest extends Model implements Auditable
         'pending_attachments' => 'array',
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
+        'dismissed_at' => 'datetime',
     ];
 
     public function treatmentPlan()

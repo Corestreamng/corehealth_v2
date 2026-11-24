@@ -995,6 +995,7 @@ class LabWorkbenchController extends Controller
                 'request_ids' => 'required|array',
                 'request_ids.*' => 'exists:lab_service_requests,id',
                 'patient_id' => 'required|exists:patients,id',
+                'reason' => 'nullable|string|max:1000',
             ]);
 
             DB::beginTransaction();
@@ -1002,9 +1003,12 @@ class LabWorkbenchController extends Controller
             foreach ($request->request_ids as $requestId) {
                 $labRequest = LabServiceRequest::findOrFail($requestId);
 
-                // Update lab request status to dismissed (0)
+                // Dismissed (0), remembering who, when and why so it shows in the Dismissed list and can be restored
                 $labRequest->update([
                     'status' => 0,
+                    'dismissed_at' => now(),
+                    'dismissed_by' => Auth::id(),
+                    'dismiss_reason' => $request->input('reason'),
                 ]);
             }
 
@@ -1086,9 +1090,10 @@ class LabWorkbenchController extends Controller
                     : $request->attachments;
 
                 if (is_array($attachmentsData)) {
-                    foreach ($attachmentsData as $att) {
+                    foreach ($attachmentsData as $index => $att) {
                         $attachments[] = [
-                            'id' => $att['id'] ?? uniqid(),
+                            // The position in the stored list: that is what a removal (deleted_attachments) is keyed by
+                            'id' => $index,
                             'filename' => $att['filename'] ?? ($att['name'] ?? 'Unknown'),
                             'url' => $att['url'] ?? (isset($att['path']) ? asset('storage/' . $att['path']) : ''),
                         ];
@@ -1785,19 +1790,13 @@ class LabWorkbenchController extends Controller
     /**
      * Get deleted requests
      */
-    public function getDeletedRequests($patientId = null)
+    public function getDeletedRequests(Request $request, $patientId = null)
     {
         try {
             $query = LabServiceRequest::onlyTrashed()
                 ->with(['service', 'doctor', 'patient.user']);
 
-            if ($patientId) {
-                $query->where('patient_id', $patientId);
-            }
-
-            $requests = $query->orderBy('deleted_at', 'desc')->get();
-
-            return response()->json($requests);
+            return $this->trashList($request, $query, $patientId, 'deleted_at', 'deleted_by');
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -1807,27 +1806,76 @@ class LabWorkbenchController extends Controller
     }
 
     /**
-     * Get dismissed requests
+     * Get dismissed requests (including any dismissed in bulk before the dismissal was recorded: status 0).
      */
-    public function getDismissedRequests($patientId = null)
+    public function getDismissedRequests(Request $request, $patientId = null)
     {
         try {
-            $query = LabServiceRequest::whereNotNull('dismissed_at')
-                ->with(['service', 'doctor', 'patient.user']);
+            $query = LabServiceRequest::where(function ($q) {
+                $q->whereNotNull('dismissed_at')->orWhere('status', 0);
+            })->with(['service', 'doctor', 'patient.user']);
 
-            if ($patientId) {
-                $query->where('patient_id', $patientId);
-            }
-
-            $requests = $query->orderBy('dismissed_at', 'desc')->get();
-
-            return response()->json($requests);
+            return $this->trashList($request, $query, $patientId, 'dismissed_at', 'dismissed_by');
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error loading dismissed requests: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * The Dismissed / Deleted lists. Without `per_page` it is the whole list (the web panel); with `per_page`
+     * it is one page, searchable by patient or service (the staff app).
+     */
+    private function trashList(Request $request, $query, $patientId, string $orderColumn, string $byColumn)
+    {
+        if ($patientId) {
+            $query->where('patient_id', $patientId);
+        }
+        if ($term = trim((string) $request->query('search', ''))) {
+            $query->where(function ($q) use ($term) {
+                $q->where('free_form_name', 'like', "%{$term}%")
+                    ->orWhereHas('service', fn ($s) => $s->where('service_name', 'like', "%{$term}%"))
+                    ->orWhereHas('patient.user', fn ($u) => $u->where('surname', 'like', "%{$term}%")->orWhere('firstname', 'like', "%{$term}%"))
+                    ->orWhereHas('patient', fn ($p) => $p->where('file_no', 'like', "%{$term}%"));
+            });
+        }
+        $query->orderByRaw("COALESCE({$orderColumn}, updated_at) DESC");
+
+        $names = fn ($rows) => \App\Models\User::whereIn('id', $rows->pluck($byColumn)->filter()->unique())
+            ->get(['id', 'surname', 'firstname', 'othername'])
+            ->mapWithKeys(fn ($u) => [$u->id => trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : ''))]);
+        $decorate = function ($rows) use ($names, $byColumn) {
+            $by = $names($rows);
+
+            return $rows->map(function ($r) use ($by, $byColumn) {
+                $a = $r->toArray();
+                $a['by_name'] = $by[$r->{$byColumn}] ?? null;
+                $a['service_name'] = $r->is_free_form ? $r->free_form_name : ($r->service->service_name ?? null);
+                $a['patient_name'] = $r->patient && $r->patient->user
+                    ? trim($r->patient->user->surname . ' ' . $r->patient->user->firstname . ($r->patient->user->othername ? ' ' . $r->patient->user->othername : ''))
+                    : null;
+                $a['file_no'] = $r->patient->file_no ?? null;
+                $a['requested_by'] = $r->doctor ? trim($r->doctor->surname . ' ' . $r->doctor->firstname) : null;
+
+                return $a;
+            })->values();
+        };
+
+        if ($request->has('per_page')) {
+            $per = max(1, min(100, (int) $request->query('per_page', 20)));
+            $page = $query->paginate($per, ['*'], 'page', max(1, (int) $request->query('page', 1)));
+
+            return response()->json([
+                'data' => $decorate(collect($page->items())),
+                'total' => $page->total(),
+                'page' => $page->currentPage(),
+                'per_page' => $per,
+            ]);
+        }
+
+        return response()->json($decorate($query->get()));
     }
 
     /**

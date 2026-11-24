@@ -1,0 +1,65 @@
+/* Pharmacy: Dismissed prescriptions panel (the same pattern as the Lab and Imaging trash panels). */
+.ph-trash-btn {
+    position: fixed;
+    right: 24px;
+    bottom: 160px;
+    width: 52px;
+    height: 52px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--hospital-primary, #011b33);
+    color: #fff;
+    font-size: 1.4rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .3);
+    z-index: 1039;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ph-trash-btn .badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #dc3545;
+    color: #fff;
+    border-radius: 12px;
+    min-width: 22px;
+    height: 22px;
+    font-size: .72rem;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+.ph-trash-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(440px, 100vw);
+    background: #fff;
+    box-shadow: -4px 0 18px rgba(0, 0, 0, .25);
+    z-index: 2000;
+    display: none;
+    flex-direction: column;
+}
+.ph-trash-panel.open { display: flex; }
+.ph-trash-head {
+    padding: 14px 16px;
+    background: var(--hospital-primary, #011b33);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.ph-trash-head h5 { margin: 0; font-size: 1.05rem; }
+.ph-trash-head button { background: none; border: 0; color: #fff; font-size: 1.6rem; line-height: 1; min-width: 44px; min-height: 44px; }
+.ph-trash-tools { padding: 10px 14px; border-bottom: 1px solid #e5e7eb; display: grid; gap: 8px; }
+.ph-trash-body { flex: 1; overflow-y: auto; padding: 12px 14px; }
+.ph-trash-card { border: 1px solid #e5e7eb; border-left: 4px solid #ffc107; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+.ph-trash-card .ph-trash-title { font-weight: 600; }
+.ph-trash-card small div { margin-top: 2px; }
+.ph-trash-foot { padding: 10px 14px; border-top: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ph-trash-card .btn, .ph-trash-foot .btn { min-height: 36px; }
+@media (max-width: 575px) {
+    .ph-trash-btn { bottom: 150px; right: 16px; }
+}

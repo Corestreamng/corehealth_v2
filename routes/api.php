@@ -644,6 +644,8 @@ Route::prefix('mobile/pharmacy')->middleware(['auth:sanctum', 'native.workspace:
     // Billing stage (hands the charge to the cashier), dismiss, new request, bundles, slip
     Route::post('bill', [PharmacyWorkbenchController::class, 'billPrescriptions']);
     Route::post('dismiss', [PharmacyWorkbenchController::class, 'dismissPrescriptions']);
+    Route::get('dismissed/{patientId?}', [PharmacyWorkbenchController::class, 'getDismissedPrescriptions'])->whereNumber('patientId');
+    Route::post('restore-dismissed', [PharmacyWorkbenchController::class, 'restoreDismissedPrescriptions']);
     Route::post('create-request', [PharmacyWorkbenchController::class, 'createPrescriptionRequest']);
     Route::post('apply-combo', [PharmacyWorkbenchController::class, 'pharmacyApplyCombo']);
     Route::post('remove-bundle', [PharmacyWorkbenchController::class, 'removeBundle']);

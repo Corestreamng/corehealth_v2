@@ -739,6 +739,7 @@ class ProductRequestController extends Controller
             $request->validate([
                 'prescription_ids' => 'required|array|min:1',
                 'patient_id' => 'required',
+                'reason' => 'nullable|string|max:1000',
             ]);
 
             DB::beginTransaction();
@@ -760,8 +761,13 @@ class ProductRequestController extends Controller
                     continue;
                 }
 
-                // Soft delete or update status to 0 (dismissed)
-                $productRequest->update(['status' => 0]);
+                // Dismissed (status 0), remembering who, when and why so it shows in the Dismissed list
+                $productRequest->update([
+                    'status' => 0,
+                    'dismissed_at' => now(),
+                    'dismissed_by' => auth()->id(),
+                    'dismiss_reason' => $request->input('reason'),
+                ]);
                 $dismissedCount++;
             }
 

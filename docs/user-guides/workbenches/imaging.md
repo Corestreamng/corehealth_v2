@@ -44,3 +44,9 @@ flowchart TD
 
 ## Developer Reference
 👉 **[Read the Imaging Developer Reference](/developer/workbenches/imaging)**
+
+## Trash & Dismissed
+The bin button opens **Dismissed** and **Deleted** lists with who, when and why (an optional reason). **Restore** returns a dismissed scan to the stage it was at (a billed scan goes back to awaiting result, never to billing again) and a deleted scan as it was.
+
+![Imaging trash panel](/images/workbenches/web-imaging-trash-panel.png)
+

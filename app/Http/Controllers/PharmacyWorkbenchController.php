@@ -2684,6 +2684,7 @@ class PharmacyWorkbenchController extends Controller
         $request->validate([
             'prescription_ids' => 'required|array',
             'prescription_ids.*' => 'exists:product_requests,id',
+            'reason' => 'nullable|string|max:1000',
         ]);
 
         try {
@@ -2702,8 +2703,13 @@ class PharmacyWorkbenchController extends Controller
                     continue;
                 }
 
-                // Soft delete or mark as cancelled
-                $productRequest->delete(); // Soft delete if using SoftDeletes trait
+                // Dismissed = status 0 (as the web and the other workbenches), remembering who, when and why
+                $productRequest->update([
+                    'status' => 0,
+                    'dismissed_at' => now(),
+                    'dismissed_by' => Auth::id(),
+                    'dismiss_reason' => $request->input('reason'),
+                ]);
 
                 $dismissedCount++;
             }
@@ -2728,6 +2734,109 @@ class PharmacyWorkbenchController extends Controller
 
             return response()->json(['message' => 'Failed to dismiss prescriptions: ' . $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Dismissed prescriptions (the pharmacy's trash): soft-deleted requests, newest first. Without `per_page` it is
+     * the whole list; with it, one page searchable by patient, file number or product.
+     */
+    public function getDismissedPrescriptions(Request $request, $patientId = null)
+    {
+        // Dismissed = status 0; prescriptions dismissed by the older route were soft-deleted, so those are listed too.
+        $query = ProductRequest::withTrashed()
+            ->where(fn ($q) => $q->where('status', 0)->orWhereNotNull('deleted_at'))
+            ->with(['product:id,product_name,product_code', 'patient.user:id,surname,firstname,othername', 'doctor:id,surname,firstname']);
+        if ($patientId) {
+            $query->where('patient_id', $patientId);
+        }
+        if ($term = trim((string) $request->query('search', ''))) {
+            $query->where(function ($q) use ($term) {
+                $q->where('free_form_name', 'like', "%{$term}%")
+                    ->orWhereHas('product', fn ($p) => $p->withoutGlobalScope('active')->where('product_name', 'like', "%{$term}%"))
+                    ->orWhereHas('patient.user', fn ($u) => $u->where('surname', 'like', "%{$term}%")->orWhere('firstname', 'like', "%{$term}%"))
+                    ->orWhereHas('patient', fn ($p) => $p->where('file_no', 'like', "%{$term}%"));
+            });
+        }
+        $query->orderByRaw('COALESCE(dismissed_at, deleted_at, updated_at) DESC');
+
+        $shape = function ($rows) {
+            $by = User::whereIn('id', $rows->map(fn ($r) => $r->dismissed_by ?? $r->deleted_by)->filter()->unique())
+                ->get(['id', 'surname', 'firstname', 'othername'])
+                ->mapWithKeys(fn ($u) => [$u->id => trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : ''))]);
+
+            return $rows->map(fn ($r) => [
+                'id' => $r->id,
+                'patient_id' => $r->patient_id,
+                'patient_name' => $r->patient && $r->patient->user ? trim($r->patient->user->surname . ' ' . $r->patient->user->firstname . ($r->patient->user->othername ? ' ' . $r->patient->user->othername : '')) : 'N/A',
+                'file_no' => $r->patient->file_no ?? null,
+                'product_name' => $r->is_free_form ? $r->free_form_name : ($r->product->product_name ?? 'Unknown product'),
+                'qty' => $r->qty,
+                'dose' => $r->dose,
+                'status' => $r->status,
+                'requested_by' => $r->doctor ? trim($r->doctor->surname . ' ' . $r->doctor->firstname) : 'N/A',
+                'reason' => $r->dismiss_reason ?? $r->deletion_reason,
+                'by_name' => $by[$r->dismissed_by ?? $r->deleted_by] ?? null,
+                'at' => optional($r->dismissed_at ?? $r->deleted_at ?? $r->updated_at)->toIso8601String(),
+                'dismissed_at' => optional($r->dismissed_at ?? $r->deleted_at ?? $r->updated_at)->format('h:i a D M j, Y'),
+            ])->values();
+        };
+
+        if ($request->has('per_page')) {
+            $per = max(1, min(100, (int) $request->query('per_page', 20)));
+            $page = $query->paginate($per, ['*'], 'page', max(1, (int) $request->query('page', 1)));
+
+            return response()->json([
+                'data' => $shape(collect($page->items())),
+                'total' => $page->total(),
+                'page' => $page->currentPage(),
+                'per_page' => $per,
+            ]);
+        }
+
+        return response()->json($shape($query->get()));
+    }
+
+    /**
+     * Restore dismissed prescriptions to the stage they were at, through Eloquent so the observers and the audit trail run.
+     */
+    public function restoreDismissedPrescriptions(Request $request)
+    {
+        $request->validate([
+            'prescription_ids' => 'required|array',
+            'prescription_ids.*' => 'integer',
+        ]);
+
+        $restored = 0;
+        $errors = [];
+        DB::transaction(function () use ($request, &$restored, &$errors) {
+            foreach ($request->prescription_ids as $id) {
+                $pr = ProductRequest::withTrashed()->where(fn ($q) => $q->where('status', 0)->orWhereNotNull('deleted_at'))->find($id);
+                if (!$pr) {
+                    $errors[] = "PR#{$id}: not in the dismissed list";
+
+                    continue;
+                }
+                if ($pr->trashed()) {
+                    $pr->restore();
+                }
+                // Back to the stage it was at: billed prescriptions wait to be dispensed, others to be billed
+                $pr->status = $pr->billed_by ? 2 : 1;
+                $pr->dismissed_at = null;
+                $pr->dismissed_by = null;
+                $pr->dismiss_reason = null;
+                $pr->deleted_by = null;
+                $pr->deletion_reason = null;
+                $pr->save();
+                $restored++;
+            }
+        });
+
+        return response()->json([
+            'success' => $restored > 0,
+            'message' => "Restored {$restored} prescription(s)" . ($errors ? '. ' . implode('; ', $errors) : ''),
+            'restored_count' => $restored,
+            'errors' => $errors,
+        ], $restored > 0 ? 200 : 422);
     }
 
     // ============================================

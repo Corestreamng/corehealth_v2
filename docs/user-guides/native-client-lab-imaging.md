@@ -57,3 +57,14 @@ Each request's ⋮ menu has **Dismiss…**, **Delete…** (reason of at least 10
 ![A patient's scans](/images/workbenches/native-phone-imaging-requests.png)
 
 👉 Developer reference: [Native Clients](/developer/native-client)
+
+## Results: several at once, files, text or structured
+- **Enter results** (Results stage, select several): opens each result in turn ("2 of 5"); requests not yet paid or HMO-validated are skipped and counted.
+- **Edit a result:** existing files are listed; the bin marks one to be removed when you save (undo before saving). A structured result can be switched to **Text**, and **Insert a template** adds a saved text template.
+
+## Trash & dismissed (Lab, Imaging, Pharmacy)
+**More → Trash & Dismissed** (Pharmacy: **More → Dismissed**) lists dismissed and deleted items a page at a time with search; each shows the reason, who and when. **Restore** puts it back at the stage it was at. Dismissing asks for a reason (required in the laboratory, optional in Imaging and Pharmacy).
+
+![Imaging trash on a phone](/images/workbenches/native-phone-imaging-trash.png)
+![Pharmacy dismissed on a phone](/images/workbenches/native-phone-pharmacy-dismissed.png)
+

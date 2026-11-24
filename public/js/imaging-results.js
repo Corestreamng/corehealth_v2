@@ -98,44 +98,37 @@ function loadTrashData() {
 }
 
 function createTrashCard(data, type) {
-    const serviceName = data.service ? data.service.service_name : 'N/A';
-    const patientName = data.patient ? `${data.patient.user.firstname} ${data.patient.user.surname}` : 'N/A';
-    const fileNo = data.patient ? data.patient.file_no : 'N/A';
-    const doctorName = data.doctor ? `${data.doctor.firstname} ${data.doctor.surname}` : 'N/A';
+    // The endpoint returns flat rows: service_name, patient_name, file_no, reason, by_name, requested_by.
+    const esc = (v) => $('<div>').text(v == null ? '' : v).html();
+    const deleted = type === 'deleted';
+    const when = data.at ? new Date(data.at).toLocaleString() : (deleted ? data.deleted_at : data.dismissed_at);
+    const reason = data.reason ? esc(data.reason) : '<em class="text-muted">No reason recorded</em>';
+    const by = data.by_name ? esc(data.by_name) : '<em class="text-muted">Not recorded</em>';
+    const badgeClass = deleted ? 'badge-danger' : 'badge-warning';
+    const icon = deleted ? 'fa-trash' : 'fa-ban';
 
-    const date = type === 'deleted'
-        ? new Date(data.deleted_at).toLocaleString()
-        : new Date(data.dismissed_at).toLocaleString();
-
-    const reason = type === 'deleted' ? data.deletion_reason : data.dismiss_reason;
-
-    const badgeClass = type === 'deleted' ? 'badge-danger' : 'badge-warning';
-    const icon = type === 'deleted' ? 'fa-trash' : 'fa-ban';
-
-    let html = `
-        <div class="card-modern mb-2" style="border-left: 4px solid ${type === 'deleted' ? '#dc3545' : '#ffc107'};">
+    return `
+        <div class="card-modern mb-2" style="border-left: 4px solid ${deleted ? '#dc3545' : '#ffc107'};">
             <div class="card-body p-2">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                     <h6 class="mb-0">
                         <span class="badge ${badgeClass}">
-                            <i class="fa ${icon}"></i> ${serviceName}
+                            <i class="fa ${icon}"></i> ${esc(data.service_name || 'N/A')}
                         </span>
                     </h6>
-                    <button class="btn btn-sm btn-success" onclick="restoreRequest(${data.id}, '${type}')">
+                    <button class="btn btn-sm btn-success" onclick="restoreRequest(${Number(data.id)}, '${type}')">
                         <i class="fa fa-undo"></i> Restore
                     </button>
                 </div>
                 <small>
-                    <div><strong>Patient:</strong> ${patientName} (${fileNo})</div>
-                    <div><strong>Doctor:</strong> ${doctorName}</div>
-                    <div><strong>${type === 'deleted' ? 'Deleted' : 'Dismissed'}:</strong> ${date}</div>
+                    <div><strong>Patient:</strong> ${esc(data.patient_name || 'N/A')}${data.file_no ? ' (' + esc(data.file_no) + ')' : ''}</div>
+                    <div><strong>Requested by:</strong> ${esc(data.requested_by || 'N/A')}</div>
+                    <div><strong>${deleted ? 'Deleted' : 'Dismissed'}:</strong> ${esc(when)} &middot; ${by}</div>
                     <div><strong>Reason:</strong> ${reason}</div>
                 </small>
             </div>
         </div>
     `;
-
-    return html;
 }
 
 function updateTrashTotalCount() {

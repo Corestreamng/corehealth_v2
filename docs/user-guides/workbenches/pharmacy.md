@@ -44,6 +44,11 @@ flowchart TD
 
 ---
 
+## Dismissed prescriptions (trash and restore)
+Select items in a stage and press **Dismiss**: you may type a **reason** (recorded with who dismissed it and when). Dispensed items cannot be dismissed. Dismissed items leave the queue and sit in the **Dismissed** panel (the round bin button at the bottom right): search by patient, file number or product, tick **Only the selected patient**, page through the list, and press **Restore**. A restored prescription returns to the stage it was at: billed items wait to be dispensed, unbilled items wait to be billed.
+
+![Dismissed panel on the Pharmacy workbench](/images/workbenches/web-pharmacy-dismissed-panel.png)
+
 ## 4. Cross-Module Data & Patient Flows
 
 - **Doctor (`encounters.create`)**: Doctor prescription orders post directly to the pharmacy prescription queue.

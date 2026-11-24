@@ -15,6 +15,13 @@ class ImagingMobileTest extends TestCase
 {
     private const AJAX = ['X-Requested-With' => 'XMLHttpRequest'];
 
+    protected function tearDown(): void
+    {
+        // the approval test changes a cached setting; never leave it behind
+        \Cache::forget('app_settings');
+        parent::tearDown();
+    }
+
     private function staff(string $role): User
     {
         if (!Role::where('name', $role)->exists()) {
@@ -87,5 +94,67 @@ class ImagingMobileTest extends TestCase
         $this->assertStringNotContainsString("lab.reports'", $js);
         $this->assertStringNotContainsString("lab.statistics'", $js);
         $this->assertStringContainsString("imaging.reports'", $js);
+    }
+
+    public function test_attachment_ids_are_their_positions_so_removal_works()
+    {
+        Sanctum::actingAs($this->staff('RADIOLOGIST'));
+        $req = \App\Models\ImagingServiceRequest::first() ?? $this->markTestSkipped('No imaging request.');
+        $req->attachments = [['name' => 'a.png', 'path' => 'imaging_results/a.png'], ['name' => 'b.png', 'path' => 'imaging_results/b.png']];
+        $req->save();
+
+        $list = $this->getJson("/api/mobile/radiology/requests/{$req->id}/attachments", self::AJAX)->assertOk()->json();
+        $this->assertSame([0, 1], array_column($list, 'id'), 'A removal (deleted_attachments) is keyed by position; random ids made it a no-op.');
+        $this->assertSame(['a.png', 'b.png'], array_column($list, 'filename'));
+    }
+
+    /** The approval chain on the imaging routes: entry waits for approval, an approver approves, rejects or reverses. */
+    public function test_imaging_results_follow_the_approval_chain_when_the_hospital_requires_it()
+    {
+        $settings = \App\Models\ApplicationStatu::first() ?? $this->markTestSkipped('No application settings row.');
+        $settings->update(['imaging_results_require_approval' => 1]);
+        appsettings(null, true);
+
+        $req = \App\Models\ImagingServiceRequest::where('is_free_form', '!=', 1)->whereNotNull('service_id')->first() ?? $this->markTestSkipped('No imaging request.');
+        $req->update(['status' => 2, 'billed_by' => $req->billed_by ?? 1, 'attachments' => null]);
+
+        $rad = $this->staff('RADIOLOGIST');
+        Sanctum::actingAs($rad);
+        $this->assertTrue($this->getJson('/api/mobile/radiology/meta', self::AJAX)->json('requires_approval'));
+
+        $fields = [
+            'invest_res_entry_id' => $req->id,
+            'invest_res_template_version' => 1,
+            'invest_res_template_submited' => '<p>No acute findings.</p>',
+            'entered_by_name' => 'Test Radiologist',
+            'entered_by_designation' => 'Radiologist',
+            'entry_source' => 'imaging_workbench',
+        ];
+        $map = $this->getJson("/api/mobile/radiology/nhmis/service-mapping/{$req->service_id}?type=imaging", self::AJAX)->json();
+        if (!empty($map['is_mapped'])) {
+            $o = $map['supported_outcomes'][0];
+            $fields['nhmis_outcome'] = $fields['nhmis_outcome_raw'] = is_array($o) ? ($o['value'] ?? $o['key']) : $o;
+        }
+        $this->post('/api/mobile/radiology/save-result', $fields, self::AJAX + ['Accept' => 'application/json'])->assertOk();
+        $this->assertSame(5, (int) $req->fresh()->status, 'Entered, not final: it waits for an approver.');
+
+        // a radiologist who is not a unit or department head cannot approve
+        $this->postJson("/api/mobile/radiology/approval/{$req->id}/approve", [], self::AJAX)->assertStatus(403);
+
+        $admin = $this->staff('ADMIN');
+        Sanctum::actingAs($admin);
+        $queue = $this->getJson('/api/mobile/radiology/approval-queue?draw=1&start=0&length=50', self::AJAX)->assertOk()->json();
+        $this->assertContains($req->id, collect($queue['data'])->map(fn ($r) => (int) ($r['id'] ?? 0))->all());
+
+        $this->postJson("/api/mobile/radiology/approval/{$req->id}/reject", ['rejection_reason' => 'Wrong side reported, please recheck'], self::AJAX)->assertOk();
+        $this->assertSame(6, (int) $req->fresh()->status);
+
+        $req->update(['status' => 5]);
+        $this->postJson("/api/mobile/radiology/approval/{$req->id}/approve", [], self::AJAX)->assertOk();
+        $this->assertSame(4, (int) $req->fresh()->status);
+        $this->assertNotNull($req->fresh()->approved_at);
+
+        $this->postJson("/api/mobile/radiology/approval/{$req->id}/reverse", [], self::AJAX)->assertOk();
+        $this->assertNotSame(4, (int) $req->fresh()->status, 'A reversed approval is no longer final.');
     }
 }

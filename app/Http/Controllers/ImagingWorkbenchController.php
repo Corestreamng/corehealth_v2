@@ -740,6 +740,7 @@ class ImagingWorkbenchController extends Controller
                 'request_ids' => 'required|array',
                 'request_ids.*' => 'exists:imaging_service_requests,id',
                 'patient_id' => 'nullable|exists:patients,id',
+                'reason' => 'nullable|string|max:1000',
             ]);
 
             DB::beginTransaction();
@@ -747,13 +748,16 @@ class ImagingWorkbenchController extends Controller
             foreach ($request->request_ids as $requestId) {
                 $imagingRequest = ImagingServiceRequest::findOrFail($requestId);
 
-                // Update imaging request status to dismissed (0)
+                // Update imaging request status to dismissed (0), remembering who, when and why
                 $imagingRequest->update([
                     'status' => 0,
+                    'dismissed_at' => now(),
+                    'dismissed_by' => Auth::id(),
+                    'dismiss_reason' => $request->input('reason'),
                 ]);
 
                 // Log audit
-                $this->logAudit($imagingRequest->id, 'dismiss', 'Imaging request dismissed');
+                $this->logAudit($imagingRequest->id, 'dismiss', 'Imaging request dismissed' . ($request->filled('reason') ? ': ' . $request->input('reason') : ''));
             }
 
             DB::commit();
@@ -858,9 +862,10 @@ class ImagingWorkbenchController extends Controller
                     : $request->attachments;
 
                 if (is_array($attachmentsData)) {
-                    foreach ($attachmentsData as $att) {
+                    foreach ($attachmentsData as $index => $att) {
                         $attachments[] = [
-                            'id' => $att['id'] ?? uniqid(),
+                            // The position in the stored list: that is what a removal (deleted_attachments) is keyed by
+                            'id' => $index,
                             'filename' => $att['filename'] ?? ($att['name'] ?? 'Unknown'),
                             'url' => $att['url'] ?? (isset($att['path']) ? asset('storage/' . $att['path']) : ''),
                         ];
@@ -1321,13 +1326,15 @@ class ImagingWorkbenchController extends Controller
     /**
      * Delete (soft) imaging request
      */
-    public function deleteRequest($id)
+    public function deleteRequest(Request $request, $id)
     {
         try {
+            $request->validate(['reason' => 'nullable|string|max:1000']);
             $imagingRequest = ImagingServiceRequest::findOrFail($id);
+            $imagingRequest->update(['deleted_by' => Auth::id(), 'deletion_reason' => $request->input('reason')]);
             $imagingRequest->delete();
 
-            $this->logAudit($id, 'delete', 'Imaging request deleted');
+            $this->logAudit($id, 'delete', 'Imaging request deleted' . ($request->filled('reason') ? ': ' . $request->input('reason') : ''));
 
             return response()->json([
                 'success' => true,
@@ -1348,9 +1355,15 @@ class ImagingWorkbenchController extends Controller
     {
         try {
             $imagingRequest = ImagingServiceRequest::withTrashed()->findOrFail($id);
-            $imagingRequest->restore();
 
-            $this->logAudit($id, 'restore', 'Imaging request restored');
+            if (!$imagingRequest->trashed()) {
+                return response()->json(['success' => false, 'message' => 'This request is not deleted.'], 400);
+            }
+
+            $imagingRequest->restore();
+            $imagingRequest->update(['deleted_by' => null, 'deletion_reason' => null]);
+
+            $this->logAudit($id, 'restore', 'Imaging request restored from trash');
 
             return response()->json([
                 'success' => true,
@@ -1405,13 +1418,19 @@ class ImagingWorkbenchController extends Controller
         ]);
     }
 
-    public function dismissRequest($id)
+    public function dismissRequest(Request $request, $id)
     {
         try {
+            $request->validate(['reason' => 'nullable|string|max:1000']);
             $imagingRequest = ImagingServiceRequest::findOrFail($id);
-            $imagingRequest->update(['status' => 0]);
+            $imagingRequest->update([
+                'status' => 0,
+                'dismissed_at' => now(),
+                'dismissed_by' => Auth::id(),
+                'dismiss_reason' => $request->input('reason'),
+            ]);
 
-            $this->logAudit($id, 'dismiss', 'Imaging request dismissed');
+            $this->logAudit($id, 'dismiss', 'Imaging request dismissed' . ($request->filled('reason') ? ': ' . $request->input('reason') : ''));
 
             return response()->json([
                 'success' => true,
@@ -1432,9 +1451,21 @@ class ImagingWorkbenchController extends Controller
     {
         try {
             $imagingRequest = ImagingServiceRequest::findOrFail($id);
-            $imagingRequest->update(['status' => 1]);
 
-            $this->logAudit($id, 'undismiss', 'Imaging request undismissed');
+            if ((int) $imagingRequest->status !== 0) {
+                return response()->json(['success' => false, 'message' => 'This request is not dismissed.'], 400);
+            }
+
+            // Back to the stage it was at: billed requests wait for their result (imaging has no sample step);
+            // restoring a billed request to "awaiting billing" would let it be billed twice.
+            $imagingRequest->update([
+                'status' => $imagingRequest->billed_by ? 2 : 1,
+                'dismissed_at' => null,
+                'dismissed_by' => null,
+                'dismiss_reason' => null,
+            ]);
+
+            $this->logAudit($id, 'undismiss', 'Imaging request restored from dismissed');
 
             return response()->json([
                 'success' => true,
@@ -1451,31 +1482,10 @@ class ImagingWorkbenchController extends Controller
     /**
      * Get deleted imaging requests
      */
-    public function getDeletedRequests($patientId = null)
+    public function getDeletedRequests(Request $request, $patientId = null)
     {
         try {
-            $query = ImagingServiceRequest::onlyTrashed()
-                ->with(['service', 'patient.user', 'doctor']);
-
-            if ($patientId) {
-                $query->where('patient_id', $patientId);
-            }
-
-            $requests = $query->orderBy('deleted_at', 'desc')->get();
-
-            $result = $requests->map(function ($req) {
-                return [
-                    'id' => $req->id,
-                    'service_name' => $req->service_name,
-                    'patient_name' => $req->patient && $req->patient->user
-                        ? $req->patient->user->surname . ' ' . $req->patient->user->firstname
-                        : 'N/A',
-                    'deleted_at' => $req->deleted_at->format('h:i a D M j, Y'),
-                    'requested_by' => $req->doctor ? $req->doctor->surname . ' ' . $req->doctor->firstname : 'N/A',
-                ];
-            });
-
-            return response()->json($result);
+            return $this->trashList($request, ImagingServiceRequest::onlyTrashed(), $patientId, 'deleted');
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -1485,39 +1495,81 @@ class ImagingWorkbenchController extends Controller
     }
 
     /**
-     * Get dismissed imaging requests
+     * Get dismissed imaging requests (status 0; older dismissals have no recorded time, reason or person).
      */
-    public function getDismissedRequests($patientId = null)
+    public function getDismissedRequests(Request $request, $patientId = null)
     {
         try {
-            $query = ImagingServiceRequest::where('status', 0)
-                ->with(['service', 'patient.user', 'doctor']);
-
-            if ($patientId) {
-                $query->where('patient_id', $patientId);
-            }
-
-            $requests = $query->orderBy('updated_at', 'desc')->get();
-
-            $result = $requests->map(function ($req) {
-                return [
-                    'id' => $req->id,
-                    'service_name' => $req->service_name,
-                    'patient_name' => $req->patient && $req->patient->user
-                        ? $req->patient->user->surname . ' ' . $req->patient->user->firstname
-                        : 'N/A',
-                    'dismissed_at' => $req->updated_at->format('h:i a D M j, Y'),
-                    'requested_by' => $req->doctor ? $req->doctor->surname . ' ' . $req->doctor->firstname : 'N/A',
-                ];
-            });
-
-            return response()->json($result);
+            return $this->trashList($request, ImagingServiceRequest::where('status', 0), $patientId, 'dismissed');
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error loading dismissed requests: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * The Dismissed / Deleted lists. Without `per_page` it is the whole list (the web panel); with `per_page` it
+     * is one page, searchable by patient, file number or service (the staff app).
+     */
+    private function trashList(Request $request, $query, $patientId, string $kind)
+    {
+        $query->with(['service', 'patient.user', 'doctor']);
+        if ($patientId) {
+            $query->where('patient_id', $patientId);
+        }
+        if ($term = trim((string) $request->query('search', ''))) {
+            $query->where(function ($q) use ($term) {
+                $q->where('free_form_name', 'like', "%{$term}%")
+                    ->orWhereHas('service', fn ($s) => $s->where('service_name', 'like', "%{$term}%"))
+                    ->orWhereHas('patient.user', fn ($u) => $u->where('surname', 'like', "%{$term}%")->orWhere('firstname', 'like', "%{$term}%"))
+                    ->orWhereHas('patient', fn ($p) => $p->where('file_no', 'like', "%{$term}%"));
+            });
+        }
+        $when = $kind === 'deleted' ? 'deleted_at' : 'dismissed_at';
+        $byCol = $kind === 'deleted' ? 'deleted_by' : 'dismissed_by';
+        $query->orderByRaw("COALESCE({$when}, updated_at) DESC");
+
+        $shape = function ($rows) use ($kind, $when, $byCol) {
+            $by = \App\Models\User::whereIn('id', $rows->pluck($byCol)->filter()->unique())
+                ->get(['id', 'surname', 'firstname', 'othername'])
+                ->mapWithKeys(fn ($u) => [$u->id => trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : ''))]);
+
+            return $rows->map(function ($req) use ($kind, $when, $byCol, $by) {
+                $at = $req->{$when} ?? $req->updated_at;
+
+                return [
+                    'id' => $req->id,
+                    'patient_id' => $req->patient_id,
+                    'service_name' => $req->service_name,
+                    'is_free_form' => (bool) $req->is_free_form,
+                    'patient_name' => $req->patient && $req->patient->user
+                        ? $req->patient->user->surname . ' ' . $req->patient->user->firstname
+                        : 'N/A',
+                    'file_no' => $req->patient->file_no ?? null,
+                    $when => $at ? $at->format('h:i a D M j, Y') : null,
+                    'at' => $at ? $at->toIso8601String() : null,
+                    'reason' => $kind === 'deleted' ? $req->deletion_reason : $req->dismiss_reason,
+                    'by_name' => $by[$req->{$byCol}] ?? null,
+                    'requested_by' => $req->doctor ? $req->doctor->surname . ' ' . $req->doctor->firstname : 'N/A',
+                ];
+            })->values();
+        };
+
+        if ($request->has('per_page')) {
+            $per = max(1, min(100, (int) $request->query('per_page', 20)));
+            $page = $query->paginate($per, ['*'], 'page', max(1, (int) $request->query('page', 1)));
+
+            return response()->json([
+                'data' => $shape(collect($page->items())),
+                'total' => $page->total(),
+                'page' => $page->currentPage(),
+                'per_page' => $per,
+            ]);
+        }
+
+        return response()->json($shape($query->get()));
     }
 
     /**

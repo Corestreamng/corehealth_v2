@@ -1187,12 +1187,15 @@ window.dismissPrescItemsConfirmed = function(type) {
         },
         data: {
             prescription_ids: selectedIds,
-            patient_id: currentPatient
+            patient_id: currentPatient,
+            reason: ($('#dismiss-reason').val() || '').trim()
         },
         success: function(response) {
             $btn.prop('disabled', false).html(originalHtml);
             if (response.success) {
                 toastr.success(response.message || 'Items dismissed successfully');
+                $('#dismiss-reason').val('');
+                if (typeof window.pharmRefreshTrashCount === 'function') window.pharmRefreshTrashCount();
                 // Clear stored data + till bag
                 selectedItemsData[type] = [];
                 if (typeof window.pharmClearBagType === 'function') window.pharmClearBagType(type);

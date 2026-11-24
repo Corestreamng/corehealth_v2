@@ -646,11 +646,13 @@ function createTrashCard(data, type) {
     const fileNo = data.patient ? data.patient.file_no : 'N/A';
     const doctorName = data.doctor ? `${data.doctor.firstname} ${data.doctor.surname}` : 'N/A';
 
-    const date = type === 'deleted'
-        ? new Date(data.deleted_at).toLocaleString()
-        : new Date(data.dismissed_at).toLocaleString();
+    // Older bulk dismissals have no recorded time, reason or person: say so instead of "1 Jan 1970" / "null".
+    const esc = (v) => $('<div>').text(v == null ? '' : v).html();
+    const rawDate = type === 'deleted' ? data.deleted_at : (data.dismissed_at || data.updated_at);
+    const date = (rawDate ? new Date(rawDate).toLocaleString() : '') + (data.by_name ? ' · ' + esc(data.by_name) : '');
 
-    const reason = type === 'deleted' ? data.deletion_reason : data.dismiss_reason;
+    const reasonText = type === 'deleted' ? data.deletion_reason : data.dismiss_reason;
+    const reason = reasonText ? esc(reasonText) : '<em class="text-muted">No reason recorded</em>';
 
     const badgeClass = type === 'deleted' ? 'badge-danger' : 'badge-warning';
     const icon = type === 'deleted' ? 'fa-trash' : 'fa-ban';

@@ -661,6 +661,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/pharmacy-workbench/record-billing', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'recordBilling'])->name('pharmacy.record-billing');
         Route::post('/pharmacy-workbench/bill', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'billPrescriptions'])->name('pharmacy.bill');
         Route::post('/pharmacy-workbench/dismiss', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'dismissPrescriptions'])->name('pharmacy.dismiss');
+        Route::get('/pharmacy-workbench/dismissed-prescriptions/{patientId?}', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getDismissedPrescriptions'])->whereNumber('patientId')->name('pharmacy.dismissed');
+        Route::post('/pharmacy-workbench/restore-dismissed', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'restoreDismissedPrescriptions'])->name('pharmacy.restore-dismissed');
         Route::post('/pharmacy-workbench/create-request', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'createPrescriptionRequest'])->name('pharmacy.create-request');
         Route::get('/pharmacy-workbench/my-transactions', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getMyTransactions'])->name('pharmacy.my-transactions');
         Route::post('/pharmacy-workbench/print-prescription-slip', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'printPrescriptionSlip'])->name('pharmacy.print-prescription-slip');
