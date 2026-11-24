@@ -47,6 +47,35 @@ use Yajra\DataTables\Facades\DataTables;
  */
 class StoreWorkbenchController extends Controller
 {
+    protected const TALLY_REF_LABELS = [
+            'PurchaseOrder' => ['prefix' => 'PO #',        'url_route' => 'inventory.purchase-orders.show'],
+            'StoreRequisition' => ['prefix' => 'Requisition #', 'url_route' => 'inventory.requisitions.show'],
+            'ProductRequest' => ['prefix' => 'Pharmacy Dispense #', 'url_route' => null],
+            'ProductOrServiceRequest' => ['prefix' => 'Clinical Bill #',     'url_route' => null],
+            'InjectionAdministration' => ['prefix' => 'Injection #',         'url_route' => null],
+            'MedicationAdministration' => ['prefix' => 'Med Admin',           'url_route' => null],
+            'PharmacyReturn' => ['prefix' => 'Drug Return #',       'url_route' => null],
+            'PharmacyDamage' => ['prefix' => 'Damage #',            'url_route' => null],
+            'StoreDamage' => ['prefix' => 'Store Damage #',      'url_route' => null],
+            'StoreRequisitionReturn' => ['prefix' => 'Req Return #',        'url_route' => null],
+            'PurchaseOrderReturn' => ['prefix' => 'PO Return #',         'url_route' => null],
+            // Legacy migration rows created during initial data import
+            'Migration' => ['prefix' => 'Legacy Import',       'url_route' => null],
+        ];
+
+    protected const TALLY_TYPE_LABELS = [
+            'in' => 'Stock In',
+            'out' => 'Dispensed',
+            'transfer_in' => 'Transfer In',
+            'transfer_out' => 'Transfer Out',
+            'return' => 'Return',
+            'expired' => 'Expired',
+            'damaged' => 'Damaged',
+            'adjustment' => 'Adjustment',
+            'po_return' => 'PO Return',
+            'req_return' => 'Req Return',
+        ];
+
     protected StockService $stockService;
 
     protected PurchaseOrderService $purchaseOrderService;
@@ -144,7 +173,7 @@ class StoreWorkbenchController extends Controller
     /**
      * Get aggregated stats for all stores
      */
-    protected function getAllStoresStats(): array
+    public function getAllStoresStats(): array
     {
         return [
             'total_products' => StoreStock::where('is_active', true)->distinct('product_id')->count('product_id'),
@@ -902,7 +931,7 @@ class StoreWorkbenchController extends Controller
     /**
      * Get store statistics
      */
-    protected function getStoreStats(int $storeId): array
+    public function getStoreStats(int $storeId): array
     {
         $totalProducts = StoreStock::where('store_id', $storeId)
             ->where('is_active', true)
@@ -1109,6 +1138,120 @@ class StoreWorkbenchController extends Controller
     }
 
     /**
+     * One tally-card row (labels, reference link, direction, batch facts). Shared by the web feed and the paged feed
+     * so both show exactly the same thing; the caller supplies the quantities and balances.
+     */
+    protected function buildTallyRow($tx, int $balBefore, int $balAfter, int $inQty, int $outQty): array
+    {
+        $productId = $tx->stockBatch->product_id;
+        $product = $tx->stockBatch->product;
+        $productName = $product?->product_name ?? '—';
+        $productCode = $product?->product_code ?? '';
+        $batchNumber = $tx->stockBatch->batch_number ?? '—';
+        $expiryDate = $tx->stockBatch->expiry_date ? $tx->stockBatch->expiry_date->format('Y-m-d') : '—';
+
+        // Batch cost price with 0 as fallback
+        $costPrice = (float) ($tx->stockBatch->cost_price ?? 0);
+
+        $type = $tx->type;
+        $txQty = abs((int) $tx->qty);
+
+        // Resolve reference label and optional URL
+        $refType = $tx->reference_type;
+        $refId = $tx->reference_id;
+        $refLabel = '—';
+        $refUrl = null;
+
+        if ($refType) {
+            $shortType = class_basename($refType);
+            $map = self::TALLY_REF_LABELS[$shortType] ?? null;
+
+            if ($map) {
+                $refLabel = $refId ? ($map['prefix'] . $refId) : rtrim($map['prefix'], ' #');
+                if ($map['url_route'] && $refId) {
+                    try {
+                        $refUrl = route($map['url_route'], $refId);
+                    } catch (\Exception $e) {
+                        $refUrl = null;
+                    }
+                }
+            } else {
+                $refLabel = $refId ? ($shortType . ' #' . $refId) : $shortType;
+            }
+        }
+
+        $isVoided = !empty($tx->voided_at);
+
+        // Determine direction and labels
+        if ($type === 'in' && ($tx->stockBatch?->is_donation || $refType === 'donation')) {
+            $direction = 'donation_in';
+            $typeLabel = 'Donation In';
+            $badgeType = 'donation_in';
+        } elseif ($type === 'in' && class_basename($refType ?? '') === 'StoreRequisition') {
+            $direction = 'transfer_in';
+            $typeLabel = 'Transfer In';
+            $badgeType = 'transfer_in';
+        } elseif ($type === 'in' && class_basename($refType ?? '') === 'PurchaseOrder') {
+            $direction = 'in';
+            $typeLabel = 'PO Receipt';
+            $badgeType = 'po_receipt';
+        } elseif ($type === 'in') {
+            $direction = 'in';
+            $typeLabel = self::TALLY_TYPE_LABELS[$type] ?? 'Stock In';
+            $badgeType = 'in';
+        } elseif ($type === 'adjustment') {
+            $direction = 'adjustment';
+            $typeLabel = ($inQty > 0 ? 'Adj (+)' : 'Adj (-)') . ($isVoided ? ' (Voided)' : '');
+            $badgeType = $inQty > 0 ? 'adjustment_in' : 'adjustment_out';
+        } elseif ($type === 'void' || $type === 'void_adjustment') {
+            $direction = 'adjustment';
+            $typeLabel = 'Void / Reversal';
+            $badgeType = 'adjustment_out';
+        } else {
+            $direction = $type;
+            $typeLabel = (self::TALLY_TYPE_LABELS[$type] ?? ucwords(str_replace('_', ' ', $type))) . ($isVoided ? ' (Voided)' : '');
+            $badgeType = $type;
+        }
+
+        return [
+            'id' => $tx->id,
+            'raw_type' => $type,
+            'is_voided' => $isVoided,
+            'void_reason' => $tx->void_reason,
+            'journal_entry_id' => $tx->journal_entry_id,
+            'datetime' => $tx->created_at->format('d M Y H:i'),
+            'product_id' => $productId,
+            'product_name' => $productName,
+            'type_label' => $typeLabel,
+            'badge_type' => $badgeType,
+            'is_donation' => (bool) ($tx->stockBatch?->is_donation || $refType === 'donation'),
+            'direction' => $direction,
+            'batch_id' => $tx->stock_batch_id,
+            'batch_number' => $batchNumber,
+            'batch_name' => $tx->stockBatch?->batch_name ?? '',
+            'expiry_date' => $expiryDate,
+            'cost_price' => $costPrice,
+            'supplier_id' => $tx->stockBatch?->supplier_id,
+            'supplier_name' => $tx->stockBatch?->supplier?->company_name,
+            'current_qty' => (int) ($tx->stockBatch?->current_qty ?? 0),
+            'source' => $tx->stockBatch?->source,
+            'bal_before' => $balBefore,
+            'in_qty' => $inQty,
+            'out_qty' => $outQty,
+            'bal_after' => $balAfter,
+            'ref_label' => $refLabel,
+            'ref_url' => $refUrl,
+            'performer' => $tx->performer->name ?? 'System',
+            'notes' => $tx->notes,
+            'packaging' => ($product->packagings ?? collect())->map(fn ($p) => [
+                'id' => $p->id, 'name' => $p->name, 'base_unit_qty' => $p->base_unit_qty,
+            ]),
+            'base_unit' => $product->base_unit_name ?? 'Piece',
+        ];
+
+    }
+
+    /**
      * Tally Card — AJAX data feed
      *
      * Returns JSON for the tally table.
@@ -1156,37 +1299,6 @@ class StoreWorkbenchController extends Controller
         $inboundTypes = ['in', 'transfer_in', 'return', 'req_return'];
         $outboundTypes = ['out', 'transfer_out', 'expired', 'damaged', 'po_return'];
 
-        // Human-readable labels and optional deep-link URLs per reference_type
-        $refLabelMap = [
-            'PurchaseOrder' => ['prefix' => 'PO #',        'url_route' => 'inventory.purchase-orders.show'],
-            'StoreRequisition' => ['prefix' => 'Requisition #', 'url_route' => 'inventory.requisitions.show'],
-            'ProductRequest' => ['prefix' => 'Pharmacy Dispense #', 'url_route' => null],
-            'ProductOrServiceRequest' => ['prefix' => 'Clinical Bill #',     'url_route' => null],
-            'InjectionAdministration' => ['prefix' => 'Injection #',         'url_route' => null],
-            'MedicationAdministration' => ['prefix' => 'Med Admin',           'url_route' => null],
-            'PharmacyReturn' => ['prefix' => 'Drug Return #',       'url_route' => null],
-            'PharmacyDamage' => ['prefix' => 'Damage #',            'url_route' => null],
-            'StoreDamage' => ['prefix' => 'Store Damage #',      'url_route' => null],
-            'StoreRequisitionReturn' => ['prefix' => 'Req Return #',        'url_route' => null],
-            'PurchaseOrderReturn' => ['prefix' => 'PO Return #',         'url_route' => null],
-            // Legacy migration rows created during initial data import
-            'Migration' => ['prefix' => 'Legacy Import',       'url_route' => null],
-        ];
-
-        // Human-readable type labels (covers all 8 types + transfer_in for completeness)
-        $typeLabelMap = [
-            'in' => 'Stock In',
-            'out' => 'Dispensed',
-            'transfer_in' => 'Transfer In',
-            'transfer_out' => 'Transfer Out',
-            'return' => 'Return',
-            'expired' => 'Expired',
-            'damaged' => 'Damaged',
-            'adjustment' => 'Adjustment',
-            'po_return' => 'PO Return',
-            'req_return' => 'Req Return',
-        ];
-
         // Per-product running balance accumulator (used in both axes)
         $balances = []; // keyed by product_id
 
@@ -1232,25 +1344,13 @@ class StoreWorkbenchController extends Controller
         $rows = $transactions->map(function ($tx) use (
             $inboundTypes,
             $outboundTypes,
-            $refLabelMap,
-            $typeLabelMap,
             &$balances,
             &$totalIn,
             &$totalOut
         ) {
             $productId = $tx->stockBatch->product_id;
-            $product = $tx->stockBatch->product;
-            $productName = $product?->product_name ?? '—';
-            $productCode = $product?->product_code ?? '';
-            $batchNumber = $tx->stockBatch->batch_number ?? '—';
-            $expiryDate = $tx->stockBatch->expiry_date ? $tx->stockBatch->expiry_date->format('Y-m-d') : '—';
-
-            // Batch cost price with 0 as fallback
-            $costPrice = (float) ($tx->stockBatch->cost_price ?? 0);
-
             $type = $tx->type;
             $txQty = abs((int) $tx->qty);
-
             $isIn = in_array($type, $inboundTypes);
             $isOut = in_array($type, $outboundTypes);
 
@@ -1284,98 +1384,7 @@ class StoreWorkbenchController extends Controller
 
             $balAfter = $balances[$productId];
 
-            // Resolve reference label and optional URL
-            $refType = $tx->reference_type;
-            $refId = $tx->reference_id;
-            $refLabel = '—';
-            $refUrl = null;
-
-            if ($refType) {
-                $shortType = class_basename($refType);
-                $map = $refLabelMap[$shortType] ?? null;
-
-                if ($map) {
-                    $refLabel = $refId ? ($map['prefix'] . $refId) : rtrim($map['prefix'], ' #');
-                    if ($map['url_route'] && $refId) {
-                        try {
-                            $refUrl = route($map['url_route'], $refId);
-                        } catch (\Exception $e) {
-                            $refUrl = null;
-                        }
-                    }
-                } else {
-                    $refLabel = $refId ? ($shortType . ' #' . $refId) : $shortType;
-                }
-            }
-
-            $isVoided = !empty($tx->voided_at);
-
-            // Determine direction and labels
-            if ($type === 'in' && ($tx->stockBatch?->is_donation || $refType === 'donation')) {
-                $direction = 'donation_in';
-                $typeLabel = 'Donation In';
-                $badgeType = 'donation_in';
-            } elseif ($type === 'in' && class_basename($refType ?? '') === 'StoreRequisition') {
-                $direction = 'transfer_in';
-                $typeLabel = 'Transfer In';
-                $badgeType = 'transfer_in';
-            } elseif ($type === 'in' && class_basename($refType ?? '') === 'PurchaseOrder') {
-                $direction = 'in';
-                $typeLabel = 'PO Receipt';
-                $badgeType = 'po_receipt';
-            } elseif ($type === 'in') {
-                $direction = 'in';
-                $typeLabel = $typeLabelMap[$type] ?? 'Stock In';
-                $badgeType = 'in';
-            } elseif ($type === 'adjustment') {
-                $direction = 'adjustment';
-                $typeLabel = ($inQty > 0 ? 'Adj (+)' : 'Adj (-)') . ($isVoided ? ' (Voided)' : '');
-                $badgeType = $inQty > 0 ? 'adjustment_in' : 'adjustment_out';
-            } elseif ($type === 'void' || $type === 'void_adjustment') {
-                $direction = 'adjustment';
-                $typeLabel = 'Void / Reversal';
-                $badgeType = 'adjustment_out';
-            } else {
-                $direction = $type;
-                $typeLabel = ($typeLabelMap[$type] ?? ucwords(str_replace('_', ' ', $type))) . ($isVoided ? ' (Voided)' : '');
-                $badgeType = $type;
-            }
-
-            return [
-                'id' => $tx->id,
-                'raw_type' => $type,
-                'is_voided' => $isVoided,
-                'void_reason' => $tx->void_reason,
-                'journal_entry_id' => $tx->journal_entry_id,
-                'datetime' => $tx->created_at->format('d M Y H:i'),
-                'product_id' => $productId,
-                'product_name' => $productName,
-                'type_label' => $typeLabel,
-                'badge_type' => $badgeType,
-                'is_donation' => (bool) ($tx->stockBatch?->is_donation || $refType === 'donation'),
-                'direction' => $direction,
-                'batch_id' => $tx->stock_batch_id,
-                'batch_number' => $batchNumber,
-                'batch_name' => $tx->stockBatch?->batch_name ?? '',
-                'expiry_date' => $expiryDate,
-                'cost_price' => $costPrice,
-                'supplier_id' => $tx->stockBatch?->supplier_id,
-                'supplier_name' => $tx->stockBatch?->supplier?->company_name,
-                'current_qty' => (int) ($tx->stockBatch?->current_qty ?? 0),
-                'source' => $tx->stockBatch?->source,
-                'bal_before' => $balBefore,
-                'in_qty' => $inQty,
-                'out_qty' => $outQty,
-                'bal_after' => $balAfter,
-                'ref_label' => $refLabel,
-                'ref_url' => $refUrl,
-                'performer' => $tx->performer->name ?? 'System',
-                'notes' => $tx->notes,
-                'packaging' => ($product->packagings ?? collect())->map(fn ($p) => [
-                    'id' => $p->id, 'name' => $p->name, 'base_unit_qty' => $p->base_unit_qty,
-                ]),
-                'base_unit' => $product->base_unit_name ?? 'Piece',
-            ];
+            return $this->buildTallyRow($tx, $balBefore, $balAfter, $inQty, $outQty);
         });
 
         // Summary
@@ -1433,6 +1442,174 @@ class StoreWorkbenchController extends Controller
     }
 
     /**
+     * SQL expression for a transaction's signed quantity (+ in, - out), identical to the rules of the tally feed:
+     * inbound types add, outbound types subtract, anything else is an adjustment whose sign is in the notes.
+     */
+    protected function tallySignedSql(string $t = 't'): string
+    {
+        return "CASE WHEN {$t}.type IN ('in','transfer_in','return','req_return') THEN ABS({$t}.qty) "
+            . "WHEN {$t}.type IN ('out','transfer_out','expired','damaged','po_return') THEN -ABS({$t}.qty) "
+            . "WHEN {$t}.notes LIKE 'Positive adjustment%' THEN ABS({$t}.qty) ELSE -ABS({$t}.qty) END";
+    }
+
+    /**
+     * Tally Card, paged. Same ledger and the same rows as tallyCardData, but one page at a time: running balances
+     * and totals come from SQL (window sum over the store's full history), so a whole-store card over 100k+ rows is
+     * cheap and the balance on a page is right even when earlier pages were never loaded.
+     *
+     * Filters: axis, store_id, product_id, date_from/date_to, type (in|out|adjustment|void|raw type), search
+     * (product, batch number, reference). Paging: page, per_page (max 100).
+     */
+    public function tallyCardPage(Request $request)
+    {
+        $request->validate([
+            'axis' => 'required|in:product,store',
+            'store_id' => 'required|exists:stores,id',
+            'product_id' => 'required_if:axis,product|nullable|exists:products,id',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date',
+            'page' => 'nullable|integer|min:1',
+            'per_page' => 'nullable|integer|min:1|max:100',
+            'type' => 'nullable|string|max:30',
+            'search' => 'nullable|string|max:100',
+        ]);
+
+        $accessible = Store::active()->forUser(auth()->user())->pluck('id');
+        if (!$accessible->contains((int) $request->store_id)) {
+            return response()->json(['success' => false, 'message' => 'Access denied to this store.'], 403);
+        }
+
+        $storeId = (int) $request->store_id;
+        $axis = $request->axis;
+        $perPage = (int) $request->input('per_page', 25);
+        $page = max(1, (int) $request->input('page', 1));
+        $signed = $this->tallySignedSql('t');
+
+        // The filtered ledger (dates, type, search). Balances never depend on these filters, only on full history.
+        $base = \DB::table('stock_batch_transactions as t')
+            ->join('stock_batches as b', 'b.id', '=', 't.stock_batch_id')
+            ->leftJoin('products as p', 'p.id', '=', 'b.product_id')
+            ->where('b.store_id', $storeId)
+            ->when($axis === 'product', fn ($q) => $q->where('b.product_id', (int) $request->product_id));
+        $filtered = clone $base;
+        if ($request->filled('date_from')) {
+            $filtered->whereDate('t.created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $filtered->whereDate('t.created_at', '<=', $request->date_to);
+        }
+        if ($type = $request->type) {
+            $groups = [
+                'in' => ['in', 'transfer_in', 'return', 'req_return'],
+                'out' => ['out', 'transfer_out', 'expired', 'damaged', 'po_return'],
+                'adjustment' => ['adjustment'],
+                'void' => ['void', 'void_adjustment'],
+            ];
+            $filtered->whereIn('t.type', $groups[$type] ?? [$type]);
+        }
+        if ($term = trim((string) $request->search)) {
+            $filtered->where(function ($q) use ($term) {
+                $q->where('p.product_name', 'like', "%{$term}%")
+                    ->orWhere('b.batch_number', 'like', "%{$term}%")
+                    ->orWhereRaw("CONCAT(t.reference_type, ' ', COALESCE(t.reference_id, '')) LIKE ?", ["%{$term}%"]);
+            });
+        }
+
+        // Totals: one plain aggregate (no window), cheap even for a 100k+ row store.
+        $totals = (clone $filtered)->selectRaw(
+            "COUNT(*) AS c, COALESCE(SUM(CASE WHEN ({$signed}) > 0 THEN ({$signed}) ELSE 0 END), 0) AS tin, "
+            . "COALESCE(SUM(CASE WHEN ({$signed}) < 0 THEN -({$signed}) ELSE 0 END), 0) AS tout, COUNT(DISTINCT b.product_id) AS products"
+        )->first();
+
+        $pageRows = (clone $filtered)->orderBy('t.created_at')->orderBy('t.id')
+            ->offset(($page - 1) * $perPage)->limit($perPage)
+            ->selectRaw("t.id, t.created_at, b.product_id, {$signed} AS signed_qty")->get();
+
+        // Balance before the page, per product on it: the sum of everything that happened earlier (full history).
+        $before = [];
+        foreach ($pageRows->groupBy('product_id') as $pid => $rowsOfProduct) {
+            $first = $rowsOfProduct->first();
+            $before[$pid] = (int) \DB::table('stock_batch_transactions as t')
+                ->join('stock_batches as b', 'b.id', '=', 't.stock_batch_id')
+                ->where('b.store_id', $storeId)->where('b.product_id', $pid)
+                ->where(fn ($q) => $q->where('t.created_at', '<', $first->created_at)->orWhere(fn ($w) => $w->where('t.created_at', $first->created_at)->where('t.id', '<', $first->id)))
+                ->selectRaw("COALESCE(SUM({$signed}), 0) AS bal")->value('bal');
+        }
+
+        $txs = \App\Models\StockBatchTransaction::with(['stockBatch.product.packagings', 'stockBatch.store', 'stockBatch.supplier', 'performer'])
+            ->whereIn('id', $pageRows->pluck('id'))->get()->keyBy('id');
+
+        $running = $before;
+        $rows = $pageRows->map(function ($r) use ($txs, &$running) {
+            $tx = $txs[$r->id] ?? null;
+            if (!$tx) {
+                return null;
+            }
+            $signedQty = (int) $r->signed_qty;
+            $beforeBal = (int) ($running[$r->product_id] ?? 0);
+            $running[$r->product_id] = $beforeBal + $signedQty;
+
+            return $this->buildTallyRow($tx, $beforeBal, $beforeBal + $signedQty, max($signedQty, 0), max(-$signedQty, 0));
+        })->filter()->values();
+
+        // By-product summary of the filtered set (top 100 by movement), with opening balances for those products only.
+        $byRaw = (clone $filtered)->selectRaw(
+            "b.product_id, MAX(p.product_name) AS product_name, "
+            . "SUM(CASE WHEN ({$signed}) > 0 THEN ({$signed}) ELSE 0 END) AS total_in, "
+            . "SUM(CASE WHEN ({$signed}) < 0 THEN -({$signed}) ELSE 0 END) AS total_out"
+        )->groupBy('b.product_id')->orderByRaw('(total_in + total_out) DESC')->limit(100)->get();
+
+        $openingBy = [];
+        if ($request->filled('date_from')) {
+            $ids = $byRaw->pluck('product_id')->all();
+            if ($axis === 'product') {
+                $ids = [(int) $request->product_id];
+            }
+            if ($ids) {
+                foreach ((clone $base)->whereIn('b.product_id', $ids)->where('t.created_at', '<', $request->date_from)->groupBy('b.product_id')->selectRaw("b.product_id, SUM({$signed}) AS bal")->get() as $o) {
+                    $openingBy[$o->product_id] = (int) $o->bal;
+                }
+            }
+        }
+        $byProduct = $byRaw->map(fn ($p) => [
+            'product_id' => (int) $p->product_id,
+            'product_name' => $p->product_name,
+            'total_in' => (int) $p->total_in,
+            'total_out' => (int) $p->total_out,
+            'closing_balance' => ($openingBy[$p->product_id] ?? 0) + (int) $p->total_in - (int) $p->total_out,
+        ])->values();
+
+        $opening = $axis === 'product' ? ($openingBy[(int) $request->product_id] ?? 0) : null;
+        $net = (int) $totals->tin - (int) $totals->tout;
+        $currentStock = null;
+        if ($axis === 'product') {
+            $currentStock = (int) (StoreStock::where('product_id', $request->product_id)->where('store_id', $storeId)->value('current_quantity') ?? 0);
+        }
+
+        return response()->json([
+            'success' => true,
+            'axis' => $axis,
+            'transactions' => $rows,
+            'pagination' => [
+                'page' => $page,
+                'per_page' => $perPage,
+                'total' => (int) $totals->c,
+                'last_page' => max(1, (int) ceil(((int) $totals->c) / $perPage)),
+            ],
+            'summary' => [
+                'total_in' => (int) $totals->tin,
+                'total_out' => (int) $totals->tout,
+                'net_movement' => $net,
+                'opening_balance' => $opening,
+                'closing_balance' => $axis === 'product' ? ($opening ?? 0) + $net : null,
+                'current_store_stock' => $currentStock,
+                'products_touched' => (int) $totals->products,
+                'by_product' => $byProduct,
+            ],
+        ]);
+    }
+
+    /**
      * Tally Card — Pending Actions (AJAX)
      *
      * Returns JSON for the pending requisitions and PO panels.
@@ -1451,44 +1628,47 @@ class StoreWorkbenchController extends Controller
             return response()->json(['success' => false, 'message' => 'Access denied to this store.'], 403);
         }
 
-        $pendingIncomingReqs = StoreRequisition::where('from_store_id', $storeId)
-            ->whereIn('status', ['pending', 'approved', 'partial'])
-            ->with(['items.product.packagings', 'toStore'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // One query builder per queue; the three response modes (counts, one paged queue, everything) share them.
+        $queues = [
+            'incoming' => fn () => StoreRequisition::where('from_store_id', $storeId)->whereIn('status', ['pending', 'approved', 'partial']),
+            'outgoing' => fn () => StoreRequisition::where('to_store_id', $storeId)->whereIn('status', ['pending', 'approved', 'partial']),
+            'pos' => fn () => PurchaseOrder::where('target_store_id', $storeId)->whereIn('status', ['approved', 'partial', 'partially_received', 'partial_received']),
+            'damages' => fn () => \App\Models\StoreDamage::where('store_id', $storeId)->where('status', 'pending'),
+            'req_returns' => fn () => \App\Models\StoreRequisitionReturn::where(function ($q) use ($storeId) {
+                $q->where('source_store_id', $storeId)->orWhere('destination_store_id', $storeId);
+            })->where('status', 'pending'),
+            'po_returns' => fn () => \App\Models\PurchaseOrderReturn::where('store_id', $storeId)->where('status', 'pending'),
+        ];
 
-        $pendingOutgoingReqs = StoreRequisition::where('to_store_id', $storeId)
-            ->whereIn('status', ['pending', 'approved', 'partial'])
-            ->with(['items.product.packagings', 'fromStore'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // Counts only: what a dashboard needs, with no rows loaded.
+        if (filter_var($request->query('counts_only'), FILTER_VALIDATE_BOOLEAN)) {
+            return response()->json(['success' => true, 'counts' => collect($queues)->map(fn ($q) => $q()->count())->all()]);
+        }
 
-        $pendingPOs = PurchaseOrder::where('target_store_id', $storeId)
-            ->whereIn('status', ['approved', 'partial', 'partially_received', 'partial_received'])
-            ->with(['supplier', 'items.product.packagings', 'targetStore'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // One queue, one page (the staff app): slim rows, newest first.
+        if ($queue = $request->query('queue')) {
+            abort_unless(isset($queues[$queue]), 422, 'Unknown queue.');
+            $with = [
+                'incoming' => ['toStore'], 'outgoing' => ['fromStore'], 'pos' => ['supplier'],
+                'damages' => ['product'], 'req_returns' => ['product', 'sourceStore', 'destinationStore'], 'po_returns' => ['purchaseOrder', 'product'],
+            ][$queue];
+            $q = $queues[$queue]()->with($with)->orderBy('created_at', 'desc');
+            if (in_array($queue, ['incoming', 'outgoing'], true)) {
+                $q->withCount('items');
+            }
+            $per = max(1, min(50, (int) $request->query('per_page', 20)));
+            $page = $q->paginate($per, ['*'], 'page', max(1, (int) $request->query('page', 1)));
 
-        $pendingDamages = \App\Models\StoreDamage::where('store_id', $storeId)
-            ->where('status', 'pending')
-            ->with(['product'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+            return response()->json(['success' => true, 'queue' => $queue, 'data' => $page->items(), 'total' => $page->total(), 'page' => $page->currentPage(), 'per_page' => $per]);
+        }
 
-        $pendingReqReturns = \App\Models\StoreRequisitionReturn::where(function ($q) use ($storeId) {
-            $q->where('source_store_id', $storeId)
-              ->orWhere('destination_store_id', $storeId);
-        })
-            ->where('status', 'pending')
-            ->with(['product', 'sourceStore', 'destinationStore'])
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        $pendingPoReturns = \App\Models\PurchaseOrderReturn::where('store_id', $storeId)
-            ->where('status', 'pending')
-            ->with(['purchaseOrder', 'product'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // Everything (the web tally card's pending panels).
+        $pendingIncomingReqs = $queues['incoming']()->with(['items.product.packagings', 'toStore'])->orderBy('created_at', 'desc')->get();
+        $pendingOutgoingReqs = $queues['outgoing']()->with(['items.product.packagings', 'fromStore'])->orderBy('created_at', 'desc')->get();
+        $pendingPOs = $queues['pos']()->with(['supplier', 'items.product.packagings', 'targetStore'])->orderBy('created_at', 'desc')->get();
+        $pendingDamages = $queues['damages']()->with(['product'])->orderBy('created_at', 'desc')->get();
+        $pendingReqReturns = $queues['req_returns']()->with(['product', 'sourceStore', 'destinationStore'])->orderBy('created_at', 'desc')->get();
+        $pendingPoReturns = $queues['po_returns']()->with(['purchaseOrder', 'product'])->orderBy('created_at', 'desc')->get();
 
         return response()->json([
             'success' => true,

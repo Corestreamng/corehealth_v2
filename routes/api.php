@@ -1335,3 +1335,267 @@ require __DIR__ . '/interop.php';
 |--------------------------------------------------------------------------
 */
 require __DIR__ . '/sdk.php';
+
+/*
+|--------------------------------------------------------------------------
+| Staff app: Staff Supplies (requisitions) and My Stock
+|--------------------------------------------------------------------------
+| The Staff Workspace section of the web sidebar, so any active staff member. The web controllers decide what each
+| person may see and do (candidate stores, store governance gates); this only exposes them.
+*/
+Route::prefix('mobile/stock')->middleware(['auth:sanctum', 'native.workspace:staff_workspace'])->group(function () {
+    $req = \App\Http\Controllers\StoreRequisitionController::class;
+    $ms = \App\Http\Controllers\API\MobileStoreController::class;
+    $su = \App\Http\Controllers\StockUtilizationController::class;
+
+    Route::get('context', [$ms, 'context']);
+    Route::get('search-products', [$ms, 'searchProducts']);
+
+    // Requisitions
+    Route::get('requisitions', [$req, 'index']);
+    Route::get('requisitions/form-data', [$ms, 'requisitionFormData']);
+    Route::post('requisitions', [$req, 'store']);
+    Route::get('requisitions/{requisition}', [$ms, 'requisition'])->whereNumber('requisition');
+    Route::put('requisitions/{requisition}', [$req, 'update'])->whereNumber('requisition');
+    Route::post('requisitions/{requisition}/approve', [$req, 'approve'])->whereNumber('requisition');
+    Route::post('requisitions/{requisition}/reject', [$req, 'reject'])->whereNumber('requisition');
+    Route::post('requisitions/{requisition}/cancel', [$req, 'cancel'])->whereNumber('requisition');
+    Route::post('requisitions/{requisition}/fulfill', [$req, 'fulfill'])->whereNumber('requisition');
+    Route::get('requisitions/{requisition}/available-batches', [$req, 'getAvailableBatches'])->whereNumber('requisition');
+    Route::patch('requisitions/{requisition}/items/{item}/approve', [$req, 'approveItem'])->whereNumber(['requisition', 'item']);
+    Route::patch('requisitions/{requisition}/items/{item}/reject', [$req, 'rejectItem'])->whereNumber(['requisition', 'item']);
+    Route::patch('requisitions/{requisition}/items/{item}/reverse', [$req, 'reverseItem'])->whereNumber(['requisition', 'item']);
+    Route::patch('requisitions/{requisition}/items/{item}/mark-returned', [$req, 'markItemReturned'])->whereNumber(['requisition', 'item']);
+
+    // My Stock and utilisation
+    Route::get('my-stock/context', [$ms, 'myStockContext']);
+    Route::get('my-stock/products', [$su, 'getProducts']);
+    Route::get('my-stock/batches', [$su, 'getBatches']);
+    Route::get('my-stock/patients', [$su, 'searchPatients']);
+    Route::get('my-stock/performers', [$su, 'searchPerformers']);
+    Route::get('my-stock/tariff-preview', [$su, 'getTariffPreview']);
+    Route::post('my-stock/utilize', [$su, 'utilize']);
+    Route::get('my-stock/history', [$su, 'history']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Staff app: Store workspace (Store Workbench, tally card, purchase orders, returns, damages, masters, governance)
+|--------------------------------------------------------------------------
+| Guard of the web sidebar's Store section. Actions go to the web controllers, so the observers post the same
+| journals; views are answered as JSON by MobileStoreController.
+*/
+Route::prefix('mobile/store')->middleware(['auth:sanctum', 'native.workspace:store'])->group(function () {
+    $ms = \App\Http\Controllers\API\MobileStoreController::class;
+    $wb = \App\Http\Controllers\StoreWorkbenchController::class;
+    $po = \App\Http\Controllers\PurchaseOrderController::class;
+    $dm = \App\Http\Controllers\StoreDamagesController::class;
+    $rr = \App\Http\Controllers\StoreRequisitionReturnController::class;
+    $pr = \App\Http\Controllers\PurchaseOrderReturnController::class;
+    $ir = \App\Http\Controllers\InventoryReportController::class;
+
+    Route::get('context', [$ms, 'context']);
+    Route::get('dashboard', [$ms, 'dashboard']);
+    Route::get('search-products', [$ms, 'searchProducts']);
+
+    // Stock and reports
+    Route::get('stock-overview', [$wb, 'stockOverview']);
+    Route::get('product/{product}/batches', [$ms, 'productBatches'])->whereNumber('product');
+    Route::get('reports/expiry', [$ms, 'expiry']);
+    Route::get('reports/stock-value', [$ms, 'stockValue']);
+    Route::get('reports/summary', [$ir, 'getSummary']);
+    Route::get('reports/drill-down', [$ir, 'getDrillDown']);
+
+    // Tally card
+    Route::get('tally-card/data', [$wb, 'tallyCardData']);
+    Route::get('tally-card/page', [$wb, 'tallyCardPage']);
+    Route::get('tally-card/pending-actions', [$wb, 'pendingActions']);
+    Route::get('batch-availability', [$wb, 'getBatchAvailability']);
+    Route::get('store-batches', [$wb, 'getStoreBatches']);
+    Route::post('journal-preview', [$wb, 'previewJournalImpact']);
+
+    // Batch and stock actions (the tally card toolbar)
+    Route::post('manual-batch', [$wb, 'createManualBatch']);
+    Route::post('batch/{batch}/adjust', [$wb, 'processAdjustment'])->whereNumber('batch');
+    Route::post('batch/{batch}/write-off-expired', [$wb, 'writeOffExpired'])->whereNumber('batch');
+    Route::post('batch/{batch}/write-off-damaged', [$wb, 'writeOffDamaged'])->whereNumber('batch');
+    Route::post('batch/{batch}/update', [$wb, 'updateBatch'])->whereNumber('batch');
+    Route::post('batch/{batch}/void', [$wb, 'voidBatch'])->whereNumber('batch');
+    Route::post('batch/{batch}/return', [$wb, 'returnBatch'])->whereNumber('batch');
+    Route::post('adjustment/{transaction}/void', [$wb, 'voidAdjustment'])->whereNumber('transaction');
+
+    // Purchase orders
+    Route::get('purchase-orders', [$po, 'index']);
+    Route::post('purchase-orders', [$po, 'store']);
+    Route::get('purchase-orders/search-products', [$po, 'searchProducts']);
+    Route::get('purchase-orders/{purchaseOrder}', [$ms, 'purchaseOrder'])->whereNumber('purchaseOrder');
+    Route::put('purchase-orders/{purchaseOrder}', [$po, 'update'])->whereNumber('purchaseOrder');
+    Route::post('purchase-orders/{purchaseOrder}/submit', [$po, 'submit'])->whereNumber('purchaseOrder');
+    Route::post('purchase-orders/{purchaseOrder}/approve', [$po, 'approve'])->whereNumber('purchaseOrder');
+    Route::post('purchase-orders/{purchaseOrder}/cancel', [$po, 'cancel'])->whereNumber('purchaseOrder');
+    Route::post('purchase-orders/{purchaseOrder}/receive', [$po, 'receive'])->whereNumber('purchaseOrder');
+    Route::post('purchase-orders/{purchaseOrder}/payment', [$po, 'recordPayment'])->whereNumber('purchaseOrder');
+
+    // Store damages
+    Route::get('damages', [$dm, 'datatables']);
+    Route::get('damages/search-products', [$dm, 'searchProducts']);
+    Route::get('damages/batches', [$dm, 'getBatches']);
+    Route::get('damages/recent-batches', [$dm, 'getRecentBatches']);
+    Route::post('damages', [$dm, 'store']);
+    Route::get('damages/{id}', [$dm, 'show'])->whereNumber('id');
+    Route::post('damages/{id}/approve', [$dm, 'approve'])->whereNumber('id');
+    Route::post('damages/{id}/reject', [$dm, 'reject'])->whereNumber('id');
+
+    // Requisition returns
+    Route::get('requisition-returns', [$rr, 'datatables']);
+    Route::get('requisition-returns/search-requisitions', [$rr, 'searchRequisitions']);
+    Route::get('requisition-returns/requisition-items', [$rr, 'getRequisitionItems']);
+    Route::get('requisition-returns/batches-for-product', [$rr, 'getBatchesForProduct']);
+    Route::post('requisition-returns', [$rr, 'store']);
+    Route::get('requisition-returns/{id}', [$rr, 'show'])->whereNumber('id');
+    Route::post('requisition-returns/{id}/approve', [$rr, 'approve'])->whereNumber('id');
+    Route::post('requisition-returns/{id}/reject', [$rr, 'reject'])->whereNumber('id');
+
+    // PO returns
+    Route::get('po-returns', [$pr, 'datatables']);
+    Route::get('po-returns/search-pos', [$pr, 'searchPOs']);
+    Route::get('po-returns/po-items', [$pr, 'getPOItems']);
+    Route::get('po-returns/batches-for-item', [$pr, 'getBatchesForItem']);
+    Route::post('po-returns', [$pr, 'store']);
+    Route::get('po-returns/{id}', [$pr, 'show'])->whereNumber('id');
+    Route::post('po-returns/{id}/approve', [$pr, 'approve'])->whereNumber('id');
+    Route::post('po-returns/{id}/reject', [$pr, 'reject'])->whereNumber('id');
+
+    Route::get('banks', [\App\Http\Controllers\BankController::class, 'getActiveBanks']);
+
+    // Suppliers lookup used by the forms
+    Route::get('suppliers/search', [\App\Http\Controllers\SupplierController::class, 'search']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Staff app: Accounting (journals, chart of accounts, periods, reports, credit notes, expenses and payables,
+| patient deposits, petty cash, transfers, banks, KPIs)
+|--------------------------------------------------------------------------
+| Guard of the web sidebar's Accounting section. The web controllers keep their own permission middleware
+| (accounting.journal.*, reports.*, expenses.*), so a route here is exactly as strict as its web page. Views the web
+| renders as Blade are answered as JSON by MobileAccountingController from the same services.
+*/
+Route::prefix('mobile/accounting')->middleware(['auth:sanctum', 'native.workspace:accounting'])->group(function () {
+    $ma = \App\Http\Controllers\API\MobileAccountingController::class;
+    $je = \App\Http\Controllers\Accounting\JournalEntryController::class;
+    $coa = \App\Http\Controllers\Accounting\ChartOfAccountsController::class;
+    $cn = \App\Http\Controllers\Accounting\CreditNoteController::class;
+    $ac = \App\Http\Controllers\Accounting\AccountingController::class;
+    $ex = \App\Http\Controllers\ExpenseController::class;
+    $po = \App\Http\Controllers\PurchaseOrderController::class;
+
+    Route::get('dashboard', [$ma, 'dashboard']);
+    Route::get('accounts', [$ma, 'accounts']);
+    Route::get('account-groups', [$ma, 'accountGroups']);
+    Route::get('petty-cash/custodians', [$ma, 'staffSearch']);
+    Route::get('banks', [\App\Http\Controllers\BankController::class, 'getActiveBanks']);
+
+    // Reports
+    Route::get('reports/{name}', [$ma, 'report'])->where('name', '[a-z-]+');
+
+    // Fiscal periods
+    Route::get('periods', [$ma, 'periods']);
+    Route::post('fiscal-years', [$ac, 'createFiscalYear']);
+    Route::post('periods/{periodId}/close', [$ac, 'closePeriod'])->whereNumber('periodId');
+    Route::post('fiscal-years/{yearId}/close', [$ac, 'closeFiscalYear'])->whereNumber('yearId');
+
+    // Journal entries
+    Route::get('journal-entries', [$je, 'datatable']);
+    Route::post('journal-entries', [$je, 'store']);
+    Route::post('journal-entries/bulk-approve', [$je, 'bulkApprove']);
+    Route::post('journal-entries/bulk-post', [$je, 'bulkPost']);
+    Route::get('journal-entries/{id}', [$ma, 'journalEntry'])->whereNumber('id');
+    Route::put('journal-entries/{id}', [$je, 'update'])->whereNumber('id');
+    Route::delete('journal-entries/{id}', [$je, 'destroy'])->whereNumber('id');
+    Route::post('journal-entries/{id}/submit', [$je, 'submit'])->whereNumber('id');
+    Route::post('journal-entries/{id}/approve', [$je, 'approve'])->whereNumber('id');
+    Route::post('journal-entries/{id}/reject', [$je, 'reject'])->whereNumber('id');
+    Route::post('journal-entries/{id}/post', [$je, 'post'])->whereNumber('id');
+    Route::post('journal-entries/{id}/reverse', [$je, 'reverse'])->whereNumber('id');
+    Route::post('journal-entries/{id}/request-edit', [$je, 'requestEdit'])->whereNumber('id');
+    Route::post('journal-entries/edit-requests/{editId}/approve', [$je, 'approveEditRequest'])->whereNumber('editId');
+    Route::post('journal-entries/edit-requests/{editId}/reject', [$je, 'rejectEditRequest'])->whereNumber('editId');
+
+    // Chart of accounts
+    Route::get('chart-of-accounts', [$coa, 'datatable']);
+    Route::post('chart-of-accounts', [$coa, 'store']);
+    Route::get('chart-of-accounts/{id}/sub-accounts', [$coa, 'subAccounts'])->whereNumber('id');
+    Route::post('chart-of-accounts/{id}/sub-accounts', [$coa, 'storeSubAccount'])->whereNumber('id');
+    Route::put('chart-of-accounts/{id}', [$coa, 'update'])->whereNumber('id');
+    Route::post('chart-of-accounts/{id}/activate', [$coa, 'activate'])->whereNumber('id');
+    Route::post('chart-of-accounts/{id}/deactivate', [$coa, 'deactivate'])->whereNumber('id');
+
+    // Credit notes
+    Route::get('credit-notes', [$cn, 'datatable']);
+    Route::post('credit-notes', [$cn, 'store']);
+    Route::post('credit-notes/bulk-approve', [$cn, 'bulkApprove']);
+    Route::get('credit-notes/patient/{patientId}/payments', [$cn, 'getPatientPayments'])->whereNumber('patientId');
+    Route::put('credit-notes/{id}', [$cn, 'update'])->whereNumber('id');
+    Route::post('credit-notes/{id}/submit', [$cn, 'submit'])->whereNumber('id');
+    Route::post('credit-notes/{id}/approve', [$cn, 'approve'])->whereNumber('id');
+    Route::post('credit-notes/{id}/void', [$cn, 'void'])->whereNumber('id');
+    Route::post('credit-notes/{id}/process', [$cn, 'process'])->whereNumber('id');
+
+    // Expenses and payables (the same controllers as the Store section's)
+    Route::get('expenses', [$ex, 'index']);
+    Route::post('expenses', [$ex, 'store']);
+    Route::get('expenses/{expense}', [$ex, 'show'])->whereNumber('expense');
+    Route::put('expenses/{expense}', [$ex, 'update'])->whereNumber('expense');
+    Route::post('expenses/{expense}/approve', [$ex, 'approve'])->whereNumber('expense');
+    Route::post('expenses/{expense}/reject', [$ex, 'reject'])->whereNumber('expense');
+    Route::post('expenses/{expense}/void', [$ex, 'void'])->whereNumber('expense');
+    Route::get('accounts-payable', [$po, 'accountsPayable']);
+    Route::get('purchase-orders/{purchaseOrder}', [\App\Http\Controllers\API\MobileStoreController::class, 'purchaseOrder'])->whereNumber('purchaseOrder');
+    Route::post('purchase-orders/{purchaseOrder}/payment', [$po, 'recordPayment'])->whereNumber('purchaseOrder');
+    Route::get('suppliers/search', [\App\Http\Controllers\SupplierController::class, 'search']);
+
+    // Patient deposits (wallet top-ups, applying and refunding them)
+    $pd = \App\Http\Controllers\Accounting\PatientDepositController::class;
+    Route::get('patient-deposits', [$pd, 'datatable']);
+    Route::post('patient-deposits', [$pd, 'store']);
+    Route::get('patient-deposits/search-patients', [$pd, 'searchPatients']);
+    Route::get('patient-deposits/patient/{patient}/summary', [$pd, 'getPatientSummary'])->whereNumber('patient');
+    Route::get('patient-deposits/{patientDeposit}', [$pd, 'show'])->whereNumber('patientDeposit');
+    Route::post('patient-deposits/{patientDeposit}/apply', [$pd, 'apply'])->whereNumber('patientDeposit');
+    Route::post('patient-deposits/{patientDeposit}/refund', [$pd, 'refund'])->whereNumber('patientDeposit');
+
+    // Petty cash
+    $pc = \App\Http\Controllers\Accounting\PettyCashController::class;
+    Route::get('petty-cash/funds', [$pc, 'fundsDatatable']);
+    Route::post('petty-cash/funds', [$pc, 'fundsStore']);
+    Route::put('petty-cash/funds/{fund}', [$pc, 'fundsUpdate'])->whereNumber('fund');
+    Route::get('petty-cash/transactions', [$pc, 'datatable']);
+    Route::get('petty-cash/funds/{fund}/transactions', [$pc, 'transactionsDatatable'])->whereNumber('fund');
+    Route::post('petty-cash/funds/{fund}/disbursement', [$pc, 'disbursementStore'])->whereNumber('fund');
+    Route::post('petty-cash/funds/{fund}/replenishment', [$pc, 'replenishmentStore'])->whereNumber('fund');
+    Route::post('petty-cash/transactions/{transaction}/approve', [$pc, 'approve'])->whereNumber('transaction');
+    Route::post('petty-cash/transactions/{transaction}/reject', [$pc, 'reject'])->whereNumber('transaction');
+    Route::post('petty-cash/transactions/{transaction}/disburse', [$pc, 'disburse'])->whereNumber('transaction');
+    Route::post('petty-cash/funds/{fund}/reconcile', [$pc, 'storeReconciliation'])->whereNumber('fund');
+    Route::get('petty-cash/reconciliations', [$pc, 'reconciliationsDatatable']);
+    Route::post('petty-cash/reconciliations/{reconciliation}/approve', [$pc, 'approveReconciliation'])->whereNumber('reconciliation');
+    Route::post('petty-cash/reconciliations/{reconciliation}/reject', [$pc, 'rejectReconciliation'])->whereNumber('reconciliation');
+
+    // Inter-account transfers
+    $tr = \App\Http\Controllers\Accounting\TransferController::class;
+    Route::get('transfers', [$tr, 'datatable']);
+    Route::post('transfers', [$tr, 'store']);
+    Route::post('transfers/{transfer}/approve', [$tr, 'approve'])->whereNumber('transfer');
+    Route::post('transfers/{transfer}/reject', [$tr, 'reject'])->whereNumber('transfer');
+    Route::post('transfers/{transfer}/mark-failed', [$tr, 'markFailed'])->whereNumber('transfer');
+    Route::post('transfers/{transfer}/confirm-clearance', [$tr, 'confirmClearance'])->whereNumber('transfer');
+    Route::post('transfers/{transfer}/cancel', [$tr, 'cancel'])->whereNumber('transfer');
+
+    // Purchase order actions an accountant may take (the web allows ACCOUNTS on every PO route)
+    Route::get('purchase-orders', [$po, 'index']);
+    Route::post('purchase-orders/{purchaseOrder}/submit', [$po, 'submit'])->whereNumber('purchaseOrder');
+    Route::post('purchase-orders/{purchaseOrder}/approve', [$po, 'approve'])->whereNumber('purchaseOrder');
+    Route::post('purchase-orders/{purchaseOrder}/cancel', [$po, 'cancel'])->whereNumber('purchaseOrder');
+    Route::post('purchase-orders/{purchaseOrder}/receive', [$po, 'receive'])->whereNumber('purchaseOrder');
+});

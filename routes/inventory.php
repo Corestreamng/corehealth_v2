@@ -31,7 +31,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(function () {
 
     // ===== PURCHASE ORDERS =====
-    Route::prefix('purchase-orders')->name('purchase-orders.')->group(function () {
+    Route::prefix('purchase-orders')->name('purchase-orders.')->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE|ACCOUNTS')->group(function () {
         Route::get('/', [PurchaseOrderController::class, 'index'])->name('index');
         Route::get('/create', [PurchaseOrderController::class, 'create'])->name('create');
         Route::post('/', [PurchaseOrderController::class, 'store'])->name('store');
@@ -99,12 +99,12 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
     });
 
     // ===== STORE WORKBENCH =====
-    Route::prefix('inventory-reports')->name('inventory-reports.')->group(function () {
+    Route::prefix('inventory-reports')->name('inventory-reports.')->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE|ACCOUNTS')->group(function () {
         Route::get('/summary', [InventoryReportController::class, 'getSummary'])->name('summary');
         Route::get('/summary/print', [InventoryReportController::class, 'printSummary'])->name('summary.print');
         Route::get('/drill-down', [InventoryReportController::class, 'getDrillDown'])->name('drill-down');
     });
-    Route::prefix('store-workbench')->name('store-workbench.')->group(function () {
+    Route::prefix('store-workbench')->name('store-workbench.')->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE')->group(function () {
         Route::get('/', [StoreWorkbenchController::class, 'index'])->name('index');
         Route::get('/stock-overview', [StoreWorkbenchController::class, 'stockOverview'])->name('stock-overview');
         Route::get('/product/{product}/batches', [StoreWorkbenchController::class, 'productBatches'])->name('product-batches');
@@ -130,8 +130,8 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
         // Tally Card
         Route::get('/tally-card', [StoreWorkbenchController::class, 'tallyCard'])->name('tally-card');
         Route::get('/tally-card/data', [StoreWorkbenchController::class, 'tallyCardData'])->name('tally-card.data');
+        Route::get('/tally-card/page', [StoreWorkbenchController::class, 'tallyCardPage'])->name('tally-card.page');
         Route::get('/tally-card/pending-actions', [StoreWorkbenchController::class, 'pendingActions'])->name('tally-card.pending-actions');
-        Route::post('/tally-card/verify-action', [StoreWorkbenchController::class, 'verifyAction'])->name('tally-card.verify-action');
 
         // Reports
         Route::get('/reports/expiry', [StoreWorkbenchController::class, 'expiryReport'])->name('expiry-report');
@@ -145,7 +145,7 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
     });
 
     // ===== STORE GOVERNANCE CONFIG (Plan §9.1, §9.3) =====
-    Route::prefix('config/store-governance')->name('config.store-governance.')->group(function () {
+    Route::prefix('config/store-governance')->name('config.store-governance.')->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE')->group(function () {
         // Store role catalog + ownership mapping (Plan §9.1 Section A/C)
         Route::get('/', [StoreGovernanceController::class, 'index'])->name('index');
         Route::post('/stores/{store}', [StoreGovernanceController::class, 'updateStore'])->name('stores.update');
@@ -169,7 +169,7 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
     });
 
     // ===== STORE DAMAGES =====
-    Route::prefix('store-damages')->name('store-damages.')->group(function () {
+    Route::prefix('store-damages')->name('store-damages.')->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE')->group(function () {
         Route::get('/', [StoreDamagesController::class, 'index'])->name('index');
         Route::get('/datatables/list', [StoreDamagesController::class, 'datatables'])->name('datatables');
         Route::get('/ajax/search-products', [StoreDamagesController::class, 'searchProducts'])->name('search-products');
@@ -186,7 +186,7 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
     });
 
     // ===== REQUISITION RETURNS =====
-    Route::prefix('requisition-returns')->name('requisition-returns.')->group(function () {
+    Route::prefix('requisition-returns')->name('requisition-returns.')->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE')->group(function () {
         Route::get('/', [StoreRequisitionReturnController::class, 'index'])->name('index');
         Route::get('/datatables/list', [StoreRequisitionReturnController::class, 'datatables'])->name('datatables');
         Route::get('/ajax/requisition-items', [StoreRequisitionReturnController::class, 'getRequisitionItems'])->name('req-items');
@@ -204,7 +204,7 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
     });
 
     // ===== PURCHASE ORDER RETURNS =====
-    Route::prefix('purchase-order-returns')->name('po-returns.')->group(function () {
+    Route::prefix('purchase-order-returns')->name('po-returns.')->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE|ACCOUNTS')->group(function () {
         Route::get('/', [PurchaseOrderReturnController::class, 'index'])->name('index');
         Route::get('/datatables/list', [PurchaseOrderReturnController::class, 'datatables'])->name('datatables');
         Route::get('/ajax/search-pos', [PurchaseOrderReturnController::class, 'searchPOs'])->name('search-pos');
@@ -221,7 +221,7 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
     });
 
     // Alias group for po-returns URL prefix
-    Route::prefix('po-returns')->group(function () {
+    Route::prefix('po-returns')->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE|ACCOUNTS')->group(function () {
         Route::get('/ajax/search-pos', [PurchaseOrderReturnController::class, 'searchPOs']);
         Route::get('/search-pos', [PurchaseOrderReturnController::class, 'searchPOs']);
         Route::get('/ajax/po-items', [PurchaseOrderReturnController::class, 'getPOItems']);
@@ -273,17 +273,17 @@ Route::middleware(['auth'])->prefix('pharmacy-workbench')->group(function () {
 // ===== API ROUTES FOR STANDALONE PO/REQUISITION ACCESS =====
 // These provide top-level access for common operations
 Route::middleware(['auth'])->group(function () {
-    Route::get('/purchase-orders', [PurchaseOrderController::class, 'index'])->name('purchase-orders.index');
-    Route::get('/purchase-orders/create', [PurchaseOrderController::class, 'create'])->name('purchase-orders.create');
-    Route::post('/purchase-orders', [PurchaseOrderController::class, 'store'])->name('purchase-orders.store');
-    Route::get('/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'show'])->name('purchase-orders.show');
-    Route::get('/purchase-orders/{purchaseOrder}/edit', [PurchaseOrderController::class, 'edit'])->name('purchase-orders.edit');
-    Route::put('/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'update'])->name('purchase-orders.update');
-    Route::post('/purchase-orders/{purchaseOrder}/submit', [PurchaseOrderController::class, 'submit'])->name('purchase-orders.submit');
-    Route::post('/purchase-orders/{purchaseOrder}/approve', [PurchaseOrderController::class, 'approve'])->name('purchase-orders.approve');
-    Route::post('/purchase-orders/{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel'])->name('purchase-orders.cancel');
-    Route::get('/purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'showReceiveForm'])->name('purchase-orders.receive');
-    Route::post('/purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'receive'])->name('purchase-orders.receive.process');
+    Route::get('/purchase-orders', [PurchaseOrderController::class, 'index'])->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE|ACCOUNTS')->name('purchase-orders.index');
+    Route::get('/purchase-orders/create', [PurchaseOrderController::class, 'create'])->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE|ACCOUNTS')->name('purchase-orders.create');
+    Route::post('/purchase-orders', [PurchaseOrderController::class, 'store'])->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE|ACCOUNTS')->name('purchase-orders.store');
+    Route::get('/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'show'])->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE|ACCOUNTS')->name('purchase-orders.show');
+    Route::get('/purchase-orders/{purchaseOrder}/edit', [PurchaseOrderController::class, 'edit'])->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE|ACCOUNTS')->name('purchase-orders.edit');
+    Route::put('/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'update'])->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE|ACCOUNTS')->name('purchase-orders.update');
+    Route::post('/purchase-orders/{purchaseOrder}/submit', [PurchaseOrderController::class, 'submit'])->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE|ACCOUNTS')->name('purchase-orders.submit');
+    Route::post('/purchase-orders/{purchaseOrder}/approve', [PurchaseOrderController::class, 'approve'])->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE|ACCOUNTS')->name('purchase-orders.approve');
+    Route::post('/purchase-orders/{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel'])->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE|ACCOUNTS')->name('purchase-orders.cancel');
+    Route::get('/purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'showReceiveForm'])->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE|ACCOUNTS')->name('purchase-orders.receive');
+    Route::post('/purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'receive'])->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE|ACCOUNTS')->name('purchase-orders.receive.process');
 
     Route::get('/requisitions', [StoreRequisitionController::class, 'index'])->name('requisitions.index');
     Route::get('/requisitions/create', [StoreRequisitionController::class, 'create'])->name('requisitions.create');
@@ -296,5 +296,5 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/requisitions/{requisition}/edit', [StoreRequisitionController::class, 'edit'])->name('requisitions.edit');
     Route::put('/requisitions/{requisition}', [StoreRequisitionController::class, 'update'])->name('requisitions.update');
 
-    Route::get('/store-workbench', [StoreWorkbenchController::class, 'index'])->name('store-workbench.index');
+    Route::get('/store-workbench', [StoreWorkbenchController::class, 'index'])->middleware('role:SUPERADMIN|ADMIN|super-admin|STORE')->name('store-workbench.index');
 });

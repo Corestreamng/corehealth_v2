@@ -602,7 +602,7 @@ class JournalEntryController extends Controller
         ]);
 
         try {
-            $reversalEntry = $this->accountingService->reverseEntry($entry, $request->reversal_reason);
+            $reversalEntry = $this->accountingService->reverseEntry($entry, (int) Auth::id(), $request->reversal_reason);
             if ($request->ajax()) {
                 return response()->json([
                     'message' => 'Entry reversed successfully.',

@@ -80,7 +80,7 @@ class AccountingController extends Controller
     /**
      * Get dashboard statistics.
      */
-    protected function getDashboardStats(?AccountingPeriod $period): array
+    public function getDashboardStats(?AccountingPeriod $period): array
     {
         $stats = [
             'total_entries' => 0,

@@ -35,6 +35,7 @@ export default defineConfig({
             { text: 'Zero-Scroll Cockpit Standards', link: '/user-guides/cockpit-experience' },
             { text: 'CoreHealth Staff App (Mobile, Tablet, Desktop)', link: '/user-guides/native-client' },
             { text: 'Staff App: Laboratory and Imaging', link: '/user-guides/native-client-lab-imaging' },
+            { text: 'Staff App: Store, Requisitions and Accounting', link: '/user-guides/native-client-store-accounts' },
           ]
         },
         {
