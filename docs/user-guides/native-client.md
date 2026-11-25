@@ -360,3 +360,10 @@ Patients don't sign in to the staff app. They use the **CoreHealth Patient App**
 
 ## Developer Reference
 👉 **[Native Staff Client developer reference](/developer/native-client)**
+
+
+## Human Resources and My Workspace
+
+**HR** (Human Resources section): the workbench shows today's figures. Leave Requests, Leave Balances and Leave Types share one bar; Disciplinary, Suspensions and Terminations another; Payroll, Salary Profiles and Pay Heads another; Staff Registry, Promotions, Qualifications, Trainings, Medical Exams and Follow-ups another; Units, Cadres and Grade Levels the last. Tap a row to open it, use the buttons for the next step (approve, reject, lift, generate payslips, mark paid). Who can do what follows your permissions, exactly as on the web.
+
+**My workspace** (Staff Workspace): Overview, My Leave (balances, request leave, cancel), Payslips (download), Queries (read and reply) and Profile (edit phone, address and emergency contact; change password). Your data only.

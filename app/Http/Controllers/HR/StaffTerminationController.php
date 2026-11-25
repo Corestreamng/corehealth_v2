@@ -132,6 +132,10 @@ class StaffTerminationController extends Controller
         $types = StaffTermination::getTypes();
         $reasonCategories = StaffTermination::getReasonCategories();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('terminations', 'staffList', 'types', 'reasonCategories'));
+        }
+
         return view('admin.hr.terminations.index', compact('terminations', 'staffList', 'types', 'reasonCategories'));
     }
 
@@ -141,6 +145,10 @@ class StaffTerminationController extends Controller
         $selectedStaff = $request->staff_id ? Staff::with('user')->find($request->staff_id) : null;
         $types = StaffTermination::getTypes();
         $reasonCategories = StaffTermination::getReasonCategories();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('staffList', 'selectedStaff', 'types', 'reasonCategories'));
+        }
 
         return view('admin.hr.terminations.create', compact('staffList', 'selectedStaff', 'types', 'reasonCategories'));
     }
@@ -262,6 +270,10 @@ class StaffTerminationController extends Controller
             ]);
         }
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('termination'));
+        }
+
         return view('admin.hr.terminations.show', compact('termination'));
     }
 
@@ -269,6 +281,10 @@ class StaffTerminationController extends Controller
     {
         $types = StaffTermination::getTypes();
         $reasonCategories = StaffTermination::getReasonCategories();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('termination', 'types', 'reasonCategories'));
+        }
 
         return view('admin.hr.terminations.edit', compact('termination', 'types', 'reasonCategories'));
     }

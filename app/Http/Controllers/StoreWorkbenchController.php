@@ -209,8 +209,8 @@ class StoreWorkbenchController extends Controller
                 $query->where('product_id', $request->product_id);
             }
 
-            if ($request->filled('search')) {
-                $search = $request->search;
+            if ($request->searchText() !== '') {
+                $search = $request->searchText();
                 $query->whereHas('product', function ($q) use ($search) {
                     $q->where('product_name', 'like', "%{$search}%")
                         ->orWhere('product_code', 'like', "%{$search}%");
@@ -263,8 +263,8 @@ class StoreWorkbenchController extends Controller
         }
 
         // Search filter
-        if ($request->filled('search')) {
-            $search = $request->search;
+        if ($request->searchText() !== '') {
+            $search = $request->searchText();
             $productsQuery->where(function ($q) use ($search) {
                 $q->where('product_name', 'like', "%{$search}%")
                     ->orWhere('product_code', 'like', "%{$search}%");
@@ -1507,7 +1507,7 @@ class StoreWorkbenchController extends Controller
             ];
             $filtered->whereIn('t.type', $groups[$type] ?? [$type]);
         }
-        if ($term = trim((string) $request->search)) {
+        if ($term = $request->searchText()) {
             $filtered->where(function ($q) use ($term) {
                 $q->where('p.product_name', 'like', "%{$term}%")
                     ->orWhere('b.batch_number', 'like', "%{$term}%")

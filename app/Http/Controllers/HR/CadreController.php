@@ -13,6 +13,10 @@ class CadreController extends Controller
     {
         $cadres = Cadre::withCount('staff')->ordered()->get();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('cadres'));
+        }
+
         return view('admin.hr.cadres.index', compact('cadres'));
     }
 

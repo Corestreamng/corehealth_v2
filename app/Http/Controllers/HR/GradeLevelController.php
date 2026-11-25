@@ -13,6 +13,10 @@ class GradeLevelController extends Controller
     {
         $gradeLevels = GradeLevel::withCount('staff')->ordered()->get();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('gradeLevels'));
+        }
+
         return view('admin.hr.grade-levels.index', compact('gradeLevels'));
     }
 

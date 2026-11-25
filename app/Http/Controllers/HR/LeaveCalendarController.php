@@ -37,6 +37,15 @@ class LeaveCalendarController extends Controller
         // Quick stats
         $stats = $this->getCalendarStats();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact(
+                'leaveTypes',
+                'departments',
+                'userCategories',
+                'stats'
+            ));
+        }
+
         return view('admin.hr.leave-calendar.index', compact(
             'leaveTypes',
             'departments',

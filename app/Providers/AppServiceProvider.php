@@ -117,6 +117,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // The search term of a list request, whether sent as plain `search=term` or the DataTables way `search[value]=term`
+        \Illuminate\Http\Request::macro('searchText', function (): string {
+            $search = $this->input('search');
+            if (is_array($search)) {
+                $search = $search['value'] ?? '';
+            }
+
+            return trim((string) $search);
+        });
+
         // Configure polymorphic morph map for expenses and other models
         Relation::morphMap([
             'payroll_batch' => \App\Models\HR\PayrollBatch::class,

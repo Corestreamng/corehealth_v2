@@ -434,8 +434,8 @@ class ChartOfAccountsController extends Controller
     {
         $query = Account::where('is_active', true);
 
-        if ($request->filled('search')) {
-            $search = $request->search;
+        if ($request->searchText() !== '') {
+            $search = $request->searchText();
             $query->where(function ($q) use ($search) {
                 $q->where('code', 'like', "%{$search}%")
                     ->orWhere('name', 'like', "%{$search}%");

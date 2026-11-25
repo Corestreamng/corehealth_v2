@@ -140,6 +140,22 @@ class HrWorkbenchController extends Controller
             'open_follow_ups' => \App\Models\HR\StaffFollowUp::whereIn('status', ['open', 'in_progress'])->count(),
         ];
 
+        if (request()->expectsJson()) {
+            return response()->json(compact(
+                'stats',
+                'staffStats',
+                'pendingLeaveRequests',
+                'openQueries',
+                'overdueQueries',
+                'activeSuspensions',
+                'pendingPayroll',
+                'recentTerminations',
+                'payrollStats',
+                'disciplinaryStats',
+                'leaveRequestsThisMonth'
+            ));
+        }
+
         return view('admin.hr.workbench.index', compact(
             'stats',
             'staffStats',

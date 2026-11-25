@@ -103,6 +103,20 @@ class EssController extends Controller
                 ->count();
         }
 
+        if (request()->expectsJson()) {
+            return response()->json(compact(
+                'staff',
+                'leaveTypes',
+                'balances',
+                'recentLeaveRequests',
+                'pendingLeaveCount',
+                'pendingQueries',
+                'recentPayslips',
+                'lastPayslip',
+                'pendingTeamApprovalsCount'
+            ));
+        }
+
         return view('admin.hr.ess.index', compact(
             'staff',
             'leaveTypes',
@@ -148,6 +162,10 @@ class EssController extends Controller
             ->orderBy('employee_id')
             ->get();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('staff', 'leaveRequests', 'leaveTypes', 'balances', 'reliefStaff'));
+        }
+
         return view('admin.hr.ess.my-leave', compact('staff', 'leaveRequests', 'leaveTypes', 'balances', 'reliefStaff'));
     }
 
@@ -167,6 +185,10 @@ class EssController extends Controller
         $balances = [];
         foreach ($leaveTypes as $leaveType) {
             $balances[$leaveType->id] = $this->leaveService->getOrCreateBalance($staff->id, $leaveType->id);
+        }
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('staff', 'leaveTypes', 'reliefStaff', 'balances'));
         }
 
         return view('admin.hr.ess.request-leave', compact('staff', 'leaveTypes', 'reliefStaff', 'balances'));
@@ -348,6 +370,10 @@ class EssController extends Controller
         $ytdGross = $ytdPayslips->sum('gross_salary');
         $ytdDeductions = $ytdPayslips->sum('total_deductions');
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('staff', 'payslips', 'years', 'latestPayslip', 'ytdGross', 'ytdDeductions'));
+        }
+
         return view('admin.hr.ess.my-payslips', compact('staff', 'payslips', 'years', 'latestPayslip', 'ytdGross', 'ytdDeductions'));
     }
 
@@ -434,6 +460,20 @@ class EssController extends Controller
 
         // Get active suspension (if any)
         $activeSuspension = $suspensions->where('status', StaffSuspension::STATUS_ACTIVE)->first();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact(
+                'staff',
+                'queries',
+                'activeQuery',
+                'totalQueries',
+                'openQueries',
+                'warningsCount',
+                'suspensionsCount',
+                'suspensions',
+                'activeSuspension'
+            ));
+        }
 
         return view('admin.hr.ess.my-disciplinary', compact(
             'staff',
@@ -592,6 +632,10 @@ class EssController extends Controller
             ]);
         }
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('staff', 'disciplinaryQuery'));
+        }
+
         return view('admin.hr.ess.disciplinary-show', compact('staff', 'disciplinaryQuery'));
     }
 
@@ -707,6 +751,10 @@ class EssController extends Controller
                 });
             })
             ->get();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('staff', 'user', 'leaveBalanceTotal', 'totalPayslips', 'specializations', 'clinics', 'supervisors'));
+        }
 
         return view('admin.hr.ess.my-profile', compact('staff', 'user', 'leaveBalanceTotal', 'totalPayslips', 'specializations', 'clinics', 'supervisors'));
     }
@@ -888,6 +936,18 @@ class EssController extends Controller
 
         $leaveTypes = LeaveType::active()->orderBy('name')->get();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact(
+                'staff',
+                'pendingRequests',
+                'pendingCount',
+                'supervisorApprovedCount',
+                'hrApprovedCount',
+                'rejectedCount',
+                'leaveTypes'
+            ));
+        }
+
         return view('admin.hr.ess.team-approvals', compact(
             'staff',
             'pendingRequests',
@@ -926,6 +986,10 @@ class EssController extends Controller
             $leaveRequest->staff_id,
             $leaveRequest->leave_type_id
         );
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('staff', 'leaveRequest', 'balance'));
+        }
 
         return view('admin.hr.ess.team-approval-show', compact('staff', 'leaveRequest', 'balance'));
     }
@@ -1031,6 +1095,10 @@ class EssController extends Controller
         // Add departments and user categories for filters in the grid calendar
         $departments = \App\Models\Department::all();
         $userCategories = \App\Models\UserCategory::all();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('staff', 'leaveTypes', 'balances', 'stats', 'departments', 'userCategories'));
+        }
 
         return view('admin.hr.ess.my-calendar', compact('staff', 'leaveTypes', 'balances', 'stats', 'departments', 'userCategories'));
     }
@@ -1159,6 +1227,10 @@ class EssController extends Controller
                 ->count(),
             'team_size' => $teamMembers->count(),
         ];
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('staff', 'teamMembers', 'leaveTypes', 'stats'));
+        }
 
         return view('admin.hr.ess.team-calendar', compact('staff', 'teamMembers', 'leaveTypes', 'stats'));
     }

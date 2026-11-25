@@ -32,6 +32,12 @@ class PayHeadController extends Controller
             ->orderBy('code')
             ->get(['id', 'code', 'name']);
 
+        if (request()->expectsJson()) {
+            $all = collect($additions)->concat($deductions)->values();
+
+            return response()->json(compact('all', 'additions', 'deductions', 'types', 'liabilityAccounts'));
+        }
+
         return view('admin.hr.pay-heads.index', compact('additions', 'deductions', 'types', 'liabilityAccounts'));
     }
 
@@ -40,6 +46,10 @@ class PayHeadController extends Controller
         $types = PayHead::getTypes();
         $calculationTypes = PayHead::getCalculationTypes();
         $calculationBases = PayHead::getCalculationBases();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('types', 'calculationTypes', 'calculationBases'));
+        }
 
         return view('admin.hr.pay-heads.create', compact('types', 'calculationTypes', 'calculationBases'));
     }
@@ -100,6 +110,10 @@ class PayHeadController extends Controller
     {
         $payHead->load(['salaryProfileItems.salaryProfile.staff.user']);
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('payHead'));
+        }
+
         return view('admin.hr.pay-heads.show', compact('payHead'));
     }
 
@@ -108,6 +122,10 @@ class PayHeadController extends Controller
         $types = PayHead::getTypes();
         $calculationTypes = PayHead::getCalculationTypes();
         $calculationBases = PayHead::getCalculationBases();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('payHead', 'types', 'calculationTypes', 'calculationBases'));
+        }
 
         return view('admin.hr.pay-heads.edit', compact('payHead', 'types', 'calculationTypes', 'calculationBases'));
     }

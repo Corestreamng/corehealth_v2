@@ -81,8 +81,13 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function configureRateLimiting()
     {
+        // Signed-in staff: a screen of the staff app makes several calls (context, counts, list, tiles) and every
+        // refresh, sort, page and search makes more, so 60 a minute ran out in ordinary use and every list then failed
+        // with 429. Anonymous callers keep the low limit (sign-in has its own, stricter one).
         RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(60)->by(optional($request->user())->id ?: $request->ip());
+            $user = $request->user();
+
+            return $user ? Limit::perMinute(1200)->by('user:' . $user->id) : Limit::perMinute(60)->by($request->ip());
         });
     }
 }

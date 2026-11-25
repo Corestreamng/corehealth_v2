@@ -96,6 +96,10 @@ class StaffMedicalExamController extends Controller
             'upcoming' => (clone $statsQuery)->whereBetween('next_exam_due', [now(), now()->addMonths(3)])->count(),
         ];
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('staffList', 'stats', 'scopedStaff'));
+        }
+
         return view('admin.hr.medical-exams.index', compact('staffList', 'stats', 'scopedStaff'));
     }
 

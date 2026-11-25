@@ -3910,8 +3910,8 @@ class ReceptionWorkbenchController extends Controller
         ->where('reception_validated', 0)
         ->orderBy('created_at', 'desc');
 
-        if ($request->filled('search')) {
-            $search = $request->search;
+        if ($request->searchText() !== '') {
+            $search = $request->searchText();
             $query->where(function ($q) use ($search) {
                 $q->whereHas('user', function ($q2) use ($search) {
                     $q2->where('firstname', 'LIKE', "%{$search}%")

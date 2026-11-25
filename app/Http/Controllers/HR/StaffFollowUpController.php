@@ -107,6 +107,10 @@ class StaffFollowUpController extends Controller
             'overdue' => (clone $statsQuery)->whereIn('status', ['open', 'in_progress'])->where('due_date', '<', now())->count(),
         ];
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('staffList', 'stats', 'scopedStaff'));
+        }
+
         return view('admin.hr.follow-ups.index', compact('staffList', 'stats', 'scopedStaff'));
     }
 

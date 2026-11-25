@@ -17,6 +17,10 @@ class UnitController extends Controller
         $departments = Department::active()->ordered()->get();
         $users = User::whereHas('staff_profile')->orderBy('surname')->get();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('units', 'departments', 'users'));
+        }
+
         return view('admin.hr.units.index', compact('units', 'departments', 'users'));
     }
 

@@ -193,8 +193,8 @@ class PayrollBatchController extends Controller
         }
 
         // Search by name or employee ID
-        if ($request->filled('search')) {
-            $search = $request->search;
+        if ($request->searchText() !== '') {
+            $search = $request->searchText();
             $query->where(function ($q) use ($search) {
                 $q->where('employee_id', 'like', "%{$search}%")
                     ->orWhereHas('user', function ($uq) use ($search) {
@@ -322,6 +322,10 @@ class PayrollBatchController extends Controller
         $statuses = PayrollBatch::getStatuses();
         $stats = $this->payrollService->getPayrollStats();
         $banks = Bank::whereNotNull('account_id')->orderBy('name')->get();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('batches', 'statuses', 'stats', 'banks'));
+        }
 
         return view('admin.hr.payroll.index', compact('batches', 'statuses', 'stats', 'banks'));
     }
@@ -749,6 +753,10 @@ class PayrollBatchController extends Controller
             ]);
         }
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('payrollBatch'));
+        }
+
         return view('admin.hr.payroll.show', compact('payrollBatch'));
     }
 
@@ -774,6 +782,10 @@ class PayrollBatchController extends Controller
         $availableStaff = Staff::active()->withSalaryProfile()
             ->with('user', 'currentSalaryProfile')
             ->get();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('payrollBatch', 'availableStaff'));
+        }
 
         return view('admin.hr.payroll.edit', compact('payrollBatch', 'availableStaff'));
     }
@@ -1074,6 +1086,10 @@ class PayrollBatchController extends Controller
 
             return $data;
         });
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('payrollBatch', 'payslips'));
+        }
 
         return view('admin.hr.payroll.payslips', compact('payrollBatch', 'payslips'));
     }

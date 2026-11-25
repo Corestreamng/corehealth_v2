@@ -35,6 +35,26 @@ class HmoReportsController extends Controller
     }
 
     /**
+     * Search shared by the claims and auth-code tables, applied in SQL so the table is paged by the database
+     * (the old code loaded every claim, hundreds of thousands, and paged them in memory).
+     */
+    private function claimSearch($query, string $term): void
+    {
+        if ($term === '') {
+            return;
+        }
+        $like = '%' . addcslashes($term, '%_\\') . '%';
+        $query->where(function ($q) use ($like) {
+            $q->where('product_or_service_requests.id', 'LIKE', $like)
+                ->orWhere('auth_code', 'LIKE', $like)
+                ->orWhereHas('user', fn ($u) => $u->where('firstname', 'LIKE', $like)->orWhere('surname', 'LIKE', $like))
+                ->orWhereHas('user.patient_profile', fn ($p) => $p->where('file_no', 'LIKE', $like)->orWhere('hmo_no', 'LIKE', $like))
+                ->orWhereHas('service', fn ($x) => $x->where('service_name', 'LIKE', $like))
+                ->orWhereHas('product', fn ($x) => $x->where('product_name', 'LIKE', $like));
+        });
+    }
+
+    /**
      * Get claims report data via AJAX.
      */
     public function getClaimsReport(Request $request)
@@ -109,9 +129,10 @@ class HmoReportsController extends Controller
             }
         }
 
-        $claims = $query->orderBy('created_at', 'DESC')->get();
+        $query->orderBy('product_or_service_requests.created_at', 'DESC');
 
-        return DataTables::of($claims)
+        return DataTables::of($query)
+            ->filter(fn ($q) => $this->claimSearch($q, $request->searchText()))
             ->addIndexColumn()
             ->addColumn('patient_name', function ($claim) {
                 return userfullname($claim->user_id) ?? 'N/A';
@@ -978,9 +999,10 @@ class HmoReportsController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $claims = $query->orderBy('created_at', 'DESC')->get();
+        $query->orderBy('product_or_service_requests.created_at', 'DESC');
 
-        return DataTables::of($claims)
+        return DataTables::of($query)
+            ->filter(fn ($q) => $this->claimSearch($q, $request->searchText()))
             ->addIndexColumn()
             ->addColumn('patient_name', function ($claim) {
                 return userfullname($claim->user_id) ?? 'N/A';

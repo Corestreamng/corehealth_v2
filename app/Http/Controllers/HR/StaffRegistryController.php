@@ -22,6 +22,10 @@ class StaffRegistryController extends Controller
         $gradeLevels = GradeLevel::where('is_active', true)->orderBy('level')->orderBy('step')->pluck('name', 'id');
         $units = Unit::orderBy('name')->get(['id', 'name', 'department_id']);
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('departments', 'cadres', 'gradeLevels', 'units'));
+        }
+
         return view('admin.hr.staff-registry.index', compact('departments', 'cadres', 'gradeLevels', 'units'));
     }
 

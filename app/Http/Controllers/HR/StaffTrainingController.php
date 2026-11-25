@@ -103,6 +103,10 @@ class StaffTrainingController extends Controller
             'planned' => (clone $statsQuery)->where('status', 'planned')->count(),
         ];
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('staffList', 'stats', 'scopedStaff'));
+        }
+
         return view('admin.hr.trainings.index', compact('staffList', 'stats', 'scopedStaff'));
     }
 

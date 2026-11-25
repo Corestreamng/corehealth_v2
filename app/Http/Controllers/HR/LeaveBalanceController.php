@@ -71,6 +71,10 @@ class LeaveBalanceController extends Controller
                     $available = $balance->entitled_days - $balance->used_days - $balance->pending_days + $balance->carried_forward;
 
                     return [
+                        'id' => $balance->id,
+                        'staff_id' => $balance->staff_id,
+                        'leave_type_id' => $balance->leave_type_id,
+                        'year' => $balance->year,
                         'DT_RowIndex' => $start + $index + 1,
                         'staff_name' => $balance->staff->user->name ?? 'N/A',
                         'employee_id' => $balance->staff->employee_id ?? 'N/A',
@@ -101,6 +105,10 @@ class LeaveBalanceController extends Controller
         $staffList = Staff::active()->with('user')->whereHas('user')->get()->sortBy('user.surname');
         $years = range(now()->year - 2, now()->year + 1);
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('balances', 'leaveTypes', 'staffList', 'years', 'year'));
+        }
+
         return view('admin.hr.leave-balances.index', compact('balances', 'leaveTypes', 'staffList', 'years', 'year'));
     }
 
@@ -123,6 +131,10 @@ class LeaveBalanceController extends Controller
         }
 
         $years = range(now()->year - 2, now()->year + 1);
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('staff', 'balances', 'years', 'year'));
+        }
 
         return view('admin.hr.leave-balances.show', compact('staff', 'balances', 'years', 'year'));
     }

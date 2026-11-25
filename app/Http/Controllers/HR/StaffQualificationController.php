@@ -82,6 +82,10 @@ class StaffQualificationController extends Controller
             'with_docs' => (clone $statsQuery)->whereNotNull('document_path')->count(),
         ];
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('staffList', 'stats', 'scopedStaff'));
+        }
+
         return view('admin.hr.qualifications.index', compact('staffList', 'stats', 'scopedStaff'));
     }
 

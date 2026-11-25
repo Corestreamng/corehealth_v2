@@ -154,7 +154,7 @@ class MobileStoreController extends Controller
         if ($level = $request->input('level')) {
             $rows = $rows->where('warning_level', $level);
         }
-        if ($term = strtolower(trim((string) $request->search))) {
+        if ($term = strtolower($request->searchText())) {
             $rows = $rows->filter(fn ($r) => str_contains(strtolower($r['product_name'] . ' ' . $r['batch_number']), $term));
         }
 
@@ -181,7 +181,7 @@ class MobileStoreController extends Controller
             'total_qty' => (int) $p['total_qty'],
             'total_value' => (float) $p['total_value'],
         ])->sortByDesc('total_value')->values();
-        if ($term = strtolower(trim((string) $request->search))) {
+        if ($term = strtolower($request->searchText())) {
             $rows = $rows->filter(fn ($r) => str_contains(strtolower($r['product_name'] . ' ' . $r['product_code']), $term))->values();
         }
 

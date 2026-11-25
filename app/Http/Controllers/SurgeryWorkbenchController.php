@@ -70,7 +70,7 @@ class SurgeryWorkbenchController extends Controller
     public function getQueue(Request $request)
     {
         $status = $request->get('status');
-        $search = $request->get('search');
+        $search = $request->searchText();
         $priority = $request->get('priority');
         $consent = $request->get('consent');
         $date = $request->get('date');

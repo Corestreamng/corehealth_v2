@@ -130,11 +130,19 @@ class LeaveTypeController extends Controller
             $query->latest()->limit(10);
         }]);
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('leaveType'));
+        }
+
         return view('admin.hr.leave-types.show', compact('leaveType'));
     }
 
     public function edit(LeaveType $leaveType)
     {
+        if (request()->expectsJson()) {
+            return response()->json(compact('leaveType'));
+        }
+
         return view('admin.hr.leave-types.edit', compact('leaveType'));
     }
 

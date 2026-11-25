@@ -119,6 +119,10 @@ class DisciplinaryQueryController extends Controller
         $staffList = Staff::with('user')->whereHas('user')->get()->sortBy('user.surname');
         $severities = DisciplinaryQuery::getSeverities();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('queries', 'staffList', 'severities'));
+        }
+
         return view('admin.hr.disciplinary.index', compact('queries', 'staffList', 'severities'));
     }
 
@@ -127,6 +131,10 @@ class DisciplinaryQueryController extends Controller
         $staffList = Staff::active()->with('user')->whereHas('user')->get()->sortBy('user.surname');
         $selectedStaff = $request->staff_id ? Staff::with('user')->find($request->staff_id) : null;
         $severities = DisciplinaryQuery::getSeverities();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('staffList', 'selectedStaff', 'severities'));
+        }
 
         return view('admin.hr.disciplinary.create', compact('staffList', 'selectedStaff', 'severities'));
     }
@@ -205,6 +213,10 @@ class DisciplinaryQueryController extends Controller
             ]);
         }
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('disciplinaryQuery', 'outcomes'));
+        }
+
         return view('admin.hr.disciplinary.show', compact('disciplinaryQuery', 'outcomes'));
     }
 
@@ -227,6 +239,10 @@ class DisciplinaryQueryController extends Controller
                 'query' => $disciplinaryQuery->load(['staff.user']),
                 'severities' => $severities,
             ]);
+        }
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('disciplinaryQuery', 'severities'));
         }
 
         return view('admin.hr.disciplinary.edit', compact('disciplinaryQuery', 'severities'));

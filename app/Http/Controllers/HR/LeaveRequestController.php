@@ -111,6 +111,8 @@ class LeaveRequestController extends Controller
                     $statusLabel = ucwords(str_replace('_', ' ', $leaveRequest->status));
 
                     return [
+                        'id' => $leaveRequest->id,
+                        'status' => $leaveRequest->status,
                         'DT_RowIndex' => $start + $index + 1,
                         'staff_name' => $leaveRequest->staff->user->name ?? 'N/A',
                         'leave_type' => $leaveRequest->leaveType->name ?? 'N/A',
@@ -136,6 +138,16 @@ class LeaveRequestController extends Controller
         $pendingForHr = collect();
         if ($user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'HR MANAGER']) || $user->can('leave-request.hr-approve')) {
             $pendingForHr = $this->leaveService->getPendingForHr();
+        }
+
+        if (request()->expectsJson()) {
+            return response()->json(compact(
+                'leaveRequests',
+                'leaveTypes',
+                'staffList',
+                'pendingForSupervisor',
+                'pendingForHr'
+            ));
         }
 
         return view('admin.hr.leave-requests.index', compact(
@@ -175,6 +187,10 @@ class LeaveRequestController extends Controller
                 $balance = $this->leaveService->getOrCreateBalance($staff->id, $leaveType->id);
                 $balances[$leaveType->id] = $balance;
             }
+        }
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('staff', 'leaveTypes', 'staffList', 'reliefStaff', 'balances'));
         }
 
         return view('admin.hr.leave-requests.create', compact('staff', 'leaveTypes', 'staffList', 'reliefStaff', 'balances'));
@@ -302,6 +318,16 @@ class LeaveRequestController extends Controller
         $canHrApprove = $leaveRequest->canBeApprovedByHr($user);
         $canReject = $canSupervisorApprove || $canHrApprove;
 
+        if (request()->expectsJson()) {
+            return response()->json(compact(
+                'leaveRequest',
+                'balance',
+                'canSupervisorApprove',
+                'canHrApprove',
+                'canReject'
+            ));
+        }
+
         return view('admin.hr.leave-requests.show', compact(
             'leaveRequest',
             'balance',
@@ -321,6 +347,10 @@ class LeaveRequestController extends Controller
         $reliefStaff = Staff::active()->with('user')
             ->where('id', '!=', $leaveRequest->staff_id)
             ->get();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('leaveRequest', 'leaveTypes', 'reliefStaff'));
+        }
 
         return view('admin.hr.leave-requests.edit', compact('leaveRequest', 'leaveTypes', 'reliefStaff'));
     }

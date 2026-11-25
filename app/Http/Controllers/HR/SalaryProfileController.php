@@ -70,6 +70,10 @@ class SalaryProfileController extends Controller
         $payFrequencies = StaffSalaryProfile::getPayFrequencies();
         $stats = $this->getSalaryProfileStats();
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('staffList', 'payHeads', 'payFrequencies', 'stats'));
+        }
+
         return view('admin.hr.salary-profiles.index', compact('staffList', 'payHeads', 'payFrequencies', 'stats'));
     }
 
@@ -120,6 +124,10 @@ class SalaryProfileController extends Controller
         $selectedStaff = $request->staff_id ? Staff::with('user')->find($request->staff_id) : null;
         $payHeads = PayHead::active()->orderBy('type')->orderBy('sort_order')->get();
         $payFrequencies = StaffSalaryProfile::getPayFrequencies();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('staffList', 'selectedStaff', 'payHeads', 'payFrequencies'));
+        }
 
         return view('admin.hr.salary-profiles.create', compact('staffList', 'selectedStaff', 'payHeads', 'payFrequencies'));
     }
@@ -286,6 +294,10 @@ class SalaryProfileController extends Controller
             'net_salary' => $salaryProfile->calculateNetSalary(),
         ];
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('salaryProfile', 'breakdown'));
+        }
+
         return view('admin.hr.salary-profiles.show', compact('salaryProfile', 'breakdown'));
     }
 
@@ -314,6 +326,10 @@ class SalaryProfileController extends Controller
 
         $payHeads = PayHead::active()->orderBy('type')->orderBy('sort_order')->get();
         $payFrequencies = StaffSalaryProfile::getPayFrequencies();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('salaryProfile', 'payHeads', 'payFrequencies'));
+        }
 
         return view('admin.hr.salary-profiles.edit', compact('salaryProfile', 'payHeads', 'payFrequencies'));
     }
@@ -465,6 +481,10 @@ class SalaryProfileController extends Controller
             ->with(['items.payHead', 'createdBy'])
             ->orderBy('effective_from', 'desc')
             ->get();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('staff', 'profiles'));
+        }
 
         return view('admin.hr.salary-profiles.staff', compact('staff', 'profiles'));
     }

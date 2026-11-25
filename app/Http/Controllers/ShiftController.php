@@ -422,8 +422,8 @@ class ShiftController extends Controller
             }
 
             // Search filter
-            if ($request->search) {
-                $search = $request->search;
+            if ($request->searchText() !== '') {
+                $search = $request->searchText();
                 $query->where(function ($q) use ($search) {
                     $q->where('summary', 'like', "%{$search}%")
                       ->orWhere('critical_notes', 'like', "%{$search}%")

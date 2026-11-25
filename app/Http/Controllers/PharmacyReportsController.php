@@ -475,8 +475,8 @@ class PharmacyReportsController extends Controller
             }
         }
 
-        if ($request->filled('search')) {
-            $search = $request->search;
+        if ($request->searchText() !== '') {
+            $search = $request->searchText();
             $query->where(function ($q) use ($search) {
                 $q->where('products.product_name', 'like', "%{$search}%")
                     ->orWhere('products.product_code', 'like', "%{$search}%");
@@ -705,8 +705,8 @@ class PharmacyReportsController extends Controller
             }
         }
 
-        if ($request->filled('search')) {
-            $search = $request->search;
+        if ($request->searchText() !== '') {
+            $search = $request->searchText();
             $query->where(function ($q) use ($search) {
                 $q->where('products.product_name', 'like', "%{$search}%")
                     ->orWhere('products.product_code', 'like', "%{$search}%");

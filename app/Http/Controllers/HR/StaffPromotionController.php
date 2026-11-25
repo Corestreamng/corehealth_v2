@@ -64,6 +64,10 @@ class StaffPromotionController extends Controller
             'due_soon' => (clone $statsQuery)->where('next_promotion_due_date', '<=', now()->addMonths(3))->where('next_promotion_due_date', '>=', now())->count(),
         ];
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('staffList', 'gradeLevels', 'stats', 'scopedStaff'));
+        }
+
         return view('admin.hr.promotions.index', compact('staffList', 'gradeLevels', 'stats', 'scopedStaff'));
     }
 
@@ -111,6 +115,10 @@ class StaffPromotionController extends Controller
     {
         $promotion->load(['staff.user', 'fromGradeLevel', 'toGradeLevel', 'processedBy']);
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('promotion'));
+        }
+
         return view('admin.hr.promotions.show', compact('promotion'));
     }
 
@@ -120,6 +128,10 @@ class StaffPromotionController extends Controller
     public function staffHistory(Staff $staff)
     {
         $promotions = $staff->promotions()->with(['fromGradeLevel', 'toGradeLevel', 'processedBy'])->get();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('staff', 'promotions'));
+        }
 
         return view('admin.hr.promotions.staff-history', compact('staff', 'promotions'));
     }

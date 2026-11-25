@@ -29,6 +29,10 @@ class StaffTrackingProfileController extends Controller
             'disciplinaryQueries',
         ]);
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('staff'));
+        }
+
         return view('admin.hr.tracking.profile', compact('staff'));
     }
 }

@@ -106,6 +106,10 @@ class StaffSuspensionController extends Controller
         $suspensions = $query->paginate(20);
         $staffList = Staff::with('user')->whereHas('user')->get()->sortBy('user.surname');
 
+        if (request()->expectsJson()) {
+            return response()->json(compact('suspensions', 'staffList'));
+        }
+
         return view('admin.hr.suspensions.index', compact('suspensions', 'staffList'));
     }
 
@@ -117,6 +121,10 @@ class StaffSuspensionController extends Controller
             ->whereDoesntHave('suspension')
             ->with('staff.user')
             ->get();
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('staffList', 'selectedStaff', 'queries'));
+        }
 
         return view('admin.hr.suspensions.create', compact('staffList', 'selectedStaff', 'queries'));
     }
@@ -223,6 +231,10 @@ class StaffSuspensionController extends Controller
                     'subject' => $suspension->disciplinaryQuery->subject,
                 ] : null,
             ]);
+        }
+
+        if (request()->expectsJson()) {
+            return response()->json(compact('suspension'));
         }
 
         return view('admin.hr.suspensions.show', compact('suspension'));
