@@ -194,6 +194,10 @@ class HrWorkbenchController extends Controller
 
     public function reports()
     {
+        if (request()->expectsJson()) {
+            return response()->json(['reports' => ['staff_registry', 'leave_requests', 'leave_balances', 'leave_calendar', 'disciplinary', 'suspensions', 'terminations', 'payroll', 'salary_profiles', 'pay_heads', 'promotions', 'qualifications', 'trainings', 'medical_exams', 'follow_ups', 'units', 'grade_levels']]);
+        }
+
         return view('admin.hr.reports.index');
     }
 }

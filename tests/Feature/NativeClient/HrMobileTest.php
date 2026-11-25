@@ -98,4 +98,81 @@ class HrMobileTest extends TestCase
         $r = $this->postJson('/api/mobile/hr/ess/my-leave/request', ['leave_type_id' => $type, 'start_date' => now()->subDay()->toDateString(), 'end_date' => now()->toDateString(), 'reason' => 'x'], self::AJAX);
         $this->assertSame(422, $r->status(), 'a start date in the past is refused like on the web');
     }
+
+    public function test_detail_pages_answer_with_what_the_app_shows()
+    {
+        $this->admin();
+        $slips = \App\Models\HR\PayrollBatch::query()->value('id');
+        if ($slips) {
+            $this->getJson("/api/mobile/hr/payroll/{$slips}", self::AJAX)->assertOk()->assertJsonStructure(['id', 'status', 'total_net']);
+            $this->getJson("/api/mobile/hr/payroll/{$slips}/payslips", self::AJAX)->assertOk()->assertJsonStructure(['payslips']);
+        }
+        $profile = \App\Models\HR\StaffSalaryProfile::query()->value('id');
+        if ($profile) {
+            $this->getJson("/api/mobile/hr/salary-profiles/{$profile}", self::AJAX)->assertOk()->assertJsonStructure(['items', 'basic_salary']);
+            $this->getJson("/api/mobile/hr/salary-profiles/{$profile}/edit", self::AJAX)->assertOk()->assertJsonStructure(['payHeads']);
+        }
+        $lr = \App\Models\HR\LeaveRequest::query()->value('id');
+        if ($lr) {
+            $this->getJson("/api/mobile/hr/leave-requests/{$lr}", self::AJAX)->assertOk()->assertJsonStructure(['leaveRequest' => ['staff' => ['user']]]);
+        }
+        $staff = Staff::query()->value('id');
+        $this->getJson("/api/mobile/hr/staff-registry/staff/{$staff}/detail", self::AJAX)->assertOk()->assertJsonStructure(['staff_id', 'employee_id']);
+    }
+
+    public function test_salary_profile_and_payroll_batch_can_be_created_from_the_app()
+    {
+        $this->admin();
+        $staff = Staff::query()->whereDoesntHave('salaryProfiles')->first();
+        $this->assertNotNull($staff, 'a staff member without a salary profile');
+        $head = \App\Models\HR\PayHead::query()->where('is_active', true)->first();
+        $r = $this->postJson('/api/mobile/hr/salary-profiles', [
+            'staff_id' => $staff->id, 'basic_salary' => 120000, 'effective_date' => now()->toDateString(), 'pay_frequency' => 'monthly',
+            'items' => [['pay_head_id' => $head->id, 'calculation_type' => 'fixed', 'calculation_base' => 'basic_salary', 'value' => 5000]],
+        ], self::AJAX);
+        $this->assertContains($r->status(), [200, 201], substr($r->getContent(), 0, 300));
+
+        $month = now()->addYears(5)->format('Y-m');
+        $r = $this->postJson('/api/mobile/hr/payroll', [
+            'pay_period' => $month, 'work_period_start' => "{$month}-01", 'work_period_end' => "{$month}-28", 'selection_mode' => 'custom', 'staff_ids' => [$staff->id], 'duplicate_action' => 'skip',
+        ], self::AJAX);
+        $this->assertContains($r->status(), [200, 201], substr($r->getContent(), 0, 300));
+
+        $month2 = now()->addYears(6)->format('Y-m');
+        $r = $this->postJson('/api/mobile/hr/payroll', [
+            'pay_period' => $month2, 'work_period_start' => "{$month2}-01", 'work_period_end' => "{$month2}-28", 'selection_mode' => 'department', 'departments' => [(string) $staff->department_id], 'duplicate_action' => 'skip',
+        ], self::AJAX);
+        $this->assertContains($r->status(), [200, 201], 'department mode: ' . substr($r->getContent(), 0, 300));
+    }
+
+    public function test_master_import_takes_a_spreadsheet_through_the_app_route()
+    {
+        $this->admin();
+        $this->getJson('/api/mobile/hr/master-import', self::AJAX)->assertOk()->assertJsonStructure(['modes']);
+        $this->post('/api/mobile/hr/master-import/import', ['mode' => 'both'], self::AJAX)->assertStatus(422);
+        $csv = \Illuminate\Http\UploadedFile::fake()->createWithContent('staff.csv', "S/NO,NAME,EMPLOYEE NUMBER\n");
+        $r = $this->post('/api/mobile/hr/master-import/import', ['mode' => 'both', 'file' => $csv], self::AJAX);
+        $this->assertSame(200, $r->status(), substr($r->getContent(), 0, 300));
+        $this->assertArrayHasKey('stats', $r->json());
+    }
+
+    public function test_calendars_and_team_approvals_answer_for_the_right_people()
+    {
+        $this->admin();
+        foreach (['leave-calendar/events', 'leave-calendar/stats', 'leave-calendar/on-leave-today', 'tracking/calendar/events', 'tracking/calendar', 'reports', 'master-import'] as $p) {
+            $r = $this->getJson("/api/mobile/hr/{$p}?start=2026-01-01&end=2026-12-31", self::AJAX);
+            $this->assertSame(200, $r->status(), "{$p}: " . substr($r->getContent(), 0, 200));
+        }
+        $staff = Staff::query()->whereNotNull('user_id')->first();
+        $owner = User::find($staff->user_id);
+        $owner->syncRoles([]);
+        $owner->syncPermissions([Permission::firstOrCreate(['name' => 'ess.access', 'guard_name' => 'web'])]);
+        Sanctum::actingAs($owner);
+        $this->getJson('/api/mobile/hr/ess/team-approvals', self::AJAX)->assertStatus(403);
+        $owner->givePermissionTo(Permission::firstOrCreate(['name' => 'leave-request.supervisor-approve', 'guard_name' => 'web']));
+        $r = $this->getJson('/api/mobile/hr/ess/team-approvals', self::AJAX);
+        $this->assertSame(200, $r->status(), substr($r->getContent(), 0, 300));
+        $this->assertArrayHasKey('pendingRequests', $r->json());
+        $this->assertSame(200, $this->getJson('/api/mobile/hr/ess/team-calendar/events?start=2026-01-01&end=2026-12-31', self::AJAX)->status());
+    }
 }

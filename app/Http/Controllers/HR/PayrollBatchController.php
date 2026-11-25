@@ -449,18 +449,20 @@ class PayrollBatchController extends Controller
                     $staffIds = $request->staff_ids;
                 } elseif ($selectionMode === 'department') {
                     // Department selection - get staff by department and optionally employment type
-                    $staffQuery = \App\Models\Staff::whereHas('salaryProfile', function ($q) {
-                        $q->where('is_active', true);
-                    })->where('status', 'active');
+                    $staffQuery = \App\Models\Staff::whereHas('currentSalaryProfile')
+                        ->where('employment_status', 'active');
 
                     if ($request->filled('departments')) {
                         $departments = collect($request->departments)->filter()->values()->all();
                         if (count($departments) > 0) {
                             // Handle empty string for 'Unassigned' department
+                            // Departments come as ids (the app) or names (the web form); an empty entry means unassigned
                             $staffQuery->where(function ($q) use ($departments) {
-                                $q->whereIn('department', array_filter($departments, fn ($d) => $d !== ''));
+                                $named = array_filter($departments, fn ($d) => $d !== '');
+                                $q->whereIn('department_id', array_filter($named, 'is_numeric'))
+                                    ->orWhereHas('department', fn ($d) => $d->whereIn('name', $named));
                                 if (in_array('', $departments)) {
-                                    $q->orWhereNull('department')->orWhere('department', '');
+                                    $q->orWhereNull('department_id');
                                 }
                             });
                         }

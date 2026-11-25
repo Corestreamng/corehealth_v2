@@ -13,6 +13,10 @@ class TrackingCalendarController extends Controller
 {
     public function index()
     {
+        if (request()->expectsJson()) {
+            return response()->json(['legend' => ['medical_exam' => 'Medical exam due', 'training' => 'Training', 'promotion' => 'Promotion due', 'confirmation' => 'Confirmation due']]);
+        }
+
         return view('admin.hr.tracking.calendar');
     }
 

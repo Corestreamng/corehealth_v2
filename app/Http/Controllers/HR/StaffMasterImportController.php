@@ -11,8 +11,8 @@ use App\Models\HR\StaffMedicalExam;
 use App\Models\HR\StaffNextOfKin;
 use App\Models\HR\StaffQualification;
 use App\Models\HR\StaffTraining;
+use App\Models\HR\Unit;
 use App\Models\Staff;
-use App\Models\Unit;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -24,6 +24,10 @@ class StaffMasterImportController extends Controller
 {
     public function showForm()
     {
+        if (request()->expectsJson()) {
+            return response()->json(['modes' => ['create', 'update', 'both'], 'template' => url('/hr/master-import/template')]);
+        }
+
         return view('admin.hr.tracking.master-import');
     }
 
