@@ -22,7 +22,7 @@
         "lodash": "^4.18.1",
         "mermaid": "^12.3.0",
         "postcss": "^8.5.28",
-        "puppeteer-core": "^25.16.0",
+        "puppeteer-core": "^25.18.1",
         "resolve-url-loader": "^5.0.0",
         "sass": "^1.105.1",
         "sass-loader": "^17.0.1",
