@@ -31,6 +31,6 @@
     "dependencies": {
         "@selectize/selectize": "^0.15.2",
         "jquery": "^3.6.3",
-        "select2": "^4.1.0"
+        "select2": "^4.1.1"
     }
 }
