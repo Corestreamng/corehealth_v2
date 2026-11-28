@@ -83,7 +83,7 @@ class VitalSignController extends Controller
 
             // Also check dynamic fields
             if (!$hasMetric) {
-                $standardFields = ['patient_id', 'datetimeField', 'otherNotes', '_token', '_method', 'bmi'];
+                $standardFields = ['patient_id', 'encounter_id', 'datetimeField', 'otherNotes', '_token', '_method', 'bmi'];
                 $formData = array_diff_key($request->all(), array_flip($standardFields));
                 foreach ($formData as $val) {
                     if (!is_null($val) && $val !== '') {
@@ -101,8 +101,15 @@ class VitalSignController extends Controller
             DB::beginTransaction();
             $vitalSign = new VitalSign();
 
-            // Default time to now if not provided
-            $timeTaken = $request->datetimeField ?? now()->toDateTimeString();
+            // Default time to now if not provided, normalized for strict SQL DATETIME
+            $timeTaken = now()->toDateTimeString();
+            if ($request->filled('datetimeField')) {
+                try {
+                    $timeTaken = Carbon::parse($request->datetimeField)->format('Y-m-d H:i:s');
+                } catch (\Throwable $e) {
+                    $timeTaken = now()->toDateTimeString();
+                }
+            }
 
             $vitalSign->taken_by = Auth::id();
             $vitalSign->patient_id = $request->patient_id;
@@ -117,6 +124,7 @@ class VitalSignController extends Controller
             $vitalSign->pain_score = $request->painScore;
             $vitalSign->other_notes = $request->otherNotes;
             $vitalSign->time_taken = $timeTaken;
+            $vitalSign->status = 1;
 
             // Auto-calculate BMI if weight and height provided
             if ($request->bmi) {
@@ -130,7 +138,7 @@ class VitalSignController extends Controller
 
             // Capture dynamic fields into form_data
             $standardFields = [
-                'patient_id', 'bloodPressure', 'bodyTemperature', 'datetimeField',
+                'patient_id', 'encounter_id', 'bloodPressure', 'bodyTemperature', 'datetimeField',
                 'heartRate', 'respiratoryRate', 'bodyWeight', 'height', 'spo2',
                 'bloodSugar', 'painScore', 'bmi', 'otherNotes', '_token', '_method',
             ];
@@ -171,6 +179,18 @@ class VitalSignController extends Controller
             }
 
             return back()->withMessage('Vitals saved successfully')->withMessageType('success');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+
+            return redirect()->back()->withErrors($e->validator)->withInput();
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);

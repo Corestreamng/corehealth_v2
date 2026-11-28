@@ -3607,7 +3607,7 @@ class EncounterController extends Controller
         try {
             $request->validate([
                 'consult_invest_id' => 'required|array',
-                'consult_invest_id.*' => 'required|string',
+                'consult_invest_id.*' => 'required',
                 'consult_invest_note' => 'required|array',
                 'consult_invest_note.*' => 'nullable|string',
             ]);
@@ -3625,7 +3625,7 @@ class EncounterController extends Controller
             // Save new lab requests
             for ($r = 0; $r < count($request->consult_invest_id); ++$r) {
                 $invest = new LabServiceRequest();
-                $idValue = $request->consult_invest_id[$r];
+                $idValue = (string) $request->consult_invest_id[$r];
                 if (strpos($idValue, 'FF_') === 0) {
                     $invest->is_free_form = true;
                     $invest->free_form_name = substr($idValue, 3);
@@ -3661,7 +3661,7 @@ class EncounterController extends Controller
         try {
             $request->validate([
                 'consult_imaging_id' => 'required|array',
-                'consult_imaging_id.*' => 'required|string',
+                'consult_imaging_id.*' => 'required',
                 'consult_imaging_note' => 'required|array',
                 'consult_imaging_note.*' => 'nullable|string',
             ]);
@@ -3679,7 +3679,7 @@ class EncounterController extends Controller
             // Save new imaging requests
             for ($r = 0; $r < count($request->consult_imaging_id); ++$r) {
                 $imaging = new ImagingServiceRequest();
-                $idValue = $request->consult_imaging_id[$r];
+                $idValue = (string) $request->consult_imaging_id[$r];
                 if (strpos($idValue, 'FF_') === 0) {
                     $imaging->is_free_form = true;
                     $imaging->free_form_name = substr($idValue, 3);
@@ -3715,7 +3715,7 @@ class EncounterController extends Controller
         try {
             $request->validate([
                 'consult_presc_id' => 'required|array|min:1',
-                'consult_presc_id.*' => 'required|string',
+                'consult_presc_id.*' => 'required',
                 'consult_presc_dose' => 'required|array|min:1',
                 'consult_presc_dose.*' => 'nullable|string',
             ]);
@@ -3723,7 +3723,7 @@ class EncounterController extends Controller
             // Validate all selected products are drugs (prescriptions should only contain drugs)
             // Skip free form items from this check
             $regularProductIds = array_filter($request->consult_presc_id, function ($id) {
-                return strpos($id, 'FF_') !== 0;
+                return strpos((string) $id, 'FF_') !== 0;
             });
 
             if (count($regularProductIds) > 0) {
@@ -3759,7 +3759,7 @@ class EncounterController extends Controller
             // Save new prescriptions
             for ($r = 0; $r < count($request->consult_presc_id); ++$r) {
                 $presc = new ProductRequest();
-                $idValue = $request->consult_presc_id[$r];
+                $idValue = (string) $request->consult_presc_id[$r];
                 if (strpos($idValue, 'FF_') === 0) {
                     $presc->is_free_form = true;
                     $presc->free_form_name = substr($idValue, 3);
@@ -4347,7 +4347,7 @@ class EncounterController extends Controller
         try {
             $request->validate([
                 'procedures' => 'required|array|min:1',
-                'procedures.*.service_id' => 'required|string',
+                'procedures.*.service_id' => 'required',
                 'procedures.*.priority' => 'required|in:routine,urgent,emergency',
                 'procedures.*.scheduled_date' => 'nullable|date',
                 'procedures.*.pre_notes' => 'nullable|string|max:2000',
@@ -5341,14 +5341,14 @@ class EncounterController extends Controller
     public function addSingleLabRequest(Request $request, Encounter $encounter)
     {
         try {
-            $request->validate(['service_id' => 'required|string']);
+            $request->validate(['service_id' => 'required']);
             $extra = [];
             if ($request->has('treatment_plan_id')) {
                 $extra['treatment_plan_id'] = $request->input('treatment_plan_id');
                 $extra['treatment_plan_name'] = $request->input('treatment_plan_name');
             }
             $lab = $this->addSingleLab(
-                $request->input('service_id'),
+                (string) $request->input('service_id'),
                 $request->input('note'),
                 $encounter->patient_id,
                 $encounter->id,
@@ -5375,14 +5375,14 @@ class EncounterController extends Controller
     public function addSingleImagingRequest(Request $request, Encounter $encounter)
     {
         try {
-            $request->validate(['service_id' => 'required|string']);
+            $request->validate(['service_id' => 'required']);
             $extra = [];
             if ($request->has('treatment_plan_id')) {
                 $extra['treatment_plan_id'] = $request->input('treatment_plan_id');
                 $extra['treatment_plan_name'] = $request->input('treatment_plan_name');
             }
             $imaging = $this->addSingleImaging(
-                $request->input('service_id'),
+                (string) $request->input('service_id'),
                 $request->input('note'),
                 $encounter->patient_id,
                 $encounter->id,
@@ -5409,14 +5409,14 @@ class EncounterController extends Controller
     public function addSinglePrescriptionRequest(Request $request, Encounter $encounter)
     {
         try {
-            $request->validate(['product_id' => 'required|string']);
+            $request->validate(['product_id' => 'required']);
             $extra = [];
             if ($request->has('treatment_plan_id')) {
                 $extra['treatment_plan_id'] = $request->input('treatment_plan_id');
                 $extra['treatment_plan_name'] = $request->input('treatment_plan_name');
             }
             $presc = $this->addSinglePrescription(
-                $request->input('product_id'),
+                (string) $request->input('product_id'),
                 $request->input('dose', ''),
                 $encounter->patient_id,
                 $encounter->id,
@@ -5463,7 +5463,7 @@ class EncounterController extends Controller
     public function addSingleProcedureRequest(Request $request, Encounter $encounter)
     {
         try {
-            $request->validate(['service_id' => 'required|string', 'priority' => 'required|string']);
+            $request->validate(['service_id' => 'required', 'priority' => 'required|string']);
             $extra = [];
             if ($request->has('treatment_plan_id')) {
                 $extra['treatment_plan_id'] = $request->input('treatment_plan_id');

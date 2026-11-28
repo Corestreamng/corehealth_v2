@@ -1339,7 +1339,7 @@ class MaternityWorkbenchController extends Controller
 
         $validator = Validator::make($request->all(), [
             'labs' => 'required|array|min:1',
-            'labs.*.service_id' => 'required|string',
+            'labs.*.service_id' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -1350,7 +1350,7 @@ class MaternityWorkbenchController extends Controller
             $created = [];
             foreach ($request->labs as $labData) {
                 $lab = $this->addSingleLab(
-                    $labData['service_id'],
+                    (string) $labData['service_id'],
                     $labData['note'] ?? null,
                     $enrollment->patient_id,
                     null
@@ -1374,7 +1374,7 @@ class MaternityWorkbenchController extends Controller
 
         $validator = Validator::make($request->all(), [
             'imaging' => 'required|array|min:1',
-            'imaging.*.service_id' => 'required|string',
+            'imaging.*.service_id' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -1385,7 +1385,7 @@ class MaternityWorkbenchController extends Controller
             $created = [];
             foreach ($request->imaging as $imgData) {
                 $img = $this->addSingleImaging(
-                    $imgData['service_id'],
+                    (string) $imgData['service_id'],
                     $imgData['note'] ?? null,
                     $enrollment->patient_id,
                     null
@@ -1409,7 +1409,7 @@ class MaternityWorkbenchController extends Controller
 
         $validator = Validator::make($request->all(), [
             'prescriptions' => 'required|array|min:1',
-            'prescriptions.*.product_id' => 'required|string',
+            'prescriptions.*.product_id' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -1420,7 +1420,7 @@ class MaternityWorkbenchController extends Controller
             $created = [];
             foreach ($request->prescriptions as $pData) {
                 $presc = $this->addSinglePrescription(
-                    $pData['product_id'],
+                    (string) $pData['product_id'],
                     $pData['dose'] ?? null,
                     $enrollment->patient_id,
                     null
@@ -1444,7 +1444,7 @@ class MaternityWorkbenchController extends Controller
 
         $validator = Validator::make($request->all(), [
             'procedures' => 'required|array|min:1',
-            'procedures.*.service_id' => 'required|string',
+            'procedures.*.service_id' => 'required',
             'procedures.*.priority' => 'nullable|in:routine,urgent,emergency',
             'procedures.*.scheduled_date' => 'nullable|date',
             'procedures.*.pre_notes' => 'nullable|string',
@@ -1570,9 +1570,9 @@ class MaternityWorkbenchController extends Controller
     {
         try {
             $enrollment = MaternityEnrollment::findOrFail($id);
-            $request->validate(['service_id' => 'required|string']);
+            $request->validate(['service_id' => 'required']);
             $lab = $this->addSingleLab(
-                $request->input('service_id'),
+                (string) $request->input('service_id'),
                 $request->input('note'),
                 $enrollment->patient_id,
                 null
@@ -1604,9 +1604,9 @@ class MaternityWorkbenchController extends Controller
     {
         try {
             $enrollment = MaternityEnrollment::findOrFail($id);
-            $request->validate(['service_id' => 'required|string']);
+            $request->validate(['service_id' => 'required']);
             $imaging = $this->addSingleImaging(
-                $request->input('service_id'),
+                (string) $request->input('service_id'),
                 $request->input('note'),
                 $enrollment->patient_id,
                 null
@@ -1638,9 +1638,9 @@ class MaternityWorkbenchController extends Controller
     {
         try {
             $enrollment = MaternityEnrollment::findOrFail($id);
-            $request->validate(['product_id' => 'required|string']);
+            $request->validate(['product_id' => 'required']);
             $presc = $this->addSinglePrescription(
-                $request->input('product_id'),
+                (string) $request->input('product_id'),
                 $request->input('dose', ''),
                 $enrollment->patient_id,
                 null
@@ -1685,7 +1685,7 @@ class MaternityWorkbenchController extends Controller
         try {
             $enrollment = MaternityEnrollment::findOrFail($id);
             $request->validate([
-                'service_id' => 'required|string',
+                'service_id' => 'required',
                 'priority' => 'required|string',
             ]);
             $procedure = $this->addSingleProcedure(
