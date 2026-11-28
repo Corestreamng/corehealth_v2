@@ -175,4 +175,19 @@ class HrMobileTest extends TestCase
         $this->assertArrayHasKey('pendingRequests', $r->json());
         $this->assertSame(200, $this->getJson('/api/mobile/hr/ess/team-calendar/events?start=2026-01-01&end=2026-12-31', self::AJAX)->status());
     }
+
+    public function test_user_without_staff_row_is_excluded_from_ess_and_gets_403()
+    {
+        $user = User::factory()->create(['status' => 1]);
+        $user->staff_profile()->delete();
+        $user->unsetRelation('staff_profile');
+        $user->givePermissionTo(Permission::firstOrCreate(['name' => 'ess.access', 'guard_name' => 'web']));
+        Sanctum::actingAs($user);
+
+        $staffWs = collect(\App\Support\Navigation\WorkspaceRegistry::visibleFor($user))->firstWhere('key', 'staff_workspace');
+        $keys = array_column($staffWs['items'] ?? [], 'key');
+        $this->assertNotContains('ess.dashboard', $keys);
+
+        $this->getJson('/api/mobile/hr/ess', self::AJAX)->assertStatus(403);
+    }
 }

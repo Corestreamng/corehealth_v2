@@ -363,7 +363,7 @@ class WorkspaceRegistry
 
         return match ($condition) {
             'chat_enabled' => (bool) (appsettings('chat_enabled') ?? true),
-            'ess_access' => !empty($staff) && $user->can('ess.access'),
+            'ess_access' => $staff && $staff->exists && $user->can('ess.access'),
             'nhmis_report' => $user->hasAnyRole(self::ADMINS) || ($user->hasAnyRole(['RECEPTIONIST', 'Receptionist']) && $isHead),
             'hmo_mgmt' => $user->hasAnyRole(['SUPERADMIN', 'ADMIN']) || ($user->hasRole('HMO Executive') && $isHead),
             'procedure_category_set' => (bool) appsettings('procedure_category_id'),

@@ -46,7 +46,7 @@ class EssController extends Controller
     protected function getStaff()
     {
         $staff = auth()->user()->staff;
-        if (!$staff) {
+        if (!$staff || !$staff->exists) {
             abort(403, 'You do not have a staff profile linked to your account.');
         }
 
