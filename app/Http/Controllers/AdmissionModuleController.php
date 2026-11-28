@@ -23,7 +23,7 @@ class AdmissionModuleController extends Controller
         }
 
         $admissions = AdmissionRequest::where('patient_id', $patientId)
-            ->with(['bed.wardRelation'])
+            ->with(['bed.wardRelation', 'doctor'])
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($admission) use ($patient) {
@@ -40,22 +40,37 @@ class AdmissionModuleController extends Controller
                 $totalBill = $this->calculateAdmissionBillTotal($patient->user_id, $admitDate, $dischargeDate);
 
                 $doctorName = 'N/A';
-                if ($admission->doctor_id) {
+                if ($admission->doctor) {
+                    $u = $admission->doctor;
+                    $doctorName = trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : ''));
+                } elseif ($admission->doctor_id) {
                     $doctorStaff = \App\Models\Staff::find($admission->doctor_id);
                     if ($doctorStaff && $doctorStaff->user_id) {
                         $doctorName = userfullname($doctorStaff->user_id);
                     }
                 }
 
+                $wardName = optional(optional($admission->bed)->wardRelation)->name ?? ($admission->bed->ward ?? 'N/A');
+                $bedName = optional($admission->bed)->name ?? 'N/A';
+                $admitFormatted = $admitDate ? Carbon::parse($admitDate)->format('d/m/Y H:i') : 'Pending';
+                $dischargeFormatted = $dischargeDate ? Carbon::parse($dischargeDate)->format('d/m/Y H:i') : ($admission->discharged ? 'Unknown' : null);
+                $reason = $admission->admission_reason ?? $admission->note ?? 'N/A';
+
                 return [
                     'id' => $admission->id,
-                    'admitted_date' => $admitDate ? Carbon::parse($admitDate)->format('d/m/Y H:i') : 'Pending',
-                    'discharge_date' => $dischargeDate ? Carbon::parse($dischargeDate)->format('d/m/Y H:i') : ($admission->discharged ? 'Unknown' : null),
+                    'admitted_date' => $admitFormatted,
+                    'admitted_at' => $admitFormatted,
+                    'discharge_date' => $dischargeFormatted,
+                    'discharged_at' => $dischargeFormatted,
                     'los' => $los,
-                    'ward' => optional(optional($admission->bed)->wardRelation)->name ?? ($admission->bed->ward ?? 'N/A'),
-                    'bed' => optional($admission->bed)->name ?? 'N/A',
+                    'ward' => $wardName,
+                    'ward_name' => $wardName,
+                    'bed' => $bedName,
+                    'bed_name' => $bedName,
                     'doctor' => $doctorName,
-                    'reason' => $admission->admission_reason ?? $admission->note ?? 'N/A',
+                    'doctor_name' => $doctorName,
+                    'reason' => $reason,
+                    'admission_reason' => $reason,
                     'status' => $admission->discharged ? 'discharged' : 'admitted',
                     'priority' => $admission->priority ?? 'routine',
                     'total_bill' => $totalBill,

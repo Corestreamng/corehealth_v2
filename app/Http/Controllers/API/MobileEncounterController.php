@@ -1035,14 +1035,10 @@ class MobileEncounterController extends Controller
                 return response()->json(['status' => false, 'message' => 'Staff profile not found.'], 404);
             }
 
-            $query = AdmissionRequest::with(['patient.user', 'patient.hmo', 'bed.ward', 'admittingDoctor'])
-                ->where('admission_status', '!=', 'discharged');
-
-            if ($doc->clinic_id) {
-                $query->whereHas('bed.ward', function ($q) use ($doc) {
-                    $q->where('clinic_id', $doc->clinic_id);
-                });
-            }
+            $query = AdmissionRequest::with(['patient.user', 'patient.hmo', 'bed.wardRelation', 'doctor'])
+                ->where('discharged', 0)
+                ->where('status', 1)
+                ->where('doctor_id', Auth::id());
 
             if ($request->has('start_date') && $request->has('end_date')) {
                 $query->whereBetween('created_at', [
@@ -1060,24 +1056,7 @@ class MobileEncounterController extends Controller
 
             $admissions = $query->orderBy('created_at', 'DESC')->paginate(min(max((int) request('per_page', 20), 1), 200));
 
-            $items = $admissions->getCollection()->map(function ($adm) {
-                return [
-                    'id' => $adm->id,
-                    'patient_id' => $adm->patient_id,
-                    'patient_name' => $adm->patient && $adm->patient->user ? $adm->patient->user->name : 'Unknown',
-                    'file_no' => $adm->patient->file_no ?? '',
-                    'gender' => $adm->patient->gender ?? '',
-                    'dob' => $adm->patient->dob ?? '',
-                    'hmo_name' => $adm->patient?->hmo?->name ?? 'N/A',
-                    'hmo_no' => $adm->patient->hmo_no ?? '',
-                    'ward_name' => $adm->bed?->ward?->name ?? 'N/A',
-                    'bed_name' => $adm->bed?->bed_name ?? 'N/A',
-                    'admission_reason' => $adm->admission_reason,
-                    'admission_status' => $adm->admission_status,
-                    'admitted_at' => $adm->created_at?->toIso8601String(),
-                    'doctor_name' => $adm->admittingDoctor ? $adm->admittingDoctor->name : 'N/A',
-                ];
-            });
+            $items = $admissions->getCollection()->map(fn ($adm) => $this->formatAdmissionItem($adm));
 
             return response()->json([
                 'status' => true,
@@ -1160,21 +1139,42 @@ class MobileEncounterController extends Controller
     public function getDoctors(Request $request)
     {
         $query = Staff::with('user')
-            ->whereHas('roles', function ($q) {
-                $q->where('role_name', 'like', '%doctor%')
-                  ->orWhere('role_name', 'like', '%physician%');
+            ->where(function ($q) {
+                $q->whereIn('employment_status', [Staff::STATUS_ACTIVE, Staff::STATUS_PROBATION])
+                  ->orWhereNull('employment_status');
+            })
+            ->where(function ($q) {
+                $q->where('status', '!=', 0)->orWhereNull('status');
+            })
+            ->whereHas('user', function ($q) {
+                $q->where('status', '!=', 0);
+            })
+            ->whereHas('user.roles', function ($q) {
+                $q->where('name', 'DOCTOR')
+                  ->orWhere('name', 'like', '%doctor%')
+                  ->orWhere('name', 'like', '%physician%');
             });
 
-        if ($request->has('clinic_id')) {
-            $query->where('clinic_id', $request->clinic_id);
+        if ($request->filled('clinic_id')) {
+            $clinicId = (int) $request->clinic_id;
+            $query->where(function ($q) use ($clinicId) {
+                $q->where('clinic_id', $clinicId)
+                  ->orWhereJsonContains('can_see_clinic_queues', $clinicId);
+            });
         }
 
         $doctors = $query->get()->map(function ($s) {
+            $u = $s->user;
+            $fullName = $u
+                ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : ''))
+                : 'Unknown';
+
             return [
                 'id' => $s->id,
-                'name' => $s->user->name ?? 'Unknown',
+                'user_id' => $s->user_id,
+                'name' => $fullName !== '' ? $fullName : ($u->name ?? 'Unknown'),
             ];
-        });
+        })->sortBy('name')->values();
 
         return response()->json(['status' => true, 'data' => $doctors]);
     }
@@ -1631,8 +1631,9 @@ class MobileEncounterController extends Controller
     public function allAdmissions(Request $request)
     {
         try {
-            $query = AdmissionRequest::with(['patient.user', 'patient.hmo', 'bed.ward', 'admittingDoctor'])
-                ->where('admission_status', '!=', 'discharged');
+            $query = AdmissionRequest::with(['patient.user', 'patient.hmo', 'bed.wardRelation', 'doctor'])
+                ->where('discharged', 0)
+                ->where('status', 1);
 
             if ($request->has('start_date') && $request->has('end_date')) {
                 $query->whereBetween('created_at', [
@@ -1648,30 +1649,15 @@ class MobileEncounterController extends Controller
             }
 
             if ($request->filled('doctor_id')) {
-                $query->where('admitting_doctor_id', $request->doctor_id);
+                $docParam = (int) $request->doctor_id;
+                $docUserId = Staff::where('id', $docParam)->value('user_id');
+                $ids = array_values(array_unique(array_filter([$docParam, $docUserId])));
+                $query->whereIn('doctor_id', $ids);
             }
 
-            $admissions = $query->orderBy('created_at', 'DESC')->paginate($request->input('per_page', 20));
+            $admissions = $query->orderBy('created_at', 'DESC')->paginate(min(max((int) $request->input('per_page', 20), 1), 200));
 
-            $items = $admissions->getCollection()->map(function ($adm) {
-                return [
-                    'id' => $adm->id,
-                    'patient_id' => $adm->patient_id,
-                    'patient_name' => $adm->patient && $adm->patient->user ? $adm->patient->user->name : 'Unknown',
-                    'file_no' => $adm->patient->file_no ?? '',
-                    'gender' => $adm->patient->gender ?? '',
-                    'dob' => $adm->patient->dob ?? '',
-                    'hmo_name' => $adm->patient?->hmo?->name ?? 'N/A',
-                    'hmo_no' => $adm->patient->hmo_no ?? '',
-                    'ward_name' => $adm->bed?->ward?->name ?? 'N/A',
-                    'bed_name' => $adm->bed?->bed_name ?? 'N/A',
-                    'admission_reason' => $adm->admission_reason,
-                    'admission_status' => $adm->admission_status,
-                    'admitted_at' => $adm->created_at?->toIso8601String(),
-                    'doctor_name' => $adm->admittingDoctor ? $adm->admittingDoctor->name : 'N/A',
-                    'requested_by' => $adm->requested_by_name ?? 'N/A',
-                ];
-            });
+            $items = $admissions->getCollection()->map(fn ($adm) => $this->formatAdmissionItem($adm));
 
             return response()->json([
                 'status' => true,
@@ -1688,6 +1674,47 @@ class MobileEncounterController extends Controller
 
             return response()->json(['status' => false, 'message' => 'Failed to load admissions.'], 500);
         }
+    }
+
+    private function formatAdmissionItem(AdmissionRequest $adm): array
+    {
+        $patientUser = $adm->patient?->user;
+        $patientName = $patientUser
+            ? trim($patientUser->surname . ' ' . $patientUser->firstname . ($patientUser->othername ? ' ' . $patientUser->othername : ''))
+            : '';
+        if ($patientName === '') {
+            $patientName = $patientUser?->name ?? 'Unknown';
+        }
+
+        $doctorUser = $adm->doctor;
+        if (!$doctorUser && $adm->doctor_id) {
+            $staffDoc = Staff::with('user')->find($adm->doctor_id);
+            $doctorUser = $staffDoc?->user;
+        }
+        $doctorName = $doctorUser
+            ? trim($doctorUser->surname . ' ' . $doctorUser->firstname . ($doctorUser->othername ? ' ' . $doctorUser->othername : ''))
+            : '';
+        if ($doctorName === '') {
+            $doctorName = $doctorUser?->name ?? 'N/A';
+        }
+
+        return [
+            'id' => $adm->id,
+            'patient_id' => $adm->patient_id,
+            'patient_name' => $patientName,
+            'file_no' => $adm->patient->file_no ?? '',
+            'gender' => $adm->patient->gender ?? '',
+            'dob' => $adm->patient->dob ?? '',
+            'hmo_name' => $adm->patient?->hmo?->name ?? 'N/A',
+            'hmo_no' => $adm->patient->hmo_no ?? '',
+            'ward_name' => $adm->bed?->wardRelation?->name ?? $adm->bed?->ward ?? 'N/A',
+            'bed_name' => $adm->bed?->name ?? 'N/A',
+            'admission_reason' => $adm->admission_reason,
+            'admission_status' => $adm->discharged ? 'discharged' : ($adm->admission_status ?? 'admitted'),
+            'admitted_at' => $adm->created_at?->toIso8601String(),
+            'doctor_name' => $doctorName,
+            'requested_by' => $adm->requested_by_name ?? $doctorName,
+        ];
     }
 
     // ═══════════════════════════════════════════════════════════════

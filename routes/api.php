@@ -314,6 +314,7 @@ Route::prefix('mobile/doctor')->middleware(['auth:sanctum', 'native.workspace:do
 
     // ── Admissions ───────────────────────────────────────────────
     Route::get('admissions', [MobileEncounterController::class, 'myAdmissions']);
+    Route::get('patient/{id}/admissions', [\App\Http\Controllers\AdmissionModuleController::class, 'getPatientAdmissions']);
 
     // ── Referrals (reuse existing JSON-returning controller) ────
     Route::get('encounters/{encounter}/referrals', [SpecialistReferralController::class, 'getEncounterReferrals']);
